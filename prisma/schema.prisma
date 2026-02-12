@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider   = "prisma-client"
   output     = "../src/generated/prisma"
@@ -15,50 +9,40 @@ datasource db {
 
 model User {
   user_id    Int      @id @default(autoincrement())
-  first_name String
-  last_name  String
-  email      String   @unique
-  user_role  String
-  tasks      Task[]
+  user_login      String  @unique
+  user_password   String
+  admin_role Boolean
+  SMM_role Boolean
+  designer_role Boolean
+  videomaker_role Boolean
+  coordinator_role Boolean
+  
   posts      Post[]
 }
 
-model Task {
-  task_id               Int       @id @default(autoincrement())
-  responsible_person_id Int?
-  user                  User?     @relation(fields: [responsible_person_id], references: [user_id])
-  status                String?   @default("Ожидает начала")
-  type_task             String
-  
-  posts_as_needs_video_smm        Post[]   @relation("needs_video_smm")
-  posts_as_needs_video_maker      Post[]   @relation("needs_video_maker")
-  posts_as_needs_text             Post[]   @relation("needs_text")
-  posts_as_needs_photogallery     Post[]   @relation("needs_photogallery")
-  posts_as_needs_cover_photo      Post[]   @relation("needs_cover_photo")
-  posts_as_needs_photo_cards      Post[]   @relation("needs_photo_cards")
-}
-
 model Post {
-  post_id                 Int       @id @default(autoincrement())
-  title                   String
-  post_date               DateTime? @default(now())
-  deadline                DateTime?
-  type_post               String
+  post_id            Int      @id @default(autoincrement())
+  post_title         String
+  post_description   String
+  
+  post_needs_video_smm        Boolean
+  post_needs_video_maker      Boolean
+  post_needs_text             Boolean
+  post_needs_photogallery     Boolean
+  post_needs_cover_photo      Boolean
+  post_needs_photo_cards      Boolean
+  
+  post_done_link_video_smm      String?
+  post_done_link_video_maker    String?
+  post_done_link_text           String?
+  post_done_link_photogallery   String?
+  post_done_link_cover_photo    String?
+  post_done_link_photo_cards    String?
+  
   responsible_person_id   Int?
   user                    User?     @relation(fields: [responsible_person_id], references: [user_id])
-  status                  String?   @default("Ожидает начала")
-  
-  needs_video_smm         Int?
-  needs_video_maker       Int?
-  needs_text              Int?
-  needs_photogallery      Int?
-  needs_cover_photo       Int?
-  needs_photo_cards       Int?
-  
-  video_smm_task          Task?     @relation("needs_video_smm", fields: [needs_video_smm], references: [task_id])
-  video_maker_task        Task?     @relation("needs_video_maker", fields: [needs_video_maker], references: [task_id])
-  text_task               Task?     @relation("needs_text", fields: [needs_text], references: [task_id])
-  photogallery_task       Task?     @relation("needs_photogallery", fields: [needs_photogallery], references: [task_id])
-  cover_photo_task        Task?     @relation("needs_cover_photo", fields: [needs_cover_photo], references: [task_id])
-  photo_cards_task        Task?     @relation("needs_photo_cards", fields: [needs_photo_cards], references: [task_id])
+  post_date          DateTime? @default(now())
+  post_deadline      DateTime
+  post_type          String
+  post_status        String?   @default("Ожидает начала")
 }
