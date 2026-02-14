@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
 
 interface AuthWindowProps {
   onClose: () => void;
@@ -30,7 +29,6 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Проверяем заполненность полей
     if (!formData.user_login.trim() || !formData.user_password.trim()) {
       setError('Введите логин и пароль');
       return;
@@ -40,31 +38,22 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
     setError(null);
 
     try {
-      console.log('🔄 Пытаемся авторизоваться...');
-      
       const result = await signIn('credentials', {
         user_login: formData.user_login,
         user_password: formData.user_password,
         redirect: false,
       });
 
-      console.log('📊 Результат авторизации:', result);
-
       if (result?.error) {
-        console.error('❌ Ошибка NextAuth:', result.error);
         setError('Неверный логин или пароль');
         return;
       }
 
       if (result?.ok) {
-        console.log('✅ Авторизация успешна!');
-        // Обновляем страницу
         router.refresh();
-        // Закрываем окно
         onClose();
       }
     } catch (error) {
-      console.error('❌ Ошибка при авторизации:', error);
       setError('Произошла ошибка при авторизации');
     } finally {
       setIsSubmitting(false);
@@ -87,7 +76,7 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
               aria-label="Закрыть"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,17 +135,17 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 cursor-pointer min-w-30"
             >
               Отмена
             </button>
-            <Button
+            <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:opacity-50"
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 cursor-pointer min-w-30"
             >
               {isSubmitting ? 'Вход...' : 'Войти'}
-            </Button>
+            </button>
           </div>
         </form>
       </div>

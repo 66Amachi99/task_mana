@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// Добавляем GET запрос для получения постов
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
+
+    // Получаем общее количество постов
+    const totalPosts = await prisma.post.count();
+    const totalPages = Math.ceil(totalPosts / limit);
+
     const posts = await prisma.post.findMany({
       include: {
         user: {
@@ -15,17 +23,22 @@ export async function GET() {
       orderBy: {
         post_date: 'desc',
       },
-      take: 10,
+      skip: skip,
+      take: limit,
     });
     
-    // Преобразуем Date объекты в строки для сериализации
     const serializedPosts = posts.map(post => ({
       ...post,
-      post_date: post.post_date ? new Date(post.post_date) : null,
-      post_deadline: new Date(post.post_deadline),
+      post_date: post.post_date ? post.post_date.toISOString() : null,
+      post_deadline: post.post_deadline.toISOString(),
     }));
     
-    return NextResponse.json(serializedPosts, { status: 200 });
+    return NextResponse.json({
+      posts: serializedPosts,
+      currentPage: page,
+      totalPages,
+      totalPosts,
+    }, { status: 200 });
   } catch (error) {
     console.error('Error fetching posts:', error);
     return NextResponse.json(
@@ -39,25 +52,22 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Валидация данных
-    if (!body.post_title || !body.post_description || !body.post_type || !body.post_deadline) {
+    if (!body.post_title || !body.post_description || !body.post_type || !body.post_deadline || !body.responsible_person_id) {
       return NextResponse.json(
         { error: 'Все обязательные поля должны быть заполнены' },
         { status: 400 }
       );
     }
 
-    // Преобразуем строку дедлайна в объект Date
     const post_deadline = new Date(body.post_deadline);
     
-    // Создаем пост в базе данных
     const post = await prisma.post.create({
       data: {
         post_title: body.post_title,
         post_description: body.post_description,
         post_type: body.post_type,
-        post_status: body.post_status || 'Ожидает начала',
         post_deadline: post_deadline,
+        responsible_person_id: body.responsible_person_id,
         post_needs_video_smm: body.post_needs_video_smm || false,
         post_needs_video_maker: body.post_needs_video_maker || false,
         post_needs_text: body.post_needs_text || false,
@@ -74,7 +84,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating post:', error);
-    
     return NextResponse.json(
       { error: 'Ошибка при создании поста' },
       { status: 500 }
@@ -94,12 +103,20 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Проверяем, что это запрос на обновление ссылок или данных поста
-    if (links) {
-      // Обновление ссылок
+    const existingPost = await prisma.post.findUnique({
+      where: { post_id: Number(postId) }
+    });
+
+    if (!existingPost) {
+      return NextResponse.json(
+        { error: 'Пост не найден' },
+        { status: 404 }
+      );
+    }
+
+    if (links && Object.keys(links).length > 0) {
       const updateData: any = {};
 
-      // Обновляем только те поля, которые есть в links
       if (links.video_smm !== undefined) {
         updateData.post_done_link_video_smm = links.video_smm || null;
       }
@@ -130,16 +147,17 @@ export async function PUT(request: NextRequest) {
         post: updatedPost,
       }, { status: 200 });
 
-    } else if (data) {
-      // Обновление данных поста
+    } else if (data && Object.keys(data).length > 0) {
       const { post_deadline, ...otherData } = data;
       
       const updateData: any = {
         ...otherData,
-        post_deadline: new Date(post_deadline),
       };
 
-      // Обновляем пост
+      if (post_deadline) {
+        updateData.post_deadline = new Date(post_deadline);
+      }
+
       const updatedPost = await prisma.post.update({
         where: { post_id: Number(postId) },
         data: updateData,
@@ -158,7 +176,7 @@ export async function PUT(request: NextRequest) {
     }
     
   } catch (error) {
-    console.error('Ошибка при обновлении:', error);
+    console.error('❌ Ошибка при обновлении:', error);
     return NextResponse.json(
       { error: 'Ошибка при обновлении данных' },
       { status: 500 }
@@ -166,7 +184,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// Добавляем обработку DELETE если нужно
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

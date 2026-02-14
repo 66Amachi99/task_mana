@@ -1,77 +1,102 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import { Container } from './container';
 import { HeaderAuthButton } from './header_auth_button';
-import { useUser } from '../../hooks/use-roles';
+import { useUser, AVAILABLE_TASKS } from '../../hooks/use-roles';
+import Link from 'next/link';
+import { ChevronDown } from 'lucide-react';
 
 interface Props {
     className?: string;
-    showMyTasks: boolean;
-    onShowMyTasksChange: (show: boolean) => void;
+    selectedTaskFilter: string | null;
+    onTaskFilterChange: (filter: string | null) => void;
 }
 
-export const Header: React.FC<Props> = ({ className, showMyTasks, onShowMyTasksChange }) => {
-    const { user, isAdminOrCoordinator, isDesigner, isVideomaker, isSmm } = useUser();
+export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskFilterChange }) => {
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const handleTaskCheck = () => {
-        onShowMyTasksChange(!showMyTasks);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleFilterSelect = (filterId: string | null) => {
+        onTaskFilterChange(filterId);
+        setIsDropdownOpen(false);
     };
 
-    // Показываем кнопку только для дизайнера, видеомейкера и smm
-    const showTasksButton = user && (isDesigner || isVideomaker || isSmm);
+    const clearFilter = () => {
+        onTaskFilterChange(null);
+        setIsDropdownOpen(false);
+    };
+
+    const selectedFilterLabel = selectedTaskFilter 
+        ? AVAILABLE_TASKS.find(f => f.id === selectedTaskFilter)?.label 
+        : null;
 
     return (
         <header className={`${className} sticky top-0 z-40 bg-white border-b shadow-sm`}>
             <Container className='flex items-center justify-between py-4'>
                 <div className='flex items-center space-x-6'>
                     <div className='flex gap-1 bg-slate-100 p-1 rounded-2xl'>
-                        <div className='flex items-center'>
-                            <a className='flex items-center font-bold h-11 rounded-2xl px-5 hover:bg-white hover:shadow-sm transition-all'>
+                        <div className='flex items-center h-11'>
+                            <Link href="/" className='flex items-center font-bold h-full rounded-2xl px-5 hover:bg-white hover:shadow-sm transition-all'>
                                 Посты
-                            </a>
-                            <a className='flex items-center font-bold h-11 rounded-2xl px-5 hover:bg-white hover:shadow-sm transition-all'>
+                            </Link>
+                            <Link href="/calendar" className='flex items-center font-bold h-full rounded-2xl px-5 hover:bg-white hover:shadow-sm transition-all'>
                                 Календарь
-                            </a>
-                            <a className='flex items-center font-bold h-11 rounded-2xl px-5 hover:bg-white hover:shadow-sm transition-all'>
-                                Таймлайн
-                            </a>
+                            </Link>
                         </div>
                     </div>
                     
-                    {/* Кнопка Мои задачи - только для дизайнера, видеомейкера и smm */}
-                    {showTasksButton && (
-                        <div className='flex items-center space-x-3'>
-                            <a className='flex items-center font-bold h-13 rounded-2xl px-5 bg-slate-100'>
-                                Мои задачи
+                    {/* Выпадающий список с фильтрами - доступен всем */}
+                    <div className="relative" ref={dropdownRef}>
+                        <button
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="flex items-center gap-2 h-13 px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
+                        >
+                            <span>
+                                {selectedFilterLabel 
+                                    ? `Фильтр: ${selectedFilterLabel}` 
+                                    : 'Все посты'}
+                            </span>
+                            <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
                                 <button
-                                    onClick={handleTaskCheck}
-                                    className={`ml-2 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${
-                                        showMyTasks
-                                            ? 'bg-blue-500 border-blue-500'
-                                            : 'bg-white border-gray-300 hover:border-blue-400'
+                                    onClick={clearFilter}
+                                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-sm ${
+                                        !selectedTaskFilter ? 'bg-blue-50 text-blue-600 font-medium' : ''
                                     }`}
-                                    aria-label={showMyTasks ? 'Снять галочку' : 'Поставить галочку'}
                                 >
-                                    {showMyTasks && (
-                                        <svg 
-                                            className="w-5 h-5 text-white" 
-                                            fill="none" 
-                                            stroke="currentColor" 
-                                            viewBox="0 0 24 24" 
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path 
-                                                strokeLinecap="round" 
-                                                strokeLinejoin="round" 
-                                                strokeWidth="3" 
-                                                d="M5 13l4 4L19 7"
-                                            />
-                                        </svg>
-                                    )}
+                                    Все посты
                                 </button>
-                            </a>
-                        </div>
-                    )}
+                                
+                                <div className="h-px bg-gray-200 my-1"></div>
+                                
+                                {AVAILABLE_TASKS.map(filter => (
+                                    <button
+                                        key={filter.id}
+                                        onClick={() => handleFilterSelect(filter.id)}
+                                        className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-sm cursor-pointer ${
+                                            selectedTaskFilter === filter.id ? 'bg-blue-50 text-blue-600 font-medium' : ''
+                                        }`}
+                                    >
+                                        {filter.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <HeaderAuthButton />

@@ -1,8 +1,7 @@
 'use client';
 
 import { PostDetailsButton } from '../ui/post_details_button';
-import { useUser } from '../../hooks/use-roles';
-import { useEffect, useState, useMemo } from 'react';
+import { getPostStatus, getStatusColor } from '../../lib/post-status';
 
 interface PostWithRelations {
   post_id: number;
@@ -14,10 +13,15 @@ interface PostWithRelations {
   post_needs_photogallery: boolean;
   post_needs_cover_photo: boolean;
   post_needs_photo_cards: boolean;
+  post_done_link_video_smm?: string | null;
+  post_done_link_video_maker?: string | null;
+  post_done_link_text?: string | null;
+  post_done_link_photogallery?: string | null;
+  post_done_link_cover_photo?: string | null;
+  post_done_link_photo_cards?: string | null;
   post_date: Date | null;
   post_deadline: Date;
   post_type: string;
-  post_status: string | null;
   responsible_person_id: number | null;
   user?: {
     user_login: string;
@@ -26,47 +30,17 @@ interface PostWithRelations {
 
 interface PostListProps {
   posts: PostWithRelations[];
-  showOnlyMyTasks: boolean;
+  onPostUpdate: () => Promise<void>;
 }
 
-export function PostList({ posts, showOnlyMyTasks }: PostListProps) {
-  const { 
-    user, 
-    loading, 
-    isAdminOrCoordinator,
-    getUserTaskFields,
-    hasAccessToPost 
-  } = useUser();
-  
-  const [filteredPosts, setFilteredPosts] = useState<PostWithRelations[]>(posts);
-
-  // Получаем поля задач текущего пользователя
-  const userTaskFields = useMemo(() => {
-    return getUserTaskFields();
-  }, [getUserTaskFields]);
-
-  // Фильтрация постов - исправляем зависимости
-  useEffect(() => {
-    // Если нет пользователя или загрузка, показываем все посты
-    if (!user || loading) {
-      setFilteredPosts(posts);
-      return;
-    }
-
-    // Админ и координатор всегда видят все посты
-    if (isAdminOrCoordinator) {
-      setFilteredPosts(posts);
-      return;
-    }
-
-    // Для остальных ролей
-    if (showOnlyMyTasks) {
-      const relevantPosts = posts.filter(post => hasAccessToPost(post));
-      setFilteredPosts(relevantPosts);
-    } else {
-      setFilteredPosts(posts);
-    }
-  }, [showOnlyMyTasks, posts, user, loading, isAdminOrCoordinator, hasAccessToPost]);
+export function PostList({ posts, onPostUpdate }: PostListProps) {
+  if (!posts || posts.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-500">Нет постов для отображения</p>
+      </div>
+    );
+  }
 
   const getRequiredTasks = (post: PostWithRelations) => {
     const tasks = [];
@@ -83,7 +57,7 @@ export function PostList({ posts, showOnlyMyTasks }: PostListProps) {
     });
     if (post.post_needs_photogallery) tasks.push({ 
       name: 'Фотогалерея', 
-      role: 'designer',
+      role: 'photographer',
       field: 'post_needs_photogallery' 
     });
     if (post.post_needs_cover_photo) tasks.push({ 
@@ -100,25 +74,9 @@ export function PostList({ posts, showOnlyMyTasks }: PostListProps) {
     return tasks;
   };
 
-  if (loading) {
-    return <div className="text-center py-10">Загрузка...</div>;
-  }
-
-  if (!filteredPosts || filteredPosts.length === 0) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-gray-500">
-          {showOnlyMyTasks && !isAdminOrCoordinator
-            ? 'Нет постов с вашими задачами' 
-            : 'Нет постов для отображения'}
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      {filteredPosts.map((post) => {
+      {posts.map((post) => {
         const requiredTasks = getRequiredTasks(post);
         
         return (
@@ -127,26 +85,24 @@ export function PostList({ posts, showOnlyMyTasks }: PostListProps) {
             className="bg-gray-50 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
           >
             <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800">
+              <div className="flex-1 min-w-0 pr-4">
+                <h2 className="text-xl font-semibold text-gray-800 truncate" title={post.post_title}>
                   {post.post_title}
                 </h2>
-                <p className="text-gray-600 mt-2">{post.post_description}</p>
+                <p className="text-gray-600 mt-2 line-clamp-3" title={post.post_description}>
+                  {post.post_description}
+                </p>
                 <div className="flex items-center space-x-4 mt-2">
                   <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
                     {post.post_type}
                   </span>
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                    post.post_status === 'Завершен' ? 'bg-green-100 text-green-800' :
-                    post.post_status === 'В процессе' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {post.post_status || 'Ожидает начала'}
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(getPostStatus(post))}`}>
+                    {getPostStatus(post)}
                   </span>
                 </div>
               </div>
               
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <p className="text-sm text-gray-500">
                   Создан: {post.post_date ? new Date(post.post_date).toLocaleDateString('ru-RU') : 'Не указана'}
                 </p>
@@ -169,18 +125,16 @@ export function PostList({ posts, showOnlyMyTasks }: PostListProps) {
                 <h3 className="text-lg font-medium text-gray-700 mb-2">Требуемые задачи:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {requiredTasks.map((task, index) => {
-                    const isUserTask = !isAdminOrCoordinator && userTaskFields.includes(task.field);
-                    
                     return (
                       <div
                         key={index}
-                        className={`border rounded p-3 hover:bg-gray-50`}
+                        className="border rounded p-3 hover:bg-gray-50"
                       >
                         <div className="flex justify-between items-center">
                           <span className="font-medium text-gray-700">
                             {task.name}
                           </span>
-                          <span className={`text-xs px-2 py-1 rounded bg-gray-100 text-gray-800`}>
+                          <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-800">
                             Ожидает выполнения
                           </span>
                         </div>
@@ -193,7 +147,7 @@ export function PostList({ posts, showOnlyMyTasks }: PostListProps) {
 
             <div className="mt-6 pt-4 border-t flex justify-between items-center">
               <div className="text-sm text-gray-500"></div>
-              <PostDetailsButton post={post} />
+              <PostDetailsButton post={post} onPostUpdate={onPostUpdate} />
             </div>
           </div>
         );

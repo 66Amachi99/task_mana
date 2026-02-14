@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { X, Lock } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { EditPostWindow } from './edit_post_window';
 import { useUser } from '../../hooks/use-roles';
+import { getPostStatus, getStatusColor } from '../../lib/post-status';
 
 interface TaskField {
   id: number;
@@ -34,7 +34,7 @@ interface PostData {
   post_date: Date | null;
   post_deadline: Date;
   post_type: string;
-  post_status: string | null;
+  responsible_person_id: number | null;
   user?: {
     user_login: string;
   } | null;
@@ -43,25 +43,17 @@ interface PostData {
 interface PostDetailsWindowProps {
   onClose: () => void;
   post: PostData | null;
+  onSuccess: () => Promise<void>;
 }
 
-export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => {
-  const router = useRouter();
-  const { user, isAdminOrCoordinator, canEditTask } = useUser();
+export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindowProps) => {
+  const { user, isAdminOrCoordinator, isSmm, canEditTask } = useUser();
   const [tasks, setTasks] = useState<TaskField[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isClosingDetails, setIsClosingDetails] = useState(false);
 
-  useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = 'hidden';
-    
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
-  }, []);
+  const canEditPost = user && (isAdminOrCoordinator || isSmm);
 
   useEffect(() => {
     if (post) {
@@ -96,7 +88,7 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
           label: 'Фотогалерея', 
           link: post.post_done_link_photogallery || '', 
           required: post.post_needs_photogallery,
-          role: 'designer'
+          role: 'photographer'
         },
         { 
           id: 5, 
@@ -133,7 +125,6 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
     if (!post) return;
 
     setIsSaving(true);
-    setSaveMessage(null);
 
     try {
       const linksData: Record<string, string> = {};
@@ -144,6 +135,7 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
       });
 
       if (Object.keys(linksData).length === 0) {
+        await onSuccess();
         onClose();
         return;
       }
@@ -159,30 +151,12 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
         }),
       });
 
-      const result = await response.json();
-
       if (response.ok) {
-        setSaveMessage({
-          type: 'success',
-          text: 'Ссылки успешно сохранены! Обновляем страницу...'
-        });
-        
-        setTimeout(() => {
-          router.refresh();
-          onClose();
-        }, 1000);
-      } else {
-        setSaveMessage({
-          type: 'error',
-          text: result.error || 'Ошибка при сохранении ссылок'
-        });
+        await onSuccess();
+        onClose();
       }
     } catch (error) {
-      console.error('Ошибка при сохранении:', error);
-      setSaveMessage({
-        type: 'error',
-        text: 'Ошибка соединения с сервером'
-      });
+      console.error('❌ Ошибка при сохранении:', error);
     } finally {
       setIsSaving(false);
     }
@@ -202,12 +176,10 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
     }, 100);
   };
 
-  const handleSuccessEdit = () => {
-    router.refresh();
-    setTimeout(() => {
-      setShowEditModal(false);
-      onClose();
-    }, 100);
+  const handleSuccessEdit = async () => {
+    await onSuccess();
+    setShowEditModal(false);
+    onClose();
   };
 
   const formatDate = (date: Date | null) => {
@@ -286,12 +258,8 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
                   <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
                     {post.post_type}
                   </span>
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                    post.post_status === 'Завершен' ? 'bg-green-100 text-green-800' :
-                    post.post_status === 'В процессе' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {post.post_status || 'Ожидает начала'}
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(getPostStatus(post))}`}>
+                    {getPostStatus(post)}
                   </span>
                 </div>
               </div>
@@ -359,17 +327,7 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
               <div className="lg:w-3/5 flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-gray-700">Задачи</h3>
-                  <span className="text-sm text-gray-500">
-                    {tasks.length} {tasks.length === 1 ? 'задача' : 
-                                   tasks.length >= 2 && tasks.length <= 4 ? 'задачи' : 'задач'}
-                  </span>
                 </div>
-                
-                {saveMessage && (
-                  <div className={`mb-4 p-3 rounded-lg ${saveMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                    {saveMessage.text}
-                  </div>
-                )}
                 
                 <div className="space-y-4">
                   {tasks.length > 0 ? (
@@ -463,47 +421,27 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
 
             {hasEditableTasks && (
               <div className="mt-6 pt-4 border-t flex justify-between items-center">
-                <button
-                  onClick={handleEditPost}
-                  className="px-6 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors font-medium text-sm flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                  </svg>
-                  Изменить пост
-                </button>
-                
-                <div className="flex gap-3">
+                {canEditPost && (
                   <button
-                    onClick={onClose}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors font-medium text-sm"
-                    disabled={isSaving}
+                    onClick={handleEditPost}
+                    className="px-6 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors font-medium text-sm flex items-center gap-2 cursor-pointer"
                   >
-                    Отмена
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Изменить пост
                   </button>
+                )}
+                
+                <div className={!canEditPost ? 'ml-auto' : ''}>
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className={`px-6 py-2 text-white rounded-md transition-colors font-medium text-sm flex items-center gap-2 ${
+                    className={`px-6 py-2 text-white rounded-md transition-colors font-medium text-sm flex items-center gap-2 cursor-pointer ${
                       isSaving ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
                     }`}
                   >
-                    {isSaving ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Сохранение...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        Сохранить изменения
-                      </>
-                    )}
+                    {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
                   </button>
                 </div>
               </div>

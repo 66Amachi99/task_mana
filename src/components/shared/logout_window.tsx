@@ -1,18 +1,11 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-
 interface LogoutWindowProps {
   onClose: () => void;
   onConfirm: () => void;
 }
 
 export const LogoutWindow = ({ onClose, onConfirm }: LogoutWindowProps) => {
-  const handleConfirm = () => {
-    onConfirm();
-    onClose();
-  };
-
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -24,11 +17,11 @@ export const LogoutWindow = ({ onClose, onConfirm }: LogoutWindowProps) => {
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-6 pb-4 border-b">
-            <h2 className="text-2xl font-bold text-gray-800">Выход из аккаунта</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Подтверждение</h2>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
               aria-label="Закрыть"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,26 +30,25 @@ export const LogoutWindow = ({ onClose, onConfirm }: LogoutWindowProps) => {
             </button>
           </div>
 
-          <div className="mb-6">
-            <p className="text-gray-700">Вы уверены, что хотите выйти из аккаунта?</p>
-          </div>
+          <p className="text-gray-700 mb-8 text-center text-lg">
+            Вы уверены, что хотите выйти?
+          </p>
 
-          <div className="flex justify-end gap-4 pt-6 border-t">
-            <Button
+          <div className="flex justify-end gap-4 pt-4 border-t">
+            <button
               type="button"
-              variant="outline"
               onClick={onClose}
-              className="px-6 py-3"
+              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium cursor-pointer min-w-30"
             >
               Отмена
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              onClick={handleConfirm}
-              className="px-6 py-3 bg-red-500 text-white hover:bg-red-600"
+              onClick={onConfirm}
+              className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium cursor-pointer min-w-30"
             >
               Выйти
-            </Button>
+            </button>
           </div>
         </div>
       </div>

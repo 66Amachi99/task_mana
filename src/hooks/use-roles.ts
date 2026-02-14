@@ -11,7 +11,24 @@ interface User {
   designer_role: boolean;
   videomaker_role: boolean;
   coordinator_role: boolean;
+  photographer_role: boolean;
 }
+
+// Типы задач для фильтрации - доступны всем
+export interface TaskFilter {
+  id: string;
+  label: string;
+  field: string;
+  role?: string;
+}
+
+export const AVAILABLE_TASKS: TaskFilter[] = [
+  { id: 'video_smm', label: 'Видео для SMM', field: 'post_needs_video_smm', role: 'smm' },
+  { id: 'video_maker', label: 'Видео для видеомейкера', field: 'post_needs_video_maker', role: 'videomaker' },
+  { id: 'cover_photo', label: 'Обложка', field: 'post_needs_cover_photo', role: 'designer' },
+  { id: 'photo_cards', label: 'Фотокарточки', field: 'post_needs_photo_cards', role: 'designer' },
+  { id: 'photogallery', label: 'Фотогалерея', field: 'post_needs_photogallery', role: 'photographer' },
+];
 
 export function useUser() {
   const { data: session, status } = useSession();
@@ -35,6 +52,7 @@ export function useUser() {
         designer_role: userData.designer_role || false,
         videomaker_role: userData.videomaker_role || false,
         coordinator_role: userData.coordinator_role || false,
+        photographer_role: userData.photographer_role || false,
       });
     } else {
       setUser(null);
@@ -49,53 +67,41 @@ export function useUser() {
   const isSmm = useMemo(() => user?.SMM_role === true, [user?.SMM_role]);
   const isCoordinator = useMemo(() => user?.coordinator_role === true, [user?.coordinator_role]);
   const isAdmin = useMemo(() => user?.admin_role === true, [user?.admin_role]);
+  const isPhotographer = useMemo(() => user?.photographer_role === true, [user?.photographer_role]);
   const isAdminOrCoordinator = useMemo(() => isAdmin || isCoordinator, [isAdmin, isCoordinator]);
 
-  // Какие задачи видит пользователь при фильтрации "Мои задачи"
-  const getUserTaskFields = useCallback(() => {
-    if (isAdminOrCoordinator) {
-      return []; // Админ и координатор видят ВСЕ посты, фильтр не применяется
-    }
-    if (isDesigner) {
-      return ['post_needs_cover_photo', 'post_needs_photo_cards', 'post_needs_photogallery'];
-    }
-    if (isVideomaker) {
-      return ['post_needs_video_maker'];
-    }
-    if (isSmm) {
-      return ['post_needs_video_smm'];
-    }
-    return []; // Нет доступа
-  }, [isAdminOrCoordinator, isDesigner, isVideomaker, isSmm]);
+  // Все задачи доступны всем для фильтрации
+  const getAvailableFilters = useCallback((): TaskFilter[] => {
+    return AVAILABLE_TASKS;
+  }, []);
 
-  // Проверка, есть ли в посте задачи ДЛЯ ФИЛЬТРАЦИИ (текст не учитываем!)
-  const hasAccessToPost = useCallback((post: any) => {
-    if (isAdminOrCoordinator) return true;
-    
-    const userTaskFields = getUserTaskFields();
-    if (userTaskFields.length === 0) return false;
-    
-    return userTaskFields.some(field => {
-      switch (field) {
-        case 'post_needs_cover_photo': return post.post_needs_cover_photo;
-        case 'post_needs_photo_cards': return post.post_needs_photo_cards;
-        case 'post_needs_photogallery': return post.post_needs_photogallery;
-        case 'post_needs_video_maker': return post.post_needs_video_maker;
-        case 'post_needs_video_smm': return post.post_needs_video_smm;
-        default: return false;
-      }
-    });
-  }, [isAdminOrCoordinator, getUserTaskFields]);
+  // Проверка, соответствует ли пост выбранному фильтру
+  const filterPostByTask = useCallback((post: any, taskField: string): boolean => {
+    switch (taskField) {
+      case 'post_needs_video_smm':
+        return post.post_needs_video_smm === true;
+      case 'post_needs_video_maker':
+        return post.post_needs_video_maker === true;
+      case 'post_needs_cover_photo':
+        return post.post_needs_cover_photo === true;
+      case 'post_needs_photo_cards':
+        return post.post_needs_photo_cards === true;
+      case 'post_needs_photogallery':
+        return post.post_needs_photogallery === true;
+      default:
+        return false;
+    }
+  }, []);
 
-  // Проверка, может ли пользователь редактировать задачу (текст могут все!)
-  const canEditTask = useCallback((taskRole: string) => {
+  // Проверка, может ли пользователь редактировать задачу
+  const canEditTask = useCallback((taskRole: string): boolean => {
     if (!user) return false;
     if (isAdminOrCoordinator) return true;
     
     // Текст могут редактировать ВСЕ
     if (taskRole === 'text') return true;
     
-    // Остальные задачи - только по ролям
+    // Проверяем, есть ли у пользователя соответствующая роль
     switch (taskRole) {
       case 'designer':
         return isDesigner;
@@ -103,24 +109,27 @@ export function useUser() {
         return isVideomaker;
       case 'smm':
         return isSmm;
+      case 'photographer':
+        return isPhotographer;
       default:
         return false;
     }
-  }, [user, isAdminOrCoordinator, isDesigner, isVideomaker, isSmm]);
+  }, [user, isAdminOrCoordinator, isDesigner, isVideomaker, isSmm, isPhotographer]);
 
   return { 
     user, 
     loading,
-    // Роли
+    // Роли (булевые)
     isDesigner,
     isVideomaker,
     isSmm,
     isCoordinator,
     isAdmin,
+    isPhotographer,
     isAdminOrCoordinator,
     // Хелперы
-    getUserTaskFields,
-    hasAccessToPost,
+    getAvailableFilters,
+    filterPostByTask,
     canEditTask
   };
 }

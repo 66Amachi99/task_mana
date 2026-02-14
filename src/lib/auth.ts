@@ -42,6 +42,7 @@ export const authOptions: NextAuthOptions = {
           designer_role: user.designer_role,
           videomaker_role: user.videomaker_role,
           coordinator_role: user.coordinator_role,
+          photographer_role: user.photographer_role,
         };
       }
     })
@@ -56,6 +57,7 @@ export const authOptions: NextAuthOptions = {
         token.designer_role = user.designer_role;
         token.videomaker_role = user.videomaker_role;
         token.coordinator_role = user.coordinator_role;
+        token.photographer_role = user.photographer_role;
       }
       return token;
     },
@@ -69,6 +71,7 @@ export const authOptions: NextAuthOptions = {
           designer_role: token.designer_role,
           videomaker_role: token.videomaker_role,
           coordinator_role: token.coordinator_role,
+          photographer_role: token.photographer_role,
         };
       }
       return session;

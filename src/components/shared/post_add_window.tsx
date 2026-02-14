@@ -1,24 +1,43 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/hooks/use-roles';
+import { Search, X } from 'lucide-react';
+
+interface User {
+  user_id: number;
+  user_login: string;
+  admin_role: boolean;
+  SMM_role: boolean;
+  designer_role: boolean;
+  videomaker_role: boolean;
+  coordinator_role: boolean;
+}
 
 interface PostAddWindowProps {
   onClose: () => void;
+  onPostAdded: () => Promise<void>;
 }
 
-export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
+export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
   const router = useRouter();
+  const { user: currentUser } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     post_title: '',
     post_description: '',
     post_type: '',
     post_deadline: '',
-    post_status: 'Ожидает начала',
+    responsible_person_id: '',
     post_needs_video_smm: false,
     post_needs_video_maker: false,
     post_needs_text: false,
@@ -27,7 +46,44 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
     post_needs_photo_cards: false,
   });
 
-  // Функция для установки задач по типу поста
+  // Закрытие дропдауна при клике вне
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        const data = await response.json();
+        setUsers(data);
+        
+        if (currentUser && data.length > 0) {
+          const currentUserInList = data.find((u: User) => u.user_login === currentUser.login);
+          if (currentUserInList) {
+            setSelectedUser(currentUserInList);
+            setFormData(prev => ({
+              ...prev,
+              responsible_person_id: currentUserInList.user_id.toString()
+            }));
+            setSearchQuery(currentUserInList.user_login);
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки пользователей:', error);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    fetchUsers();
+  }, [currentUser]);
+
   const setTasksByPostType = (postType: string) => {
     const baseState = {
       post_needs_video_smm: false,
@@ -122,7 +178,6 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
       }));
     } else {
       if (name === 'post_type') {
-        // При изменении типа поста устанавливаем нужные задачи и сбрасываем остальные
         const tasks = setTasksByPostType(value);
         setFormData(prev => ({
           ...prev,
@@ -138,7 +193,6 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
     }
   };
 
-  // Отдельная функция для изменения checkbox'ов (чтобы можно было их включать/выключать вручную)
   const handleCheckboxChange = (name: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -146,11 +200,36 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
     }));
   };
 
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user);
+    setFormData(prev => ({
+      ...prev,
+      responsible_person_id: user.user_id.toString()
+    }));
+    setSearchQuery(user.user_login);
+    setIsDropdownOpen(false);
+  };
+
+  const clearSelectedUser = () => {
+    setSelectedUser(null);
+    setFormData(prev => ({
+      ...prev,
+      responsible_person_id: ''
+    }));
+    setSearchQuery('');
+    setIsDropdownOpen(false);
+  };
+
+  // Фильтрация пользователей по поисковому запросу
+  const filteredUsers = users.filter(user =>
+    user.user_login.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.post_title.trim() || !formData.post_description.trim() || 
-        !formData.post_type || !formData.post_deadline) {
+        !formData.post_type || !formData.post_deadline || !formData.responsible_person_id) {
       setError('Пожалуйста, заполните все обязательные поля');
       return;
     }
@@ -170,8 +249,8 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
           post_title: formData.post_title,
           post_description: formData.post_description,
           post_type: formData.post_type,
-          post_status: formData.post_status,
           post_deadline: deadlineDate.toISOString(),
+          responsible_person_id: parseInt(formData.responsible_person_id),
           post_needs_video_smm: formData.post_needs_video_smm,
           post_needs_video_maker: formData.post_needs_video_maker,
           post_needs_text: formData.post_needs_text,
@@ -186,17 +265,11 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
         throw new Error(errorData.error || 'Ошибка при создании поста');
       }
 
-      setSuccess(true);
-      
-      setTimeout(() => {
-        router.refresh();
-        onClose();
-      }, 2000);
+      await onPostAdded();
 
     } catch (error) {
       console.error('Ошибка при создании поста:', error);
       setError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -233,7 +306,7 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
               aria-label="Закрыть"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,7 +315,6 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
             </button>
           </div>
 
-          {/* Сообщения об ошибках и успехе */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="flex items-center">
@@ -254,20 +326,8 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
             </div>
           )}
 
-          {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <p className="text-green-700">Пост успешно создан!</p>
-              </div>
-            </div>
-          )}
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-6">
-              {/* Название поста */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Название поста *
@@ -284,7 +344,6 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
                 />
               </div>
 
-              {/* Описание */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Описание *
@@ -301,7 +360,6 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
                 />
               </div>
 
-              {/* Тип поста */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Тип поста *
@@ -326,25 +384,71 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Статус
+                  Ответственный *
                 </label>
-                <select
-                  name="post_status"
-                  value={formData.post_status}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="Ожидает начала">Ожидает начала</option>
-                  <option value="В процессе">В процессе</option>
-                  <option value="Завершен">Завершен</option>
-                  <option value="Отложен">Отложен</option>
-                </select>
+                <div className="relative" ref={dropdownRef}>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setIsDropdownOpen(true);
+                        if (!e.target.value && !selectedUser) {
+                          setFormData(prev => ({ ...prev, responsible_person_id: '' }));
+                        }
+                      }}
+                      onFocus={() => setIsDropdownOpen(true)}
+                      placeholder="Поиск ответственного..."
+                      disabled={isSubmitting || loadingUsers}
+                      className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    {selectedUser && (
+                      <button
+                        type="button"
+                        onClick={clearSelectedUser}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {isDropdownOpen && !loadingUsers && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {filteredUsers.length > 0 ? (
+                        filteredUsers.map(user => (
+                          <div
+                            key={user.user_id}
+                            onClick={() => handleUserSelect(user)}
+                            className={`px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors ${
+                              selectedUser?.user_id === user.user_id ? 'bg-blue-100' : ''
+                            }`}
+                          >
+                            <div className="font-medium">{user.user_login}</div>
+                            <div className="text-xs text-gray-500">
+                              {user.admin_role && 'Админ '}
+                              {user.coordinator_role && 'Координатор '}
+                              {user.designer_role && 'Дизайнер '}
+                              {user.videomaker_role && 'Видеомейкер '}
+                              {user.SMM_role && 'SMM'}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-gray-500">Пользователи не найдены</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {loadingUsers && (
+                  <p className="text-sm text-gray-500 mt-1">Загрузка пользователей...</p>
+                )}
               </div>
             </div>
 
             <div className="space-y-6">
-              {/* Дедлайн с датой и временем */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Дедлайн (дата и время) *
@@ -370,13 +474,12 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
                 </div>
               </div>
 
-              {/* Необходимые задачи */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-4">
                   Необходимые задачи
                 </label>
                 <div className="space-y-3">
-                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
+                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                     <input
                       type="checkbox"
                       name="post_needs_video_smm"
@@ -388,7 +491,7 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
                     <span className="text-gray-700">Видео для SMM</span>
                   </label>
 
-                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
+                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                     <input
                       type="checkbox"
                       name="post_needs_video_maker"
@@ -400,7 +503,7 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
                     <span className="text-gray-700">Видео для видеомейкера</span>
                   </label>
 
-                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
+                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                     <input
                       type="checkbox"
                       name="post_needs_text"
@@ -412,7 +515,7 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
                     <span className="text-gray-700">Текст</span>
                   </label>
                   
-                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
+                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                     <input
                       type="checkbox"
                       name="post_needs_photogallery"
@@ -424,7 +527,7 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
                     <span className="text-gray-700">Фотогалерея</span>
                   </label>
 
-                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
+                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                     <input
                       type="checkbox"
                       name="post_needs_cover_photo"
@@ -436,7 +539,7 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
                     <span className="text-gray-700">Обложка</span>
                   </label>
 
-                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
+                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                     <input
                       type="checkbox"
                       name="post_needs_photo_cards"
@@ -457,26 +560,16 @@ export const PostAddWindow = ({ onClose }: PostAddWindowProps) => {
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 cursor-pointer"
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-30"
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 cursor-pointer flex items-center justify-center min-w-30"
             >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Создание...
-                </>
-              ) : (
-                'Создать пост'
-              )}
+              {isSubmitting ? 'Создание...' : 'Создать пост'}
             </button>
           </div>
         </form>

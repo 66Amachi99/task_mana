@@ -16,6 +16,7 @@ model User {
   designer_role Boolean
   videomaker_role Boolean
   coordinator_role Boolean
+  photographer_role Boolean
   
   posts      Post[]
 }
@@ -44,5 +45,4 @@ model Post {
   post_date          DateTime? @default(now())
   post_deadline      DateTime
   post_type          String
-  post_status        String?   @default("Ожидает начала")
 }
