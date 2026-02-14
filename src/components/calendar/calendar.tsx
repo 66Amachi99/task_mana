@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   format,
   startOfMonth,
@@ -27,7 +27,6 @@ interface CalendarProps {
   hasAccessToPost: (post: Post) => boolean;
 }
 
-// Маппинг типов постов на эмодзи
 const typeEmoji: Record<string, string> = {
   'Видео': '🎥',
   'Фотопост': '📷',
@@ -37,7 +36,6 @@ const typeEmoji: Record<string, string> = {
   'ЧЕ': '⭐',
 };
 
-// Запасной вариант с проверкой частичного совпадения
 const getEmojiForType = (type: string): string => {
   if (typeEmoji[type]) return typeEmoji[type];
   
@@ -71,33 +69,38 @@ export const Calendar: React.FC<CalendarProps> = ({
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
-  // Получаем посты для дня (уже отфильтрованные на уровне страницы)
   const getPostsForDay = (day: Date): Post[] => {
     const dateStr = format(day, 'yyyy-MM-dd');
     return postsByDate.get(dateStr) || [];
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
+    <div className="bg-white rounded-lg shadow p-2 md:p-4">
       <div className="flex justify-between items-center mb-4">
-        <button onClick={handlePrevMonth} className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-lg">
+        <button 
+          onClick={handlePrevMonth} 
+          className="px-2 md:px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-base md:text-lg cursor-pointer"
+        >
           ←
         </button>
-        <h2 className="text-xl font-semibold capitalize">
+        <h2 className="text-base md:text-xl font-semibold capitalize">
           {format(currentMonth, 'LLLL yyyy', { locale: ru })}
         </h2>
-        <button onClick={handleNextMonth} className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-lg">
+        <button 
+          onClick={handleNextMonth} 
+          className="px-2 md:px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-base md:text-lg cursor-pointer"
+        >
           →
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center font-medium text-gray-600 mb-2">
+      <div className="grid grid-cols-7 gap-0.5 md:gap-1 text-center font-medium text-gray-600 mb-2 text-xs md:text-sm">
         {weekDays.map(day => <div key={day}>{day}</div>)}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5 md:gap-1">
         {Array.from({ length: emptyDays }).map((_, i) => (
-          <div key={`empty-${i}`} className="h-32 bg-gray-50 rounded" />
+          <div key={`empty-${i}`} className="h-16 md:h-32 bg-gray-50 rounded" />
         ))}
 
         {days.map(day => {
@@ -110,18 +113,18 @@ export const Calendar: React.FC<CalendarProps> = ({
               key={day.toISOString()}
               onClick={() => onDateSelect(day)}
               className={`
-                h-32 p-2 border rounded cursor-pointer transition-colors flex flex-col
+                h-16 md:h-32 p-1 md:p-2 border rounded cursor-pointer transition-colors flex flex-col
                 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-100'}
-                ${isCurrentDay ? 'ring-2 ring-yellow-400' : ''}
+                ${isCurrentDay ? 'ring-1 md:ring-2 ring-yellow-400' : ''}
                 ${postsForDay.length === 0 ? 'opacity-50' : ''}
               `}
             >
-              <div className="text-right text-sm mb-2">{format(day, 'd')}</div>
-              <div className="flex flex-wrap gap-2 items-start justify-start overflow-y-auto flex-1 content-start no-scrollbar">
+              <div className="text-right text-xs md:text-sm mb-1">{format(day, 'd')}</div>
+              <div className="flex flex-wrap gap-0.5 md:gap-2 items-start justify-start overflow-y-auto flex-1 content-start no-scrollbar">
                 {postsForDay.map((post, idx) => {
                   const emoji = getEmojiForType(post.post_type);
                   return (
-                    <span key={idx} className="text-2xl" title={`${post.post_type}: ${post.post_title}`}>
+                    <span key={idx} className="text-sm md:text-2xl" title={`${post.post_type}: ${post.post_title}`}>
                       {emoji}
                     </span>
                   );

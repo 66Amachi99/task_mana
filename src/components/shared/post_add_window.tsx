@@ -398,7 +398,7 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
                           setFormData(prev => ({ ...prev, responsible_person_id: '' }));
                         }
                       }}
-                      onFocus={() => setIsDropdownOpen(true)}
+                      onFocus={() => setIsDropdownOpen(true) }
                       placeholder="Поиск ответственного..."
                       disabled={isSubmitting || loadingUsers}
                       className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -464,13 +464,6 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     min={new Date().toISOString().slice(0, 16)}
                   />
-                  
-                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-sm text-gray-600 mb-1">Выбранный дедлайн:</p>
-                    <p className="font-medium text-gray-800">
-                      {formatDateTimeDisplay(formData.post_deadline)}
-                    </p>
-                  </div>
                 </div>
               </div>
 

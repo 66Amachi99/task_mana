@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { AuthWindow } from "./auth_window";
 import { LogoutWindow } from "./logout_window";
+import { LogIn, LogOut } from 'lucide-react';
 
 export const HeaderAuthButton = () => {
   const { data: session, status } = useSession();
@@ -22,8 +23,8 @@ export const HeaderAuthButton = () => {
 
   if (status === "loading") {
     return (
-      <div className="flex items-center h-11 px-5 bg-slate-100 rounded-2xl font-bold text-sm text-gray-500">
-        Загрузка...
+      <div className="flex items-center justify-center w-11 h-11 bg-slate-100 rounded-2xl">
+        <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -33,12 +34,11 @@ export const HeaderAuthButton = () => {
       <>
         <button
           onClick={() => setShowAuthWindow(true)}
-          className="flex items-center gap-2 h-11 px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
+          className="flex items-center justify-center gap-2 h-11 px-3 md:px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
+          title="Авторизоваться"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-          </svg>
-          Авторизоваться
+          <LogIn className="w-5 h-5" />
+          <span className="hidden md:inline">Авторизоваться</span>
         </button>
         
         {showAuthWindow && (
@@ -52,12 +52,11 @@ export const HeaderAuthButton = () => {
     <>
       <button
         onClick={() => setShowLogoutWindow(true)}
-        className="flex items-center gap-2 h-11 px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
+        className="flex items-center justify-center gap-2 h-11 px-3 md:px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
+        title={`Выйти (${session.user?.user_login})`}
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-        </svg>
-        {session.user?.user_login}
+        <LogOut className="w-5 h-5" />
+        <span className="hidden md:inline">{session.user?.user_login}</span>
       </button>
       
       {showLogoutWindow && (
