@@ -68,7 +68,9 @@ export function useUser() {
   const isCoordinator = useMemo(() => user?.coordinator_role === true, [user?.coordinator_role]);
   const isAdmin = useMemo(() => user?.admin_role === true, [user?.admin_role]);
   const isPhotographer = useMemo(() => user?.photographer_role === true, [user?.photographer_role]);
-  const isAdminOrCoordinator = useMemo(() => isAdmin || isCoordinator, [isAdmin, isCoordinator]);
+  
+  // SMM теперь считается как админ/координатор для прав редактирования
+  const isAdminOrCoordinatorOrSmm = useMemo(() => isAdmin || isCoordinator || isSmm, [isAdmin, isCoordinator, isSmm]);
 
   // Все задачи доступны всем для фильтрации
   const getAvailableFilters = useCallback((): TaskFilter[] => {
@@ -96,7 +98,9 @@ export function useUser() {
   // Проверка, может ли пользователь редактировать задачу
   const canEditTask = useCallback((taskRole: string): boolean => {
     if (!user) return false;
-    if (isAdminOrCoordinator) return true;
+    
+    // Админ, координатор и SMM могут редактировать ВСЕ задачи
+    if (isAdminOrCoordinatorOrSmm) return true;
     
     // Текст могут редактировать ВСЕ
     if (taskRole === 'text') return true;
@@ -114,7 +118,7 @@ export function useUser() {
       default:
         return false;
     }
-  }, [user, isAdminOrCoordinator, isDesigner, isVideomaker, isSmm, isPhotographer]);
+  }, [user, isAdminOrCoordinatorOrSmm, isDesigner, isVideomaker, isSmm, isPhotographer]);
 
   return { 
     user, 
@@ -126,7 +130,7 @@ export function useUser() {
     isCoordinator,
     isAdmin,
     isPhotographer,
-    isAdminOrCoordinator,
+    isAdminOrCoordinatorOrSmm,
     // Хелперы
     getAvailableFilters,
     filterPostByTask,

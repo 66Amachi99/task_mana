@@ -75,9 +75,9 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
                     <div className="relative hidden md:block" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className="flex items-center gap-2 h-11 px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm"
+                            className="flex items-center gap-2 h-13 px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
                         >
-                            <span className="max-w-[150px] truncate">
+                            <span className="max-w-37.5 truncate">
                                 {selectedFilterLabel 
                                     ? `Фильтр: ${selectedFilterLabel}` 
                                     : 'Все посты'}
@@ -89,7 +89,7 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
                             <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
                                 <button
                                     onClick={clearFilter}
-                                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-sm ${
+                                    className={`w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors text-sm ${
                                         !selectedTaskFilter ? 'bg-blue-50 text-blue-600 font-medium' : ''
                                     }`}
                                 >
@@ -102,7 +102,7 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
                                     <button
                                         key={filter.id}
                                         onClick={() => handleFilterSelect(filter.id)}
-                                        className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-sm ${
+                                        className={`w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors text-sm ${
                                             selectedTaskFilter === filter.id ? 'bg-blue-50 text-blue-600 font-medium' : ''
                                         }`}
                                     >

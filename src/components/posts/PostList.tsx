@@ -45,31 +45,60 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
   const getRequiredTasks = (post: PostWithRelations) => {
     const tasks = [];
     
-    if (post.post_needs_video_smm) tasks.push({ 
-      name: 'Видео для SMM', 
-      role: 'smm',
-      field: 'post_needs_video_smm' 
-    });
-    if (post.post_needs_video_maker) tasks.push({ 
-      name: 'Видео для видеомейкера', 
-      role: 'videomaker',
-      field: 'post_needs_video_maker' 
-    });
-    if (post.post_needs_photogallery) tasks.push({ 
-      name: 'Фотогалерея', 
-      role: 'photographer',
-      field: 'post_needs_photogallery' 
-    });
-    if (post.post_needs_cover_photo) tasks.push({ 
-      name: 'Обложка', 
-      role: 'designer',
-      field: 'post_needs_cover_photo' 
-    });
-    if (post.post_needs_photo_cards) tasks.push({ 
-      name: 'Фотокарточки', 
-      role: 'designer',
-      field: 'post_needs_photo_cards' 
-    });
+    if (post.post_needs_video_smm) {
+      const hasLink = post.post_done_link_video_smm && post.post_done_link_video_smm.trim() !== '';
+      tasks.push({ 
+        name: 'Видео для SMM', 
+        role: 'smm',
+        field: 'post_needs_video_smm',
+        isCompleted: hasLink
+      });
+    }
+    if (post.post_needs_video_maker) {
+      const hasLink = post.post_done_link_video_maker && post.post_done_link_video_maker.trim() !== '';
+      tasks.push({ 
+        name: 'Видео для видеомейкера', 
+        role: 'videomaker',
+        field: 'post_needs_video_maker',
+        isCompleted: hasLink
+      });
+    }
+    if (post.post_needs_text) {
+      const hasLink = post.post_done_link_text && post.post_done_link_text.trim() !== '';
+      tasks.push({ 
+        name: 'Текст', 
+        role: 'text',
+        field: 'post_needs_text',
+        isCompleted: hasLink
+      });
+    }
+    if (post.post_needs_photogallery) {
+      const hasLink = post.post_done_link_photogallery && post.post_done_link_photogallery.trim() !== '';
+      tasks.push({ 
+        name: 'Фотогалерея', 
+        role: 'photographer',
+        field: 'post_needs_photogallery',
+        isCompleted: hasLink
+      });
+    }
+    if (post.post_needs_cover_photo) {
+      const hasLink = post.post_done_link_cover_photo && post.post_done_link_cover_photo.trim() !== '';
+      tasks.push({ 
+        name: 'Обложка', 
+        role: 'designer',
+        field: 'post_needs_cover_photo',
+        isCompleted: hasLink
+      });
+    }
+    if (post.post_needs_photo_cards) {
+      const hasLink = post.post_done_link_photo_cards && post.post_done_link_photo_cards.trim() !== '';
+      tasks.push({ 
+        name: 'Фотокарточки', 
+        role: 'designer',
+        field: 'post_needs_photo_cards',
+        isCompleted: hasLink
+      });
+    }
     
     return tasks;
   };
@@ -134,8 +163,12 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
                           <span className="text-xs md:text-sm font-medium text-gray-700">
                             {task.name}
                           </span>
-                          <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-800">
-                            Ожидает выполнения
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            task.isCompleted 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {task.isCompleted ? 'Выполнено' : 'Ожидает выполнения'}
                           </span>
                         </div>
                       </div>

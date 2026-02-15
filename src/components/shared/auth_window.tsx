@@ -71,12 +71,13 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
       >
         <form onSubmit={handleSubmit} className="p-6">
           <div className="flex justify-between items-center mb-6 pb-4 border-b">
-            <h2 className="text-2xl font-bold text-gray-800">Авторизация</h2>
+            <div className="flex-1"></div> {/* Пустой div для баланса */}
+            <h2 className="text-2xl font-bold text-gray-800 text-center">Авторизация</h2>
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer flex-1 flex justify-end"
               aria-label="Закрыть"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +131,7 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 mt-8 pt-6 border-t">
+          <div className="flex justify-center gap-4 mt-8 pt-6 border-t">
             <button
               type="button"
               onClick={onClose}

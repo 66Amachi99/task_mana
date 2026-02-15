@@ -1,20 +1,15 @@
 'use client';
 
-import { useState, useCallback } from "react";
-import { Nunito } from "next/font/google";
-import "./globals.css";
-import { PlusCircle } from "lucide-react";
-import { PostAddWindow } from "@/components/shared/post_add_window";
-import { Providers } from "./providers";
-import { useUser } from "@/hooks/use-roles";
+import { useState, useCallback } from 'react';
+import { PlusCircle } from 'lucide-react';
+import { PostAddWindow } from './post_add_window';
+import { useUser } from '@/hooks/use-roles';
 
-const nunito = Nunito({
-  subsets: ['cyrillic'],
-  variable: '--font-nunito', 
-  weight: ['400', '500', '600', '700', '800', '900']
-});
+interface CalendarAddButtonProps {
+  selectedDate: Date;
+}
 
-function AddPostButton() {
+export const CalendarAddButton = ({ selectedDate }: CalendarAddButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, isAdminOrCoordinatorOrSmm } = useUser(); // Изменено здесь
   
@@ -45,27 +40,9 @@ function AddPostButton() {
         <PostAddWindow 
           onClose={handleClose}
           onPostAdded={handlePostAdded}
+          initialDate={selectedDate}
         />
       )}
     </>
   );
-}
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" className="h-full">
-      <body className={`${nunito.variable} antialiased h-full overflow-x-hidden`}>
-        <Providers>
-          <AddPostButton />
-          <div className="min-h-full">
-            {children}
-          </div>
-        </Providers>
-      </body>
-    </html>
-  );
-}
+};

@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    // Получаем общее количество постов
     const totalPosts = await prisma.post.count();
     const totalPages = Math.ceil(totalPosts / limit);
 
@@ -52,29 +51,48 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    if (!body.post_title || !body.post_description || !body.post_type || !body.post_deadline || !body.responsible_person_id) {
+    console.log('📥 Получен запрос на создание поста:', body);
+
+    // Валидация ТОЛЬКО действительно обязательных полей
+    if (!body.post_title || !body.post_type || !body.post_deadline) {
       return NextResponse.json(
-        { error: 'Все обязательные поля должны быть заполнены' },
+        { error: 'Заполните название, тип и дедлайн поста' },
         { status: 400 }
       );
     }
 
     const post_deadline = new Date(body.post_deadline);
     
+    // Подготавливаем данные, исключая undefined поля
+    const data: any = {
+      post_title: body.post_title,
+      post_type: body.post_type,
+      post_deadline: post_deadline,
+      post_needs_video_smm: body.post_needs_video_smm || false,
+      post_needs_video_maker: body.post_needs_video_maker || false,
+      post_needs_text: body.post_needs_text || false,
+      post_needs_photogallery: body.post_needs_photogallery || false,
+      post_needs_cover_photo: body.post_needs_cover_photo || false,
+      post_needs_photo_cards: body.post_needs_photo_cards || false,
+    };
+
+    // Добавляем описание только если оно есть
+    if (body.post_description !== undefined && body.post_description !== null) {
+      data.post_description = body.post_description;
+    }
+
+    // Добавляем ответственного только если он есть и это число
+    if (body.responsible_person_id && body.responsible_person_id !== '') {
+      const id = parseInt(body.responsible_person_id);
+      if (!isNaN(id)) {
+        data.responsible_person_id = id;
+      }
+    }
+
+    console.log('📤 Отправляем в БД:', data);
+
     const post = await prisma.post.create({
-      data: {
-        post_title: body.post_title,
-        post_description: body.post_description,
-        post_type: body.post_type,
-        post_deadline: post_deadline,
-        responsible_person_id: body.responsible_person_id,
-        post_needs_video_smm: body.post_needs_video_smm || false,
-        post_needs_video_maker: body.post_needs_video_maker || false,
-        post_needs_text: body.post_needs_text || false,
-        post_needs_photogallery: body.post_needs_photogallery || false,
-        post_needs_cover_photo: body.post_needs_cover_photo || false,
-        post_needs_photo_cards: body.post_needs_photo_cards || false,
-      },
+      data: data,
     });
 
     return NextResponse.json(
@@ -83,7 +101,7 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('Error creating post:', error);
+    console.error('❌ Ошибка при создании поста:', error);
     return NextResponse.json(
       { error: 'Ошибка при создании поста' },
       { status: 500 }
@@ -156,6 +174,20 @@ export async function PUT(request: NextRequest) {
 
       if (post_deadline) {
         updateData.post_deadline = new Date(post_deadline);
+      }
+
+      // Обрабатываем ответственного
+      if (otherData.responsible_person_id !== undefined) {
+        if (otherData.responsible_person_id && otherData.responsible_person_id !== '') {
+          const id = parseInt(otherData.responsible_person_id);
+          if (!isNaN(id)) {
+            updateData.responsible_person_id = id;
+          } else {
+            updateData.responsible_person_id = null;
+          }
+        } else {
+          updateData.responsible_person_id = null;
+        }
       }
 
       const updatedPost = await prisma.post.update({

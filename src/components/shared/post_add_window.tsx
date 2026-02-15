@@ -13,14 +13,16 @@ interface User {
   designer_role: boolean;
   videomaker_role: boolean;
   coordinator_role: boolean;
+  photographer_role: boolean;
 }
 
 interface PostAddWindowProps {
   onClose: () => void;
   onPostAdded: () => Promise<void>;
+  initialDate?: Date;
 }
 
-export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
+export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWindowProps) => {
   const router = useRouter();
   const { user: currentUser } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +47,31 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
     post_needs_cover_photo: false,
     post_needs_photo_cards: false,
   });
+
+  // Функция для форматирования даты в формат datetime-local
+  const formatDateForInput = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // Функция для получения даты по умолчанию
+  const getDefaultDateTime = (): string => {
+    if (initialDate) {
+      const date = new Date(initialDate);
+      date.setHours(12, 0, 0, 0);
+      return formatDateForInput(date);
+    }
+    
+    const now = new Date();
+    const defaultDate = new Date(now);
+    defaultDate.setDate(now.getDate() + 7);
+    defaultDate.setHours(12, 0, 0, 0);
+    return formatDateForInput(defaultDate);
+  };
 
   // Закрытие дропдауна при клике вне
   useEffect(() => {
@@ -137,26 +164,13 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
     }
   };
 
-  const getDefaultDateTime = () => {
-    const now = new Date();
-    const defaultDate = new Date(now);
-    defaultDate.setDate(now.getDate() + 7);
-    
-    const year = defaultDate.getFullYear();
-    const month = String(defaultDate.getMonth() + 1).padStart(2, '0');
-    const day = String(defaultDate.getDate()).padStart(2, '0');
-    const hours = String(defaultDate.getHours()).padStart(2, '0');
-    const minutes = String(defaultDate.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
+  // Устанавливаем начальную дату
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
       post_deadline: getDefaultDateTime()
     }));
-  }, []);
+  }, [initialDate]);
 
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
@@ -220,6 +234,21 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
     setIsDropdownOpen(false);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setIsDropdownOpen(true);
+    
+    // Если поле поиска пустое, сбрасываем выбранного пользователя
+    if (!value.trim()) {
+      setSelectedUser(null);
+      setFormData(prev => ({
+        ...prev,
+        responsible_person_id: ''
+      }));
+    }
+  };
+
   // Фильтрация пользователей по поисковому запросу
   const filteredUsers = users.filter(user =>
     user.user_login.toLowerCase().includes(searchQuery.toLowerCase())
@@ -228,8 +257,8 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.post_title.trim() || !formData.post_description.trim() || 
-        !formData.post_type || !formData.post_deadline || !formData.responsible_person_id) {
+    // Проверяем только обязательные поля
+    if (!formData.post_title.trim() || !formData.post_type || !formData.post_deadline) {
       setError('Пожалуйста, заполните все обязательные поля');
       return;
     }
@@ -247,10 +276,10 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
         },
         body: JSON.stringify({
           post_title: formData.post_title,
-          post_description: formData.post_description,
+          post_description: formData.post_description || null,
           post_type: formData.post_type,
           post_deadline: deadlineDate.toISOString(),
-          responsible_person_id: parseInt(formData.responsible_person_id),
+          responsible_person_id: formData.responsible_person_id || null,
           post_needs_video_smm: formData.post_needs_video_smm,
           post_needs_video_maker: formData.post_needs_video_maker,
           post_needs_text: formData.post_needs_text,
@@ -346,17 +375,16 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Описание *
+                  Описание
                 </label>
                 <textarea
                   name="post_description"
                   value={formData.post_description}
                   onChange={handleChange}
-                  required
                   disabled={isSubmitting}
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder="Опишите детали поста"
+                  placeholder="Опишите детали поста (необязательно)"
                 />
               </div>
 
@@ -384,21 +412,15 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ответственный *
+                  Ответственный
                 </label>
                 <div className="relative" ref={dropdownRef}>
                   <div className="relative">
                     <input
                       type="text"
                       value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setIsDropdownOpen(true);
-                        if (!e.target.value && !selectedUser) {
-                          setFormData(prev => ({ ...prev, responsible_person_id: '' }));
-                        }
-                      }}
-                      onFocus={() => setIsDropdownOpen(true) }
+                      onChange={handleSearchChange}
+                      onFocus={() => setIsDropdownOpen(true)}
                       placeholder="Поиск ответственного..."
                       disabled={isSubmitting || loadingUsers}
                       className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -415,30 +437,27 @@ export const PostAddWindow = ({ onClose, onPostAdded }: PostAddWindowProps) => {
                     )}
                   </div>
 
-                  {isDropdownOpen && !loadingUsers && (
+                  {isDropdownOpen && !loadingUsers && filteredUsers.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {filteredUsers.length > 0 ? (
-                        filteredUsers.map(user => (
-                          <div
-                            key={user.user_id}
-                            onClick={() => handleUserSelect(user)}
-                            className={`px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors ${
-                              selectedUser?.user_id === user.user_id ? 'bg-blue-100' : ''
-                            }`}
-                          >
-                            <div className="font-medium">{user.user_login}</div>
-                            <div className="text-xs text-gray-500">
-                              {user.admin_role && 'Админ '}
-                              {user.coordinator_role && 'Координатор '}
-                              {user.designer_role && 'Дизайнер '}
-                              {user.videomaker_role && 'Видеомейкер '}
-                              {user.SMM_role && 'SMM'}
-                            </div>
+                      {filteredUsers.map(user => (
+                        <div
+                          key={user.user_id}
+                          onClick={() => handleUserSelect(user)}
+                          className={`px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors ${
+                            selectedUser?.user_id === user.user_id ? 'bg-blue-100' : ''
+                          }`}
+                        >
+                          <div className="font-medium">{user.user_login}</div>
+                          <div className="text-xs text-gray-500">
+                            {user.admin_role && 'Админ '}
+                            {user.coordinator_role && 'Координатор '}
+                            {user.designer_role && 'Дизайнер '}
+                            {user.videomaker_role && 'Видеомейкер '}
+                            {user.SMM_role && 'SMM '}
+                            {user.photographer_role && 'Фотограф'}
                           </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-2 text-gray-500">Пользователи не найдены</div>
-                      )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

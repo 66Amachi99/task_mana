@@ -7,6 +7,7 @@ import { PostDetailsButton } from '@/components/ui/post_details_button';
 import { PostDetailsWindow } from '@/components/shared/post_details_window';
 import { format } from 'date-fns';
 import { getPostStatus, getStatusColor } from '../../lib/post-status';
+import { CalendarAddButton } from '@/components/shared/calendar_add_button';
 
 interface Post {
   post_id: number;
@@ -190,6 +191,9 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
+
+      {/* Кнопка добавления поста с выбранной датой */}
+      <CalendarAddButton selectedDate={selectedDate} />
 
       {showPostDetails && selectedPost && (
         <PostDetailsWindow 

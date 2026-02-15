@@ -17,11 +17,12 @@ export const LogoutWindow = ({ onClose, onConfirm }: LogoutWindowProps) => {
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-6 pb-4 border-b">
-            <h2 className="text-2xl font-bold text-gray-800">Подтверждение</h2>
+            <div className="flex-1"></div> {/* Пустой div для баланса */}
+            <h2 className="text-2xl font-bold text-gray-800 text-center">Подтверждение</h2>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors cursor-pointer flex-1 flex justify-end"
               aria-label="Закрыть"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +35,7 @@ export const LogoutWindow = ({ onClose, onConfirm }: LogoutWindowProps) => {
             Вы уверены, что хотите выйти?
           </p>
 
-          <div className="flex justify-end gap-4 pt-4 border-t">
+          <div className="flex justify-center gap-4 pt-4 border-t">
             <button
               type="button"
               onClick={onClose}

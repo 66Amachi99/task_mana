@@ -23,7 +23,7 @@ export const HeaderAuthButton = () => {
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center w-11 h-11 bg-slate-100 rounded-2xl">
+      <div className="flex items-center justify-center w-11 h-13 bg-slate-100 rounded-2xl">
         <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -34,7 +34,7 @@ export const HeaderAuthButton = () => {
       <>
         <button
           onClick={() => setShowAuthWindow(true)}
-          className="flex items-center justify-center gap-2 h-11 px-3 md:px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
+          className="flex items-center justify-center gap-2 h-13 px-3 md:px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
           title="Авторизоваться"
         >
           <LogIn className="w-5 h-5" />
@@ -52,7 +52,7 @@ export const HeaderAuthButton = () => {
     <>
       <button
         onClick={() => setShowLogoutWindow(true)}
-        className="flex items-center justify-center gap-2 h-11 px-3 md:px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
+        className="flex items-center justify-center gap-2 h-13 px-3 md:px-5 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors font-bold text-sm cursor-pointer"
         title={`Выйти (${session.user?.user_login})`}
       >
         <LogOut className="w-5 h-5" />

@@ -13,6 +13,7 @@ interface User {
   designer_role: boolean;
   videomaker_role: boolean;
   coordinator_role: boolean;
+  photographer_role: boolean;
 }
 
 interface PostData {
@@ -169,22 +170,17 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
         post_needs_cover_photo: post.post_needs_cover_photo || false,
         post_needs_photo_cards: post.post_needs_photo_cards || false,
       });
-    }
-  }, [post]);
 
-  // Отдельный эффект для установки выбранного пользователя после загрузки users
-  useEffect(() => {
-    if (users.length > 0 && post?.responsible_person_id) {
-      const user = users.find(u => u.user_id === post.responsible_person_id);
-      if (user) {
-        setSelectedUser(user);
-        setSearchQuery(user.user_login);
+      // Устанавливаем выбранного пользователя если есть
+      if (post.responsible_person_id && users.length > 0) {
+        const user = users.find(u => u.user_id === post.responsible_person_id);
+        if (user) {
+          setSelectedUser(user);
+          setSearchQuery(user.user_login);
+        }
       }
-    } else if (users.length > 0 && !post?.responsible_person_id) {
-      setSelectedUser(null);
-      setSearchQuery('');
     }
-  }, [users, post]);
+  }, [post, users]);
 
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
@@ -248,6 +244,21 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
     setIsDropdownOpen(false);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setIsDropdownOpen(true);
+    
+    // Если поле поиска пустое, сбрасываем выбранного пользователя
+    if (!value.trim()) {
+      setSelectedUser(null);
+      setFormData(prev => ({
+        ...prev,
+        responsible_person_id: ''
+      }));
+    }
+  };
+
   // Фильтрация пользователей по поисковому запросу
   const filteredUsers = users.filter(user =>
     user.user_login.toLowerCase().includes(searchQuery.toLowerCase())
@@ -256,8 +267,8 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.post_title.trim() || !formData.post_description.trim() || 
-        !formData.post_type || !formData.post_deadline) {
+    // Проверяем только обязательные поля
+    if (!formData.post_title.trim() || !formData.post_type || !formData.post_deadline) {
       setError('Пожалуйста, заполните все обязательные поля');
       return;
     }
@@ -277,10 +288,10 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
           postId: post.post_id,
           data: {
             post_title: formData.post_title,
-            post_description: formData.post_description,
+            post_description: formData.post_description || null,
             post_type: formData.post_type,
             post_deadline: deadlineDate.toISOString(),
-            responsible_person_id: formData.responsible_person_id ? parseInt(formData.responsible_person_id) : null,
+            responsible_person_id: formData.responsible_person_id || null,
             post_needs_video_smm: formData.post_needs_video_smm,
             post_needs_video_maker: formData.post_needs_video_maker,
             post_needs_text: formData.post_needs_text,
@@ -378,17 +389,16 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Описание *
+                  Описание
                 </label>
                 <textarea
                   name="post_description"
                   value={formData.post_description}
                   onChange={handleChange}
-                  required
                   disabled={isSubmitting}
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder="Опишите детали поста"
+                  placeholder="Опишите детали поста (необязательно)"
                 />
               </div>
 
@@ -416,20 +426,14 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ответственный *
+                  Ответственный
                 </label>
                 <div className="relative" ref={dropdownRef}>
                   <div className="relative">
                     <input
                       type="text"
                       value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setIsDropdownOpen(true);
-                        if (!e.target.value && !selectedUser) {
-                          setFormData(prev => ({ ...prev, responsible_person_id: '' }));
-                        }
-                      }}
+                      onChange={handleSearchChange}
                       onFocus={() => setIsDropdownOpen(true)}
                       placeholder="Поиск ответственного..."
                       disabled={isSubmitting || loadingUsers}
@@ -447,30 +451,27 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
                     )}
                   </div>
 
-                  {isDropdownOpen && !loadingUsers && (
+                  {isDropdownOpen && !loadingUsers && filteredUsers.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {filteredUsers.length > 0 ? (
-                        filteredUsers.map(user => (
-                          <div
-                            key={user.user_id}
-                            onClick={() => handleUserSelect(user)}
-                            className={`px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors ${
-                              selectedUser?.user_id === user.user_id ? 'bg-blue-100' : ''
-                            }`}
-                          >
-                            <div className="font-medium">{user.user_login}</div>
-                            <div className="text-xs text-gray-500">
-                              {user.admin_role && 'Админ '}
-                              {user.coordinator_role && 'Координатор '}
-                              {user.designer_role && 'Дизайнер '}
-                              {user.videomaker_role && 'Видеомейкер '}
-                              {user.SMM_role && 'SMM'}
-                            </div>
+                      {filteredUsers.map(user => (
+                        <div
+                          key={user.user_id}
+                          onClick={() => handleUserSelect(user)}
+                          className={`px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors ${
+                            selectedUser?.user_id === user.user_id ? 'bg-blue-100' : ''
+                          }`}
+                        >
+                          <div className="font-medium">{user.user_login}</div>
+                          <div className="text-xs text-gray-500">
+                            {user.admin_role && 'Админ '}
+                            {user.coordinator_role && 'Координатор '}
+                            {user.designer_role && 'Дизайнер '}
+                            {user.videomaker_role && 'Видеомейкер '}
+                            {user.SMM_role && 'SMM '}
+                            {user.photographer_role && 'Фотограф'}
                           </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-2 text-gray-500">Пользователи не найдены</div>
-                      )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -495,13 +496,6 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
                     disabled={isSubmitting}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   />
-                  
-                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-sm text-gray-600 mb-1">Выбранный дедлайн:</p>
-                    <p className="font-medium text-gray-800">
-                      {formatDateTimeDisplay(formData.post_deadline)}
-                    </p>
-                  </div>
                 </div>
               </div>
 

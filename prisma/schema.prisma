@@ -24,7 +24,7 @@ model User {
 model Post {
   post_id            Int      @id @default(autoincrement())
   post_title         String
-  post_description   String
+  post_description   String?
   
   post_needs_video_smm        Boolean
   post_needs_video_maker      Boolean
