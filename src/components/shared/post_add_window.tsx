@@ -48,7 +48,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     post_needs_photo_cards: false,
   });
 
-  // Функция для форматирования даты в формат datetime-local
   const formatDateForInput = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -58,7 +57,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // Функция для получения даты по умолчанию
   const getDefaultDateTime = (): string => {
     if (initialDate) {
       const date = new Date(initialDate);
@@ -73,7 +71,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     return formatDateForInput(defaultDate);
   };
 
-  // Закрытие дропдауна при клике вне
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -164,7 +161,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     }
   };
 
-  // Устанавливаем начальную дату
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
@@ -239,7 +235,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     setSearchQuery(value);
     setIsDropdownOpen(true);
     
-    // Если поле поиска пустое, сбрасываем выбранного пользователя
     if (!value.trim()) {
       setSelectedUser(null);
       setFormData(prev => ({
@@ -249,7 +244,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     }
   };
 
-  // Фильтрация пользователей по поисковому запросу
   const filteredUsers = users.filter(user =>
     user.user_login.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -257,7 +251,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Проверяем только обязательные поля
     if (!formData.post_title.trim() || !formData.post_type || !formData.post_deadline) {
       setError('Пожалуйста, заполните все обязательные поля');
       return;

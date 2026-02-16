@@ -10,7 +10,7 @@ interface PaginationProps {
 
 export const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
   const getPageNumbers = (): (number | string)[] => {
-    const delta = 2; // Количество страниц слева и справа от текущей
+    const delta = 2;
     const range: number[] = [];
     const rangeWithDots: (number | string)[] = [];
     let l: number | undefined;

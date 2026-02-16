@@ -119,7 +119,7 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
 
                 {/* Мобильное меню - выезжающая панель */}
                 {isMobileMenuOpen && (
-                    <div className="fixed inset-0 top-[57px] bg-white z-30 md:hidden">
+                    <div className="fixed inset-0 top-14.25 bg-white z-30 md:hidden">
                         <div className="p-4 border-t">
                             <nav className="flex flex-col gap-2">
                                 <Link 

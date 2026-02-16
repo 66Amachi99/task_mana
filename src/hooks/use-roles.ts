@@ -14,7 +14,6 @@ interface User {
   photographer_role: boolean;
 }
 
-// Типы задач для фильтрации - доступны всем
 export interface TaskFilter {
   id: string;
   label: string;
@@ -61,7 +60,6 @@ export function useUser() {
     setLoading(false);
   }, [session, status]);
 
-  // Хелперы для проверки ролей
   const isDesigner = useMemo(() => user?.designer_role === true, [user?.designer_role]);
   const isVideomaker = useMemo(() => user?.videomaker_role === true, [user?.videomaker_role]);
   const isSmm = useMemo(() => user?.SMM_role === true, [user?.SMM_role]);
@@ -69,15 +67,12 @@ export function useUser() {
   const isAdmin = useMemo(() => user?.admin_role === true, [user?.admin_role]);
   const isPhotographer = useMemo(() => user?.photographer_role === true, [user?.photographer_role]);
   
-  // SMM теперь считается как админ/координатор для прав редактирования
   const isAdminOrCoordinatorOrSmm = useMemo(() => isAdmin || isCoordinator || isSmm, [isAdmin, isCoordinator, isSmm]);
 
-  // Все задачи доступны всем для фильтрации
   const getAvailableFilters = useCallback((): TaskFilter[] => {
     return AVAILABLE_TASKS;
   }, []);
 
-  // Проверка, соответствует ли пост выбранному фильтру
   const filterPostByTask = useCallback((post: any, taskField: string): boolean => {
     switch (taskField) {
       case 'post_needs_video_smm':
@@ -95,17 +90,13 @@ export function useUser() {
     }
   }, []);
 
-  // Проверка, может ли пользователь редактировать задачу
   const canEditTask = useCallback((taskRole: string): boolean => {
     if (!user) return false;
     
-    // Админ, координатор и SMM могут редактировать ВСЕ задачи
     if (isAdminOrCoordinatorOrSmm) return true;
     
-    // Текст могут редактировать ВСЕ
     if (taskRole === 'text') return true;
     
-    // Проверяем, есть ли у пользователя соответствующая роль
     switch (taskRole) {
       case 'designer':
         return isDesigner;
@@ -123,7 +114,6 @@ export function useUser() {
   return { 
     user, 
     loading,
-    // Роли (булевые)
     isDesigner,
     isVideomaker,
     isSmm,
@@ -131,7 +121,6 @@ export function useUser() {
     isAdmin,
     isPhotographer,
     isAdminOrCoordinatorOrSmm,
-    // Хелперы
     getAvailableFilters,
     filterPostByTask,
     canEditTask

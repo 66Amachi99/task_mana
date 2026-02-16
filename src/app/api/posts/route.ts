@@ -51,9 +51,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    console.log('📥 Получен запрос на создание поста:', body);
+    console.log('Получен запрос на создание поста:', body);
 
-    // Валидация ТОЛЬКО действительно обязательных полей
     if (!body.post_title || !body.post_type || !body.post_deadline) {
       return NextResponse.json(
         { error: 'Заполните название, тип и дедлайн поста' },
@@ -63,7 +62,6 @@ export async function POST(request: NextRequest) {
 
     const post_deadline = new Date(body.post_deadline);
     
-    // Подготавливаем данные, исключая undefined поля
     const data: any = {
       post_title: body.post_title,
       post_type: body.post_type,
@@ -76,12 +74,10 @@ export async function POST(request: NextRequest) {
       post_needs_photo_cards: body.post_needs_photo_cards || false,
     };
 
-    // Добавляем описание только если оно есть
     if (body.post_description !== undefined && body.post_description !== null) {
       data.post_description = body.post_description;
     }
 
-    // Добавляем ответственного только если он есть и это число
     if (body.responsible_person_id && body.responsible_person_id !== '') {
       const id = parseInt(body.responsible_person_id);
       if (!isNaN(id)) {
@@ -101,7 +97,7 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('❌ Ошибка при создании поста:', error);
+    console.error('Ошибка при создании поста:', error);
     return NextResponse.json(
       { error: 'Ошибка при создании поста' },
       { status: 500 }
@@ -176,7 +172,6 @@ export async function PUT(request: NextRequest) {
         updateData.post_deadline = new Date(post_deadline);
       }
 
-      // Обрабатываем ответственного
       if (otherData.responsible_person_id !== undefined) {
         if (otherData.responsible_person_id && otherData.responsible_person_id !== '') {
           const id = parseInt(otherData.responsible_person_id);
@@ -208,7 +203,7 @@ export async function PUT(request: NextRequest) {
     }
     
   } catch (error) {
-    console.error('❌ Ошибка при обновлении:', error);
+    console.error('Ошибка при обновлении:', error);
     return NextResponse.json(
       { error: 'Ошибка при обновлении данных' },
       { status: 500 }

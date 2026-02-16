@@ -71,7 +71,7 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
       >
         <form onSubmit={handleSubmit} className="p-6">
           <div className="flex justify-between items-center mb-6 pb-4 border-b">
-            <div className="flex-1"></div> {/* Пустой div для баланса */}
+            <div className="flex-1"></div>
             <h2 className="text-2xl font-bold text-gray-800 text-center">Авторизация</h2>
             <button
               type="button"

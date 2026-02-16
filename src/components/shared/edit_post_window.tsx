@@ -67,7 +67,6 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
     post_needs_photo_cards: false,
   });
 
-  // Закрытие дропдауна при клике вне
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -146,7 +145,6 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
     }
   };
 
-  // Инициализация формы данными из поста
   useEffect(() => {
     if (post) {
       const deadline = new Date(post.post_deadline);
@@ -171,7 +169,6 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
         post_needs_photo_cards: post.post_needs_photo_cards || false,
       });
 
-      // Устанавливаем выбранного пользователя если есть
       if (post.responsible_person_id && users.length > 0) {
         const user = users.find(u => u.user_id === post.responsible_person_id);
         if (user) {
@@ -249,7 +246,6 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
     setSearchQuery(value);
     setIsDropdownOpen(true);
     
-    // Если поле поиска пустое, сбрасываем выбранного пользователя
     if (!value.trim()) {
       setSelectedUser(null);
       setFormData(prev => ({
@@ -259,7 +255,6 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
     }
   };
 
-  // Фильтрация пользователей по поисковому запросу
   const filteredUsers = users.filter(user =>
     user.user_login.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -267,7 +262,6 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Проверяем только обязательные поля
     if (!formData.post_title.trim() || !formData.post_type || !formData.post_deadline) {
       setError('Пожалуйста, заполните все обязательные поля');
       return;
@@ -311,7 +305,7 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
       onClose();
 
     } catch (error) {
-      console.error('❌ Ошибка при обновлении поста:', error);
+      console.error('Ошибка при обновлении поста:', error);
       setError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
       setIsSubmitting(false);
     }

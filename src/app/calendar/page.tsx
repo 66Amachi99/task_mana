@@ -192,7 +192,6 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Кнопка добавления поста с выбранной датой */}
       <CalendarAddButton selectedDate={selectedDate} />
 
       {showPostDetails && selectedPost && (

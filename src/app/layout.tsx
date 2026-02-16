@@ -16,9 +16,9 @@ const nunito = Nunito({
 
 function AddPostButton() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { user, isAdminOrCoordinatorOrSmm } = useUser(); // Изменено здесь
+  const { user, isAdminOrCoordinatorOrSmm } = useUser();
   
-  const canAddPost = user && isAdminOrCoordinatorOrSmm; // Изменено здесь
+  const canAddPost = user && isAdminOrCoordinatorOrSmm;
   
   const handlePostAdded = useCallback(async () => {
     setIsModalOpen(false);
