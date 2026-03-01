@@ -11,9 +11,14 @@ interface User {
   admin_role: boolean;
   SMM_role: boolean;
   designer_role: boolean;
-  videomaker_role: boolean;
   coordinator_role: boolean;
   photographer_role: boolean;
+}
+
+interface Tag {
+  tag_id: number;
+  name: string;
+  color: string;
 }
 
 interface PostAddWindowProps {
@@ -22,6 +27,12 @@ interface PostAddWindowProps {
   initialDate?: Date;
 }
 
+// Доступные статусы для поста
+const POST_STATUSES = [
+  { value: 'В работе', label: 'В работе', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'Завершен', label: 'Завершен', color: 'bg-green-100 text-green-800' },
+];
+
 export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWindowProps) => {
   const router = useRouter();
   const { user: currentUser } = useUser();
@@ -29,6 +40,12 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -37,16 +54,32 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
   const [formData, setFormData] = useState({
     post_title: '',
     post_description: '',
-    post_type: '',
+    tz_link: '',
     post_deadline: '',
+    post_status: 'В работе', // Статус по умолчанию
     responsible_person_id: '',
-    post_needs_video_smm: false,
-    post_needs_video_maker: false,
-    post_needs_text: false,
-    post_needs_photogallery: false,
+    post_needs_mini_video_smm: false,
+    post_needs_video: false,
     post_needs_cover_photo: false,
     post_needs_photo_cards: false,
+    post_needs_photogallery: false,
+    post_needs_mini_gallery: false,
+    // post_needs_text всегда true, не показываем
   });
+
+  // Загрузка тегов
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await fetch('/api/tags');
+        const data = await response.json();
+        setTags(data);
+      } catch (error) {
+        console.error('Ошибка загрузки тегов:', error);
+      }
+    };
+    fetchTags();
+  }, []);
 
   const formatDateForInput = (date: Date): string => {
     const year = date.getFullYear();
@@ -75,6 +108,9 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(event.target as Node)) {
+        setIsTagDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -108,59 +144,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     fetchUsers();
   }, [currentUser]);
 
-  const setTasksByPostType = (postType: string) => {
-    const baseState = {
-      post_needs_video_smm: false,
-      post_needs_video_maker: false,
-      post_needs_text: false,
-      post_needs_photogallery: false,
-      post_needs_cover_photo: false,
-      post_needs_photo_cards: false,
-    };
-
-    switch (postType) {
-      case 'Видео':
-        return {
-          ...baseState,
-          post_needs_video_maker: true
-        };
-      case 'Фотопост':
-        return {
-          ...baseState,
-          post_needs_photo_cards: true,
-          post_needs_photogallery: true,
-          post_needs_cover_photo: true
-        };
-      case 'Афиша':
-        return {
-          ...baseState,
-          post_needs_cover_photo: true,
-          post_needs_video_smm: true
-        };
-      case 'Светлана Юрьевна':
-        return {
-          ...baseState,
-          post_needs_video_smm: true
-        };
-      case 'Рубрика':
-        return {
-          ...baseState,
-          post_needs_text: true
-        };
-      case 'ЧЕ':
-        return {
-          post_needs_video_smm: true,
-          post_needs_video_maker: true,
-          post_needs_text: true,
-          post_needs_photogallery: true,
-          post_needs_cover_photo: true,
-          post_needs_photo_cards: true
-        };
-      default:
-        return baseState;
-    }
-  };
-
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
@@ -187,19 +170,10 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
         [name]: checked
       }));
     } else {
-      if (name === 'post_type') {
-        const tasks = setTasksByPostType(value);
-        setFormData(prev => ({
-          ...prev,
-          [name]: value,
-          ...tasks
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          [name]: value
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
   };
 
@@ -244,6 +218,46 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     }
   };
 
+  // Теги
+  const handleTagSelect = (tag: Tag) => {
+    if (!selectedTags.find(t => t.tag_id === tag.tag_id)) {
+      setSelectedTags([...selectedTags, tag]);
+    }
+    setTagSearchQuery('');
+    setIsTagDropdownOpen(false);
+  };
+
+  const handleTagRemove = (tagId: number) => {
+    setSelectedTags(selectedTags.filter(t => t.tag_id !== tagId));
+  };
+
+  const handleCreateTag = async () => {
+    if (!tagSearchQuery.trim()) return;
+    
+    try {
+      const response = await fetch('/api/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: tagSearchQuery }),
+      });
+      
+      if (response.ok) {
+        const newTag = await response.json();
+        setTags([...tags, newTag]);
+        setSelectedTags([...selectedTags, newTag]);
+        setTagSearchQuery('');
+        setIsTagDropdownOpen(false);
+      }
+    } catch (error) {
+      console.error('Ошибка создания тега:', error);
+    }
+  };
+
+  const filteredTags = tags.filter(tag =>
+    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
+    !selectedTags.find(t => t.tag_id === tag.tag_id)
+  );
+
   const filteredUsers = users.filter(user =>
     user.user_login.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -251,7 +265,7 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.post_title.trim() || !formData.post_type || !formData.post_deadline) {
+    if (!formData.post_title.trim() || !formData.post_deadline) {
       setError('Пожалуйста, заполните все обязательные поля');
       return;
     }
@@ -270,15 +284,17 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
         body: JSON.stringify({
           post_title: formData.post_title,
           post_description: formData.post_description || null,
-          post_type: formData.post_type,
+          tz_link: formData.tz_link || null,
           post_deadline: deadlineDate.toISOString(),
+          post_status: formData.post_status, // Отправляем статус
           responsible_person_id: formData.responsible_person_id || null,
-          post_needs_video_smm: formData.post_needs_video_smm,
-          post_needs_video_maker: formData.post_needs_video_maker,
-          post_needs_text: formData.post_needs_text,
-          post_needs_photogallery: formData.post_needs_photogallery,
+          post_needs_mini_video_smm: formData.post_needs_mini_video_smm,
+          post_needs_video: formData.post_needs_video,
           post_needs_cover_photo: formData.post_needs_cover_photo,
           post_needs_photo_cards: formData.post_needs_photo_cards,
+          post_needs_photogallery: formData.post_needs_photogallery,
+          post_needs_mini_gallery: formData.post_needs_mini_gallery,
+          tag_ids: selectedTags.map(t => t.tag_id),
         }),
       });
 
@@ -383,24 +399,83 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Тип поста *
+                  Ссылка на ТЗ
                 </label>
-                <select
-                  name="post_type"
-                  value={formData.post_type}
+                <input
+                  type="text"
+                  name="tz_link"
+                  value={formData.tz_link}
                   onChange={handleChange}
-                  required
                   disabled={isSubmitting}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Выберите тип</option>
-                  <option value="Видео">Видео</option>
-                  <option value="Фотопост">Фотопост</option>
-                  <option value="Афиша">Афиша</option>
-                  <option value="Светлана Юрьевна">Светлана Юрьевна</option>
-                  <option value="Рубрика">Рубрика</option>
-                  <option value="ЧЕ">ЧЕ</option>
-                </select>
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  placeholder="https://example.com/document"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Теги
+                </label>
+                <div className="relative" ref={tagDropdownRef}>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {selectedTags.map(tag => (
+                      <span
+                        key={tag.tag_id}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm"
+                        style={{ backgroundColor: tag.color + '20', color: tag.color }}
+                      >
+                        {tag.name}
+                        <button
+                          type="button"
+                          onClick={() => handleTagRemove(tag.tag_id)}
+                          className="hover:opacity-70"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={tagSearchQuery}
+                    onChange={(e) => {
+                      setTagSearchQuery(e.target.value);
+                      setIsTagDropdownOpen(true);
+                    }}
+                    onFocus={() => setIsTagDropdownOpen(true)}
+                    placeholder="Поиск или создание тега..."
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  />
+                  {isTagDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {filteredTags.length > 0 ? (
+                        filteredTags.map(tag => (
+                          <div
+                            key={tag.tag_id}
+                            onClick={() => handleTagSelect(tag)}
+                            className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <span
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            {tag.name}
+                          </div>
+                        ))
+                      ) : tagSearchQuery.trim() ? (
+                        <div
+                          onClick={handleCreateTag}
+                          className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-blue-600"
+                        >
+                          + Создать "{tagSearchQuery}"
+                        </div>
+                      ) : (
+                        <div className="px-4 py-2 text-gray-500">Введите текст для поиска</div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div>
@@ -445,7 +520,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                             {user.admin_role && 'Админ '}
                             {user.coordinator_role && 'Координатор '}
                             {user.designer_role && 'Дизайнер '}
-                            {user.videomaker_role && 'Видеомейкер '}
                             {user.SMM_role && 'SMM '}
                             {user.photographer_role && 'Фотограф'}
                           </div>
@@ -487,49 +561,25 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                   <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                     <input
                       type="checkbox"
-                      name="post_needs_video_smm"
-                      checked={formData.post_needs_video_smm}
+                      name="post_needs_mini_video_smm"
+                      checked={formData.post_needs_mini_video_smm}
                       onChange={(e) => handleCheckboxChange(e.target.name, e.target.checked)}
                       disabled={isSubmitting}
                       className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
                     />
-                    <span className="text-gray-700">Видео для SMM</span>
+                    <span className="text-gray-700">Мини-видео для SMM</span>
                   </label>
 
                   <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                     <input
                       type="checkbox"
-                      name="post_needs_video_maker"
-                      checked={formData.post_needs_video_maker}
+                      name="post_needs_video"
+                      checked={formData.post_needs_video}
                       onChange={(e) => handleCheckboxChange(e.target.name, e.target.checked)}
                       disabled={isSubmitting}
                       className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
                     />
-                    <span className="text-gray-700">Видео для видеомейкера</span>
-                  </label>
-
-                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
-                    <input
-                      type="checkbox"
-                      name="post_needs_text"
-                      checked={formData.post_needs_text}
-                      onChange={(e) => handleCheckboxChange(e.target.name, e.target.checked)}
-                      disabled={isSubmitting}
-                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
-                    />
-                    <span className="text-gray-700">Текст</span>
-                  </label>
-                  
-                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
-                    <input
-                      type="checkbox"
-                      name="post_needs_photogallery"
-                      checked={formData.post_needs_photogallery}
-                      onChange={(e) => handleCheckboxChange(e.target.name, e.target.checked)}
-                      disabled={isSubmitting}
-                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
-                    />
-                    <span className="text-gray-700">Фотогалерея</span>
+                    <span className="text-gray-700">Видео</span>
                   </label>
 
                   <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
@@ -554,6 +604,30 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                       className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
                     />
                     <span className="text-gray-700">Фотокарточки</span>
+                  </label>
+
+                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
+                    <input
+                      type="checkbox"
+                      name="post_needs_photogallery"
+                      checked={formData.post_needs_photogallery}
+                      onChange={(e) => handleCheckboxChange(e.target.name, e.target.checked)}
+                      disabled={isSubmitting}
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-gray-700">Фотогалерея</span>
+                  </label>
+
+                  <label className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
+                    <input
+                      type="checkbox"
+                      name="post_needs_mini_gallery"
+                      checked={formData.post_needs_mini_gallery}
+                      onChange={(e) => handleCheckboxChange(e.target.name, e.target.checked)}
+                      disabled={isSubmitting}
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-gray-700">Мини-фотогалерея</span>
                   </label>
                 </div>
               </div>

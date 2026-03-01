@@ -10,7 +10,6 @@ export async function GET() {
         admin_role: true,
         SMM_role: true,
         designer_role: true,
-        videomaker_role: true,
         coordinator_role: true,
         photographer_role: true,
       },

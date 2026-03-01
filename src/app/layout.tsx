@@ -1,18 +1,11 @@
 'use client';
 
 import { useState, useCallback } from "react";
-import { Nunito } from "next/font/google";
 import "./globals.css";
 import { PlusCircle } from "lucide-react";
 import { PostAddWindow } from "@/components/shared/post_add_window";
 import { Providers } from "./providers";
 import { useUser } from "@/hooks/use-roles";
-
-const nunito = Nunito({
-  subsets: ['cyrillic'],
-  variable: '--font-nunito', 
-  weight: ['400', '500', '600', '700', '800', '900']
-});
 
 function AddPostButton() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,7 +51,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${nunito.variable} antialiased h-full overflow-x-hidden`}>
+      <body className="antialiased h-full overflow-x-hidden">
         <Providers>
           <AddPostButton />
           <div className="min-h-full">

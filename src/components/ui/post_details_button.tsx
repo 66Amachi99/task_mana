@@ -2,30 +2,53 @@
 
 import { useState } from 'react';
 import { PostDetailsWindow } from '../shared/post_details_window';
+import { Eye } from 'lucide-react';
 
 interface PostData {
   post_id: number;
   post_title: string;
   post_description: string;
-  post_needs_video_smm: boolean;
-  post_needs_video_maker: boolean;
-  post_needs_text: boolean;
-  post_needs_photogallery: boolean;
+  post_status: string;
+  is_published: boolean;
+  telegram_published?: string | null;
+  vkontakte_published?: string | null;
+  MAX_published?: string | null;
+  tz_link?: string | null;
+  feedback_comment?: string | null;
+  
+  post_needs_mini_video_smm: boolean;
+  post_needs_video: boolean;
   post_needs_cover_photo: boolean;
   post_needs_photo_cards: boolean;
-  post_done_link_video_smm?: string | null;
-  post_done_link_video_maker?: string | null;
-  post_done_link_text?: string | null;
-  post_done_link_photogallery?: string | null;
+  post_needs_photogallery: boolean;
+  post_needs_mini_gallery: boolean;
+  post_needs_text: boolean;
+  
+  post_done_link_mini_video_smm?: string | null;
+  post_done_link_video?: string | null;
   post_done_link_cover_photo?: string | null;
   post_done_link_photo_cards?: string | null;
+  post_done_link_photogallery?: string | null;
+  post_done_link_mini_gallery?: string | null;
+  post_done_link_text?: string | null;
+  
   post_date: Date | null;
   post_deadline: Date;
-  post_type: string;
+  
   responsible_person_id: number | null;
-  user?: {
+  approved_by_id?: number | null;
+  
+  user?: { 
     user_login: string;
   } | null;
+  approved_by?: {
+    user_login: string;
+  } | null;
+  tags?: Array<{
+    tag_id: number;
+    name: string;
+    color: string;
+  }>;
 }
 
 interface PostDetailsButtonProps {
@@ -53,8 +76,9 @@ export const PostDetailsButton = ({ post, onPostUpdate }: PostDetailsButtonProps
     <>
       <button
         onClick={handleOpen}
-        className="px-4 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium cursor-pointer"
+        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium"
       >
+        <Eye className="w-4 h-4" />
         Подробнее
       </button>
 

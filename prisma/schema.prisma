@@ -1,6 +1,6 @@
 generator client {
-  provider   = "prisma-client"
-  output     = "../src/generated/prisma"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -8,17 +8,76 @@ datasource db {
 }
 
 model User {
-  user_id    Int      @id @default(autoincrement())
-  user_login      String  @unique
-  user_password   String
-  admin_role Boolean
-  SMM_role Boolean
-  designer_role Boolean
-  videomaker_role Boolean
-  coordinator_role Boolean
-  photographer_role Boolean
+  user_id           Int      @id @default(autoincrement())
+  user_login        String   @unique
+  user_password     String
+  admin_role        Boolean  @default(false)
+  SMM_role          Boolean  @default(false)
+  designer_role     Boolean  @default(false)
+  coordinator_role  Boolean  @default(false)
+  photographer_role Boolean  @default(false)
   
-  posts      Post[]
+  posts             Post[]
+  approved_posts    Post[]         @relation("ApprovedPosts")
+  created_tasks     Task[]         @relation("CreatedTasks")
+  assigned_tasks    TaskAssignee[]
+}
+
+model Tag {
+  tag_id        Int      @id @default(autoincrement())
+  name          String   @unique
+  color         String
+  created_at    DateTime @default(now())
+  
+  posts         PostTag[]
+  tasks         TaskTag[]
+}
+
+model PostTag {
+  post_tag_id   Int      @id @default(autoincrement())
+  post_id       Int
+  tag_id        Int
+  
+  post          Post     @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+  tag           Tag      @relation(fields: [tag_id], references: [tag_id], onDelete: Cascade)
+}
+
+model TaskTag {
+  task_tag_id   Int      @id @default(autoincrement())
+  task_id       Int
+  tag_id        Int
+  
+  task          Task     @relation(fields: [task_id], references: [task_id], onDelete: Cascade)
+  tag           Tag      @relation(fields: [tag_id], references: [tag_id], onDelete: Cascade)
+}
+
+model Task {
+  task_id        Int      @id @default(autoincrement())
+  title          String
+  description    String?
+  
+  created_by_id  Int
+  created_by     User     @relation("CreatedTasks", fields: [created_by_id], references: [user_id])
+  
+  start_time     DateTime
+  end_time       DateTime
+  all_day        Boolean  @default(false)
+  
+  priority         Int    @default(0)
+  post_status      String   @default("Поставлена")
+  completed_task   String?
+  
+  assignees      TaskAssignee[]
+  tags           TaskTag[]
+}
+
+model TaskAssignee {
+  task_assignee_id Int      @id @default(autoincrement())
+  task_id          Int
+  user_id          Int
+  
+  task             Task     @relation(fields: [task_id], references: [task_id], onDelete: Cascade)
+  user             User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 }
 
 model Post {
@@ -26,23 +85,46 @@ model Post {
   post_title         String
   post_description   String?
   
-  post_needs_video_smm        Boolean
-  post_needs_video_maker      Boolean
-  post_needs_text             Boolean
-  post_needs_photogallery     Boolean
-  post_needs_cover_photo      Boolean
-  post_needs_photo_cards      Boolean
+  post_status        String   @default("В работе")
   
-  post_done_link_video_smm      String?
-  post_done_link_video_maker    String?
-  post_done_link_text           String?
-  post_done_link_photogallery   String?
-  post_done_link_cover_photo    String?
-  post_done_link_photo_cards    String?
+  tz_link            String?
+  is_published       Boolean  @default(false)
+  telegram_published String?
+  vkontakte_published String?
+  MAX_published String?
+  
+  post_needs_mini_video_smm      Boolean @default(false)
+  post_needs_video               Boolean @default(false)
+  post_needs_cover_photo         Boolean @default(false)
+  post_needs_photo_cards         Boolean @default(false)
+  post_needs_photogallery        Boolean @default(false)
+  post_needs_mini_gallery        Boolean @default(false)
+  post_needs_text                Boolean @default(true)
+  
+  post_done_link_mini_video_smm      String?
+  post_done_link_video               String?
+  post_done_link_cover_photo         String?
+  post_done_link_photo_cards         String?
+  post_done_link_photogallery        String?
+  post_done_link_mini_gallery        String?
+  post_done_link_text                String?
+
+  post_feedback_mini_video_smm       String?
+  post_feedback_video                String?
+  post_feedback_cover_photo          String?
+  post_feedback_photo_cards          String?
+  post_feedback_photogallery         String?
+  post_feedback_mini_gallery         String?
+  post_feedback_text                 String?
   
   responsible_person_id   Int?
   user                    User?     @relation(fields: [responsible_person_id], references: [user_id])
+  
+  approved_by_id          Int?
+  approved_by             User?     @relation("ApprovedPosts", fields: [approved_by_id], references: [user_id])
+  
+  tags                    PostTag[]
+
   post_date          DateTime? @default(now())
   post_deadline      DateTime
-  post_type          String
 }

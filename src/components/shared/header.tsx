@@ -1,17 +1,25 @@
 'use client';
 
+import React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { Container } from './container';
 import { HeaderAuthButton } from './header_auth_button';
-import { useUser, AVAILABLE_TASKS } from '../../hooks/use-roles';
+import { useUser, ROLE_FILTERS } from '../../hooks/use-roles';
 import Link from 'next/link';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { ChevronDown, Menu, X, Camera, Video, PenTool } from 'lucide-react';
 
 interface Props {
     className?: string;
     selectedTaskFilter: string | null;
     onTaskFilterChange: (filter: string | null) => void;
 }
+
+// Иконки для ролей
+const roleIcons: Record<string, React.ReactNode> = {
+  'smm': <Video className="w-4 h-4" />,
+  'photographer': <Camera className="w-4 h-4" />,
+  'designer': <PenTool className="w-4 h-4" />,
+};
 
 export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskFilterChange }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -41,7 +49,7 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
     };
 
     const selectedFilterLabel = selectedTaskFilter 
-        ? AVAILABLE_TASKS.find(f => f.id === selectedTaskFilter)?.label 
+        ? ROLE_FILTERS.find(f => f.id === selectedTaskFilter)?.label 
         : null;
 
     return (
@@ -71,7 +79,7 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
                         </button>
                     </div>
 
-                    {/* Выпадающий список с фильтрами - десктоп */}
+                    {/* Выпадающий список с фильтрами по ролям - десктоп */}
                     <div className="relative hidden md:block" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -79,35 +87,47 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
                         >
                             <span className="max-w-37.5 truncate">
                                 {selectedFilterLabel 
-                                    ? `Фильтр: ${selectedFilterLabel}` 
+                                    ? `Роль: ${selectedFilterLabel}` 
                                     : 'Все посты'}
                             </span>
                             <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         {isDropdownOpen && (
-                            <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
+                            <div className="absolute top-full left-0 mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
                                 <button
                                     onClick={clearFilter}
-                                    className={`w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors text-sm ${
-                                        !selectedTaskFilter ? 'bg-blue-50 text-blue-600 font-medium' : ''
+                                    className={`w-full text-left px-4 py-2.5 cursor-pointer hover:bg-gray-100 transition-colors text-sm font-medium ${
+                                        !selectedTaskFilter ? 'bg-blue-50 text-blue-600' : ''
                                     }`}
                                 >
                                     Все посты
                                 </button>
                                 
-                                <div className="h-px bg-gray-200 my-1"></div>
+                                <div className="h-px bg-gray-200 my-2"></div>
                                 
-                                {AVAILABLE_TASKS.map(filter => (
-                                    <button
-                                        key={filter.id}
-                                        onClick={() => handleFilterSelect(filter.id)}
-                                        className={`w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors text-sm ${
-                                            selectedTaskFilter === filter.id ? 'bg-blue-50 text-blue-600 font-medium' : ''
-                                        }`}
-                                    >
-                                        {filter.label}
-                                    </button>
+                                {ROLE_FILTERS.map((role, index) => (
+                                    <div key={role.id}>
+                                        <button
+                                            onClick={() => handleFilterSelect(role.id)}
+                                            className={`w-full text-left px-4 py-2.5 cursor-pointer hover:bg-gray-100 transition-colors ${
+                                                selectedTaskFilter === role.id ? 'bg-blue-50 text-blue-600 font-medium' : ''
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-500">
+                                                    {roleIcons[role.id]}
+                                                </span>
+                                                <span className="text-sm font-medium">{role.label}</span>
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-1 ml-6">
+                                                {role.tasks.map(t => t.label).join(' • ')}
+                                            </div>
+                                        </button>
+                                        {index < ROLE_FILTERS.length - 1 && (
+                                            <div className="h-px bg-gray-100 my-1"></div>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -119,7 +139,7 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
 
                 {/* Мобильное меню - выезжающая панель */}
                 {isMobileMenuOpen && (
-                    <div className="fixed inset-0 top-14.25 bg-white z-30 md:hidden">
+                    <div className="fixed inset-0 top-14.25 bg-white z-30 md:hidden overflow-y-auto">
                         <div className="p-4 border-t">
                             <nav className="flex flex-col gap-2">
                                 <Link 
@@ -139,7 +159,7 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
                                 
                                 <div className="h-px bg-gray-200 my-2"></div>
                                 
-                                <div className="py-2 px-4 font-bold text-gray-700">Фильтр по задачам:</div>
+                                <div className="py-2 px-4 font-bold text-gray-700">Фильтр по ролям:</div>
                                 
                                 <button
                                     onClick={clearFilter}
@@ -150,15 +170,23 @@ export const Header: React.FC<Props> = ({ className, selectedTaskFilter, onTaskF
                                     Все посты
                                 </button>
                                 
-                                {AVAILABLE_TASKS.map(filter => (
+                                {ROLE_FILTERS.map(role => (
                                     <button
-                                        key={filter.id}
-                                        onClick={() => handleFilterSelect(filter.id)}
+                                        key={role.id}
+                                        onClick={() => handleFilterSelect(role.id)}
                                         className={`py-3 px-4 text-left hover:bg-slate-100 rounded-lg ${
-                                            selectedTaskFilter === filter.id ? 'bg-blue-50 text-blue-600 font-bold' : ''
+                                            selectedTaskFilter === role.id ? 'bg-blue-50 text-blue-600 font-bold' : ''
                                         }`}
                                     >
-                                        {filter.label}
+                                        <div className="flex items-center gap-2 font-medium">
+                                            <span className="text-gray-500">
+                                                {roleIcons[role.id]}
+                                            </span>
+                                            {role.label}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1 ml-6">
+                                            {role.tasks.map(t => t.label).join(' • ')}
+                                        </div>
                                     </button>
                                 ))}
                             </nav>

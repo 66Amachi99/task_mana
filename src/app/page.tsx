@@ -4,40 +4,62 @@ import { useEffect, useState, useCallback } from 'react';
 import { PostList } from '../components/posts/PostList';
 import { Header } from '../components/shared/header';
 import { Pagination } from '../components/ui/pagination';
+import { useUser, ROLE_FILTERS } from '../hooks/use-roles';
 
 interface PostWithRelations {
   post_id: number;
   post_title: string;
   post_description: string;
-  post_needs_video_smm: boolean;
-  post_needs_video_maker: boolean;
-  post_needs_text: boolean;
-  post_needs_photogallery: boolean;
+  post_status: string;
+  is_published: boolean;
+  tz_link?: string | null;
+  feedback_comment?: string | null;
+  
+  post_needs_mini_video_smm: boolean;
+  post_needs_video: boolean;
   post_needs_cover_photo: boolean;
   post_needs_photo_cards: boolean;
-  post_done_link_video_smm?: string | null;
-  post_done_link_video_maker?: string | null;
-  post_done_link_text?: string | null;
-  post_done_link_photogallery?: string | null;
+  post_needs_photogallery: boolean;
+  post_needs_mini_gallery: boolean;
+  post_needs_text: boolean;
+  
+  post_done_link_mini_video_smm?: string | null;
+  post_done_link_video?: string | null;
   post_done_link_cover_photo?: string | null;
   post_done_link_photo_cards?: string | null;
+  post_done_link_photogallery?: string | null;
+  post_done_link_mini_gallery?: string | null;
+  post_done_link_text?: string | null;
+  
   post_date: Date | null;
   post_deadline: Date;
-  post_type: string;
+  
   responsible_person_id: number | null;
+  approved_by_id?: number | null;
+  
   user?: {
     user_login: string;
   } | null;
+  approved_by?: {
+    user_login: string;
+  } | null;
+  tags?: Array<{
+    tag_id: number;
+    name: string;
+    color: string;
+  }>;
 }
 
 export default function HomePage() {
   const [allPosts, setAllPosts] = useState<PostWithRelations[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<PostWithRelations[]>([]);
-  const [selectedTaskFilter, setSelectedTaskFilter] = useState<string | null>(null);
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const postsPerPage = 10;
+
+  const { filterPostByRole } = useUser();
 
   const fetchAllPosts = useCallback(async () => {
     try {
@@ -80,19 +102,9 @@ export default function HomePage() {
   useEffect(() => {
     let filtered = allPosts;
     
-    if (selectedTaskFilter) {
-      const filterFieldMap: Record<string, string> = {
-        'video_smm': 'post_needs_video_smm',
-        'video_maker': 'post_needs_video_maker',
-        'cover_photo': 'post_needs_cover_photo',
-        'photo_cards': 'post_needs_photo_cards',
-        'photogallery': 'post_needs_photogallery',
-      };
-      
-      const field = filterFieldMap[selectedTaskFilter];
-      if (field) {
-        filtered = allPosts.filter(post => (post as any)[field] === true);
-      }
+    if (selectedRoleFilter) {
+      // Фильтруем посты, которые содержат хотя бы одну задачу из выбранной роли
+      filtered = allPosts.filter(post => filterPostByRole(post, selectedRoleFilter));
     }
     
     setFilteredPosts(filtered);
@@ -101,7 +113,7 @@ export default function HomePage() {
     setTotalPages(total || 1);
     
     setCurrentPage(1);
-  }, [selectedTaskFilter, allPosts, postsPerPage]);
+  }, [selectedRoleFilter, allPosts, filterPostByRole, postsPerPage]);
 
   const currentPosts = filteredPosts.slice(
     (currentPage - 1) * postsPerPage,
@@ -117,8 +129,8 @@ export default function HomePage() {
     return (
       <div>
         <Header 
-          selectedTaskFilter={selectedTaskFilter} 
-          onTaskFilterChange={setSelectedTaskFilter} 
+          selectedTaskFilter={selectedRoleFilter} 
+          onTaskFilterChange={setSelectedRoleFilter} 
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-10">Загрузка...</div>
@@ -130,8 +142,8 @@ export default function HomePage() {
   return (
     <div>
       <Header 
-        selectedTaskFilter={selectedTaskFilter} 
-        onTaskFilterChange={setSelectedTaskFilter} 
+        selectedTaskFilter={selectedRoleFilter} 
+        onTaskFilterChange={setSelectedRoleFilter} 
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PostList 
@@ -149,9 +161,11 @@ export default function HomePage() {
           </div>
         )}
         
-        {filteredPosts.length === 0 && selectedTaskFilter && (
+        {filteredPosts.length === 0 && selectedRoleFilter && (
           <div className="text-center py-10">
-            <p className="text-gray-500">Нет постов с выбранной задачей</p>
+            <p className="text-gray-500">
+              Нет постов с задачами для роли {ROLE_FILTERS.find(r => r.id === selectedRoleFilter)?.label}
+            </p>
           </div>
         )}
       </div>

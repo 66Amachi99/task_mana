@@ -16,6 +16,7 @@ interface Post {
   post_id: number;
   post_title: string;
   post_type: string;
+  post_status: string;
   post_deadline: Date;
 }
 
@@ -23,8 +24,6 @@ interface CalendarProps {
   postsByDate: Map<string, Post[]>;
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
-  showMyTasks: boolean;
-  hasAccessToPost: (post: Post) => boolean;
 }
 
 const typeEmoji: Record<string, string> = {
@@ -36,7 +35,9 @@ const typeEmoji: Record<string, string> = {
   'ЧЕ': '⭐',
 };
 
-const getEmojiForType = (type: string): string => {
+const getEmojiForType = (type: string | undefined | null): string => {
+  if (!type) return '📄';
+  
   if (typeEmoji[type]) return typeEmoji[type];
   
   const lowerType = type.toLowerCase();
@@ -47,7 +48,22 @@ const getEmojiForType = (type: string): string => {
   if (lowerType.includes('рубрик')) return '📑';
   if (lowerType.includes('че')) return '⭐';
   
-  return type.charAt(0).toUpperCase();
+  return type.charAt(0).toUpperCase() || '📄';
+};
+
+// Функция для получения эмодзи статуса (только 2 статуса)
+const getPostStatusEmoji = (status: string | undefined | null): string => {
+  if (!status) return '🟡';
+  
+  // Приводим к нижнему регистру для надежности
+  const lowerStatus = status.toLowerCase();
+  
+  if (lowerStatus.includes('завершен') || lowerStatus === 'завершен') {
+    return '✅';
+  }
+  
+  // По умолчанию - "В работе"
+  return '🟡';
 };
 
 export const Calendar: React.FC<CalendarProps> = ({
@@ -120,12 +136,18 @@ export const Calendar: React.FC<CalendarProps> = ({
               `}
             >
               <div className="text-right text-xs md:text-sm mb-1">{format(day, 'd')}</div>
-              <div className="flex flex-wrap gap-0.5 md:gap-2 items-start justify-start overflow-y-auto flex-1 content-start no-scrollbar">
+              <div className="flex flex-wrap gap-0.5 md:gap-1 items-start justify-start overflow-y-auto flex-1 content-start no-scrollbar">
                 {postsForDay.map((post, idx) => {
-                  const emoji = getEmojiForType(post.post_type);
+                  const typeEmoji = getEmojiForType(post.post_type);
+                  const statusEmoji = getPostStatusEmoji(post.post_status);
                   return (
-                    <span key={idx} className="text-sm md:text-2xl" title={`${post.post_type}: ${post.post_title}`}>
-                      {emoji}
+                    <span 
+                      key={idx} 
+                      className="text-sm md:text-lg flex items-center gap-0.5" 
+                      title={`${post.post_type}: ${post.post_title} (${post.post_status})`}
+                    >
+                      {typeEmoji}
+                      {statusEmoji}
                     </span>
                   );
                 })}

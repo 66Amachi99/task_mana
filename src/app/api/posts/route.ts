@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+
+// Функция для проверки выполнения всех задач
+const checkAllTasksCompleted = (post: any): boolean => {
+  return (
+    (!post.post_needs_mini_video_smm || post.post_done_link_mini_video_smm) &&
+    (!post.post_needs_video || post.post_done_link_video) &&
+    (!post.post_needs_text || post.post_done_link_text) &&
+    (!post.post_needs_photogallery || post.post_done_link_photogallery) &&
+    (!post.post_needs_cover_photo || post.post_done_link_cover_photo) &&
+    (!post.post_needs_photo_cards || post.post_done_link_photo_cards) &&
+    (!post.post_needs_mini_gallery || post.post_done_link_mini_gallery)
+  );
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +33,16 @@ export async function GET(request: NextRequest) {
             user_login: true,
           },
         },
+        approved_by: {
+          select: {
+            user_login: true,
+          },
+        },
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
       orderBy: {
         post_date: 'desc',
@@ -26,14 +51,15 @@ export async function GET(request: NextRequest) {
       take: limit,
     });
     
-    const serializedPosts = posts.map(post => ({
+    const transformedPosts = posts.map(post => ({
       ...post,
+      tags: post.tags.map(pt => pt.tag),
       post_date: post.post_date ? post.post_date.toISOString() : null,
       post_deadline: post.post_deadline.toISOString(),
     }));
     
     return NextResponse.json({
-      posts: serializedPosts,
+      posts: transformedPosts,
       currentPage: page,
       totalPages,
       totalPosts,
@@ -51,11 +77,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    console.log('Получен запрос на создание поста:', body);
-
-    if (!body.post_title || !body.post_type || !body.post_deadline) {
+    if (!body.post_title || !body.post_deadline) {
       return NextResponse.json(
-        { error: 'Заполните название, тип и дедлайн поста' },
+        { error: 'Заполните название и дедлайн поста' },
         { status: 400 }
       );
     }
@@ -64,14 +88,20 @@ export async function POST(request: NextRequest) {
     
     const data: any = {
       post_title: body.post_title,
-      post_type: body.post_type,
       post_deadline: post_deadline,
-      post_needs_video_smm: body.post_needs_video_smm || false,
-      post_needs_video_maker: body.post_needs_video_maker || false,
-      post_needs_text: body.post_needs_text || false,
-      post_needs_photogallery: body.post_needs_photogallery || false,
+      tz_link: body.tz_link || null,
+      post_status: 'В работе',
+      is_published: false,
+      telegram_published: null,
+      vkontakte_published: null,
+      MAX_published: null,
+      post_needs_mini_video_smm: body.post_needs_mini_video_smm || false,
+      post_needs_video: body.post_needs_video || false,
       post_needs_cover_photo: body.post_needs_cover_photo || false,
       post_needs_photo_cards: body.post_needs_photo_cards || false,
+      post_needs_photogallery: body.post_needs_photogallery || false,
+      post_needs_mini_gallery: body.post_needs_mini_gallery || false,
+      post_needs_text: true,
     };
 
     if (body.post_description !== undefined && body.post_description !== null) {
@@ -85,11 +115,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('📤 Отправляем в БД:', data);
-
     const post = await prisma.post.create({
       data: data,
     });
+
+    if (body.tag_ids && body.tag_ids.length > 0) {
+      await prisma.postTag.createMany({
+        data: body.tag_ids.map((tagId: number) => ({
+          post_id: post.post_id,
+          tag_id: tagId,
+        })),
+      });
+    }
 
     return NextResponse.json(
       { success: true, post },
@@ -105,10 +142,146 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { postId, action, social, link } = body;
+
+    if (!postId) {
+      return NextResponse.json(
+        { error: 'Не указан ID поста' },
+        { status: 400 }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      );
+    }
+
+    const userData = session.user as any;
+    const userId = parseInt(userData.id);
+
+    const existingPost = await prisma.post.findUnique({
+      where: { post_id: Number(postId) }
+    });
+
+    if (!existingPost) {
+      return NextResponse.json(
+        { error: 'Пост не найден' },
+        { status: 404 }
+      );
+    }
+
+    let updateData: any = {};
+
+    if (action === 'approve') {
+      const allTasksCompleted = checkAllTasksCompleted(existingPost);
+
+      if (!allTasksCompleted) {
+        return NextResponse.json(
+          { error: 'Не все задачи выполнены' },
+          { status: 400 }
+        );
+      }
+
+      updateData.approved_by_id = userId;
+    } 
+    else if (action === 'publish') {
+      updateData.is_published = true;
+    }
+    else if (action === 'unpublish') {
+      updateData.is_published = false;
+    }
+    else if (action === 'add_social_link') {
+      if (!social || !link) {
+        return NextResponse.json(
+          { error: 'Не указана соцсеть или ссылка' },
+          { status: 400 }
+        );
+      }
+
+      switch (social) {
+        case 'telegram':
+          updateData.telegram_published = link;
+          break;
+        case 'vkontakte':
+          updateData.vkontakte_published = link;
+          break;
+        case 'max':
+          updateData.MAX_published = link;
+          break;
+        default:
+          return NextResponse.json(
+            { error: 'Неизвестная соцсеть' },
+            { status: 400 }
+          );
+      }
+    }
+    else if (action === 'remove_social_link') {
+      if (!social) {
+        return NextResponse.json(
+          { error: 'Не указана соцсеть' },
+          { status: 400 }
+        );
+      }
+
+      switch (social) {
+        case 'telegram':
+          updateData.telegram_published = null;
+          break;
+        case 'vkontakte':
+          updateData.vkontakte_published = null;
+          break;
+        case 'max':
+          updateData.MAX_published = null;
+          break;
+        default:
+          return NextResponse.json(
+            { error: 'Неизвестная соцсеть' },
+            { status: 400 }
+          );
+      }
+    }
+    else {
+      return NextResponse.json(
+        { error: 'Неизвестное действие' },
+        { status: 400 }
+      );
+    }
+
+    const updatedPost = await prisma.post.update({
+      where: { post_id: Number(postId) },
+      data: updateData,
+      include: {
+        approved_by: {
+          select: { user_login: true }
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Статус обновлен',
+      post: updatedPost,
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error('Ошибка при обновлении:', error);
+    return NextResponse.json(
+      { error: 'Ошибка при обновлении данных' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { postId, links, data } = body;
+    const { postId, links, feedback, data } = body;
 
     if (!postId) {
       return NextResponse.json(
@@ -131,11 +304,11 @@ export async function PUT(request: NextRequest) {
     if (links && Object.keys(links).length > 0) {
       const updateData: any = {};
 
-      if (links.video_smm !== undefined) {
-        updateData.post_done_link_video_smm = links.video_smm || null;
+      if (links.mini_video_smm !== undefined) {
+        updateData.post_done_link_mini_video_smm = links.mini_video_smm || null;
       }
-      if (links.video_maker !== undefined) {
-        updateData.post_done_link_video_maker = links.video_maker || null;
+      if (links.video !== undefined) {
+        updateData.post_done_link_video = links.video || null;
       }
       if (links.text !== undefined) {
         updateData.post_done_link_text = links.text || null;
@@ -149,6 +322,74 @@ export async function PUT(request: NextRequest) {
       if (links.photo_cards !== undefined) {
         updateData.post_done_link_photo_cards = links.photo_cards || null;
       }
+      if (links.mini_gallery !== undefined) {
+        updateData.post_done_link_mini_gallery = links.mini_gallery || null;
+      }
+
+      const updatedPost = await prisma.post.update({
+        where: { post_id: Number(postId) },
+        data: updateData,
+      });
+
+      const allTasksCompleted = checkAllTasksCompleted({
+        ...existingPost,
+        ...updatedPost,
+        ...updateData
+      });
+
+      if (allTasksCompleted && updatedPost.post_status !== 'Завершен') {
+        await prisma.post.update({
+          where: { post_id: Number(postId) },
+          data: { post_status: 'Завершен' },
+        });
+      } 
+      else if (!allTasksCompleted && updatedPost.post_status === 'Завершен') {
+        await prisma.post.update({
+          where: { post_id: Number(postId) },
+          data: { post_status: 'В работе' },
+        });
+      }
+
+      const finalPost = await prisma.post.findUnique({
+        where: { post_id: Number(postId) },
+        include: {
+          approved_by: {
+            select: { user_login: true }
+          }
+        }
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Ссылки успешно сохранены',
+        post: finalPost,
+      }, { status: 200 });
+
+    } 
+    else if (feedback && Object.keys(feedback).length > 0) {
+      const updateData: any = {};
+
+      if (feedback.mini_video_smm !== undefined) {
+        updateData.post_feedback_mini_video_smm = feedback.mini_video_smm || null;
+      }
+      if (feedback.video !== undefined) {
+        updateData.post_feedback_video = feedback.video || null;
+      }
+      if (feedback.text !== undefined) {
+        updateData.post_feedback_text = feedback.text || null;
+      }
+      if (feedback.photogallery !== undefined) {
+        updateData.post_feedback_photogallery = feedback.photogallery || null;
+      }
+      if (feedback.cover_photo !== undefined) {
+        updateData.post_feedback_cover_photo = feedback.cover_photo || null;
+      }
+      if (feedback.photo_cards !== undefined) {
+        updateData.post_feedback_photo_cards = feedback.photo_cards || null;
+      }
+      if (feedback.mini_gallery !== undefined) {
+        updateData.post_feedback_mini_gallery = feedback.mini_gallery || null;
+      }
 
       const updatedPost = await prisma.post.update({
         where: { post_id: Number(postId) },
@@ -157,12 +398,12 @@ export async function PUT(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: 'Ссылки успешно сохранены',
+        message: 'Комментарий сохранен',
         post: updatedPost,
       }, { status: 200 });
-
-    } else if (data && Object.keys(data).length > 0) {
-      const { post_deadline, ...otherData } = data;
+    }
+    else if (data && Object.keys(data).length > 0) {
+      const { post_deadline, tag_ids, ...otherData } = data;
       
       const updateData: any = {
         ...otherData,
@@ -185,15 +426,64 @@ export async function PUT(request: NextRequest) {
         }
       }
 
+      if (existingPost.approved_by_id) {
+        updateData.approved_by_id = null;
+      }
+
       const updatedPost = await prisma.post.update({
         where: { post_id: Number(postId) },
         data: updateData,
       });
 
+      if (tag_ids && Array.isArray(tag_ids)) {
+        await prisma.postTag.deleteMany({
+          where: { post_id: Number(postId) },
+        });
+
+        if (tag_ids.length > 0) {
+          await prisma.postTag.createMany({
+            data: tag_ids.map((tagId: number) => ({
+              post_id: Number(postId),
+              tag_id: tagId,
+            })),
+          });
+        }
+      }
+
+      const postAfterUpdate = await prisma.post.findUnique({
+        where: { post_id: Number(postId) }
+      });
+
+      if (postAfterUpdate) {
+        const allTasksCompleted = checkAllTasksCompleted(postAfterUpdate);
+        
+        if (allTasksCompleted && postAfterUpdate.post_status !== 'Завершен') {
+          await prisma.post.update({
+            where: { post_id: Number(postId) },
+            data: { post_status: 'Завершен' },
+          });
+        } 
+        else if (!allTasksCompleted && postAfterUpdate.post_status === 'Завершен') {
+          await prisma.post.update({
+            where: { post_id: Number(postId) },
+            data: { post_status: 'В работе' },
+          });
+        }
+      }
+
+      const finalPost = await prisma.post.findUnique({
+        where: { post_id: Number(postId) },
+        include: {
+          approved_by: {
+            select: { user_login: true }
+          }
+        }
+      });
+
       return NextResponse.json({
         success: true,
         message: 'Пост успешно обновлен',
-        post: updatedPost,
+        post: finalPost,
       }, { status: 200 });
     } else {
       return NextResponse.json(
