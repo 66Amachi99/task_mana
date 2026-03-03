@@ -289,7 +289,7 @@ export const EditPostWindow = ({ onClose, post, onSuccess }: EditPostWindowProps
     try {
       const deadlineDate = new Date(formData.post_deadline);
       
-      const response = await fetch('/api/posts', {
+      const response = await fetch('/api/posts/update', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

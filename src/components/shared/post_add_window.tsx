@@ -276,7 +276,7 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     try {
       const deadlineDate = new Date(formData.post_deadline);
       
-      const response = await fetch('/api/posts', {
+      const response = await fetch('/api/posts/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
