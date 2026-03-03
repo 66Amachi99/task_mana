@@ -16,6 +16,17 @@ const checkAllTasksCompleted = (post: any): boolean => {
   );
 };
 
+// Константы для типов задач (нужно синхронизировать с TASK_CONFIG)
+const TASK_TYPE_IDS = {
+  mini_video_smm: 1,
+  video: 2,
+  text: 3,
+  photogallery: 4,
+  cover_photo: 5,
+  photo_cards: 6,
+  mini_gallery: 7,
+};
+
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
@@ -155,7 +166,7 @@ export async function PATCH(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { postId, links, feedback, data } = body;
+    const { postId, links, data } = body;
 
     if (!postId) {
       return NextResponse.json(
@@ -175,6 +186,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Обновление ссылок на выполненные задачи
     if (links && Object.keys(links).length > 0) {
       const updateData: any = {};
 
@@ -240,42 +252,7 @@ export async function PUT(request: NextRequest) {
       }, { status: 200 });
 
     } 
-    else if (feedback && Object.keys(feedback).length > 0) {
-      const updateData: any = {};
-
-      if (feedback.mini_video_smm !== undefined) {
-        updateData.post_feedback_mini_video_smm = feedback.mini_video_smm || null;
-      }
-      if (feedback.video !== undefined) {
-        updateData.post_feedback_video = feedback.video || null;
-      }
-      if (feedback.text !== undefined) {
-        updateData.post_feedback_text = feedback.text || null;
-      }
-      if (feedback.photogallery !== undefined) {
-        updateData.post_feedback_photogallery = feedback.photogallery || null;
-      }
-      if (feedback.cover_photo !== undefined) {
-        updateData.post_feedback_cover_photo = feedback.cover_photo || null;
-      }
-      if (feedback.photo_cards !== undefined) {
-        updateData.post_feedback_photo_cards = feedback.photo_cards || null;
-      }
-      if (feedback.mini_gallery !== undefined) {
-        updateData.post_feedback_mini_gallery = feedback.mini_gallery || null;
-      }
-
-      const updatedPost = await prisma.post.update({
-        where: { post_id: Number(postId) },
-        data: updateData,
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: 'Комментарий сохранен',
-        post: updatedPost,
-      }, { status: 200 });
-    }
+    // Обновление данных поста (не ссылок)
     else if (data && Object.keys(data).length > 0) {
       const { post_deadline, tag_ids, ...otherData } = data;
       

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       post_title: body.post_title,
       post_deadline: post_deadline,
       tz_link: body.tz_link || null,
-      post_status: 'В работе',
+      post_status: body.post_status || 'В работе',
       is_published: false,
       telegram_published: null,
       vkontakte_published: null,
@@ -30,6 +30,15 @@ export async function POST(request: NextRequest) {
       post_needs_photogallery: body.post_needs_photogallery || false,
       post_needs_mini_gallery: body.post_needs_mini_gallery || false,
       post_needs_text: true,
+      
+      // Поля для активных комментариев (по умолчанию false)
+      has_active_comments_mini_video_smm: false,
+      has_active_comments_video: false,
+      has_active_comments_cover_photo: false,
+      has_active_comments_photo_cards: false,
+      has_active_comments_photogallery: false,
+      has_active_comments_mini_gallery: false,
+      has_active_comments_text: false,
     };
 
     if (body.post_description !== undefined && body.post_description !== null) {
@@ -43,6 +52,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // created_at и post_date установятся автоматически
     const post = await prisma.post.create({
       data: data,
     });

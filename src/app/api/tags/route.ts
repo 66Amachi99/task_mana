@@ -43,10 +43,12 @@ export async function POST(request: NextRequest) {
     ];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
+    // created_at и updated_at устанавливаются автоматически благодаря @default(now()) и @updatedAt
     const tag = await prisma.tag.create({
       data: {
         name: name.trim(),
         color: randomColor,
+        // created_at и updated_at не нужно указывать, они установятся автоматически
       },
     });
 
@@ -96,6 +98,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // updated_at обновится автоматически благодаря @updatedAt
     const tag = await prisma.tag.update({
       where: { tag_id: Number(tag_id) },
       data: updateData,

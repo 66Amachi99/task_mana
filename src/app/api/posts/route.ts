@@ -7,7 +7,54 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
+    const postId = searchParams.get('id'); // Добавляем возможность получить конкретный пост
 
+    if (postId) {
+      // Получаем конкретный пост с комментариями
+      const post = await prisma.post.findUnique({
+        where: { post_id: Number(postId) },
+        include: {
+          user: {
+            select: {
+              user_login: true,
+            },
+          },
+          approved_by: {
+            select: {
+              user_login: true,
+            },
+          },
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
+          comments: {
+            orderBy: {
+              created_at: 'desc',
+            },
+          },
+        },
+      });
+
+      if (!post) {
+        return NextResponse.json(
+          { error: 'Пост не найден' },
+          { status: 404 }
+        );
+      }
+
+      const transformedPost = {
+        ...post,
+        tags: post.tags.map(pt => pt.tag),
+        post_date: post.post_date ? post.post_date.toISOString() : null,
+        post_deadline: post.post_deadline.toISOString(),
+      };
+
+      return NextResponse.json({ posts: [transformedPost] }, { status: 200 });
+    }
+
+    // Получаем все посты с пагинацией и комментариями
     const totalPosts = await prisma.post.count();
     const totalPages = Math.ceil(totalPosts / limit);
 
@@ -26,6 +73,11 @@ export async function GET(request: NextRequest) {
         tags: {
           include: {
             tag: true,
+          },
+        },
+        comments: {
+          orderBy: {
+            created_at: 'desc',
           },
         },
       },
