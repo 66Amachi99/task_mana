@@ -40,7 +40,6 @@ export const authOptions: NextAuthOptions = {
           admin_role: user.admin_role,
           SMM_role: user.SMM_role,
           designer_role: user.designer_role,
-          videomaker_role: user.videomaker_role,
           coordinator_role: user.coordinator_role,
           photographer_role: user.photographer_role,
         };

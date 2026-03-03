@@ -37,7 +37,9 @@ export async function POST(request: NextRequest) {
     const colors = [
       '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD',
       '#D4A5A5', '#9B59B6', '#3498DB', '#E67E22', '#2ECC71',
-      '#E74C3C', '#1ABC9C', '#F39C12', '#8E44AD', '#16A085'
+      '#E74C3C', '#1ABC9C', '#F39C12', '#8E44AD', '#16A085',
+      '#FF9F1C', '#2EC4B6', '#E71D36', '#011627', '#FF9F1C',
+      '#6B4E71', '#F46036', '#2E294E', '#FFB400', '#C5D86D'
     ];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
 

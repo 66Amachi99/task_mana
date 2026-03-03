@@ -16,10 +16,7 @@ interface PostWithLinks {
   post_done_link_mini_gallery?: string | null;
 }
 
-/**
- * Проверяет, выполнены ли все необходимые задачи поста
- * Используется только для логики согласования, но не для отображения статуса
- */
+
 export const isPostCompleted = (post: PostWithLinks): boolean => {
   if (post.post_needs_mini_video_smm && !post.post_done_link_mini_video_smm) return false;
   if (post.post_needs_video && !post.post_done_link_video) return false;
@@ -32,17 +29,12 @@ export const isPostCompleted = (post: PostWithLinks): boolean => {
   return true;
 };
 
-/**
- * Возвращает статус поста из БД
- * Теперь просто возвращаем то, что в БД, без вычислений
- */
+
 export const getPostStatus = (post: PostWithLinks): string => {
   return post.post_status || 'В работе';
 };
 
-/**
- * Возвращает цветовую схему для статуса
- */
+
 export const getStatusColor = (status: string): string => {
   return status === 'Завершен' 
     ? 'bg-green-100 text-green-800' 

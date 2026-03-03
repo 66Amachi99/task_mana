@@ -1,5 +1,3 @@
-// types/index.ts
-
 export interface User {
   user_id: number;
   user_login: string;
@@ -77,7 +75,6 @@ export interface TaskAssignee {
   task?: Task;
 }
 
-// Типы для API ответов
 export interface PostsResponse {
   posts: Post[];
   currentPage: number;

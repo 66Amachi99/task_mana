@@ -23,7 +23,6 @@ export interface RoleFilter {
   }[];
 }
 
-// Фильтры по ролям
 export const ROLE_FILTERS: RoleFilter[] = [
   { 
     id: 'smm', 
@@ -100,7 +99,6 @@ export function useUser() {
     const roleFilter = ROLE_FILTERS.find(r => r.id === roleId);
     if (!roleFilter) return false;
     
-    // Пост подходит под роль, если есть хотя бы одна задача из этой роли
     return roleFilter.tasks.some(task => post[task.field] === true);
   }, []);
 

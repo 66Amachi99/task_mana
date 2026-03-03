@@ -128,7 +128,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
 
   const canEditPost = user && (user.admin_role || user.SMM_role);
   const canDelete = user && (user.admin_role || user.SMM_role);
-  const canManageSocial = user && (user.admin_role || user.SMM_role); // Только админ и SMM
+  const canManageSocial = user && (user.admin_role || user.SMM_role);
 
   const getTaskFeedback = (taskName: string): string => {
     if (!post) return '';
@@ -249,66 +249,6 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       ...prev,
       [social]: value
     }));
-  };
-
-  const handleSaveSocialLink = async (social: string) => {
-    if (!post || !canManageSocial) return;
-
-    const link = socialLinks[social as keyof typeof socialLinks];
-    if (!link.trim()) return;
-
-    setIsActionLoading(true);
-    try {
-      const response = await fetch('/api/posts', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          postId: post.post_id,
-          action: 'add_social_link',
-          social: social === 'max' ? 'max' : social,
-          link: link.trim()
-        }),
-      });
-
-      if (response.ok) {
-        await onSuccess();
-        onClose();
-      }
-    } catch (error) {
-      console.error('Ошибка при сохранении ссылки:', error);
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  const handleRemoveSocialLink = async (social: string) => {
-    if (!post || !canManageSocial) return;
-
-    setIsActionLoading(true);
-    try {
-      const response = await fetch('/api/posts', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          postId: post.post_id,
-          action: 'remove_social_link',
-          social: social === 'max' ? 'max' : social,
-        }),
-      });
-
-      if (response.ok) {
-        await onSuccess();
-        onClose();
-      }
-    } catch (error) {
-      console.error('Ошибка при удалении ссылки:', error);
-    } finally {
-      setIsActionLoading(false);
-    }
   };
 
   const hasChanges = () => {
@@ -727,7 +667,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
 
             {/* Блок управления ссылками на соцсети - ТОЛЬКО ДЛЯ ОПУБЛИКОВАННЫХ ПОСТОВ и для админа/SMM */}
             {post.is_published === true && canManageSocial && (
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="mb-4 p-4 bg-gray-10 rounded-lg border border-gray-200">
                 <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                   <Link className="w-4 h-4" />
                   Ссылки на посты в соцсетях
@@ -739,24 +679,15 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                       <img src="/icons/telegram.svg" alt="Telegram" className="w-5 h-5" />
                       <span>Telegram</span>
                     </div>
-                    <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1">
                       <input
                         type="text"
                         value={socialLinks.telegram}
                         onChange={(e) => handleSocialLinkChange('telegram', e.target.value)}
                         placeholder="https://t.me/..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         disabled={isSaving || isActionLoading}
                       />
-                      {socialLinks.telegram && socialLinks.telegram !== originalSocialLinks.telegram && (
-                        <button
-                          onClick={() => handleSaveSocialLink('telegram')}
-                          disabled={isSaving || isActionLoading}
-                          className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium disabled:opacity-50"
-                        >
-                          Сохранить
-                        </button>
-                      )}
                     </div>
                   </div>
 
@@ -766,24 +697,15 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                       <img src="/icons/vk.svg" alt="VK" className="w-5 h-5" />
                       <span>VK</span>
                     </div>
-                    <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1">
                       <input
                         type="text"
                         value={socialLinks.vkontakte}
                         onChange={(e) => handleSocialLinkChange('vkontakte', e.target.value)}
                         placeholder="https://vk.com/..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         disabled={isSaving || isActionLoading}
                       />
-                      {socialLinks.vkontakte && socialLinks.vkontakte !== originalSocialLinks.vkontakte && (
-                        <button
-                          onClick={() => handleSaveSocialLink('vkontakte')}
-                          disabled={isSaving || isActionLoading}
-                          className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium disabled:opacity-50"
-                        >
-                          Сохранить
-                        </button>
-                      )}
                     </div>
                   </div>
 
@@ -793,24 +715,15 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                       <img src="/icons/max.svg" alt="MAX" className="w-5 h-5" />
                       <span>MAX</span>
                     </div>
-                    <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1">
                       <input
                         type="text"
                         value={socialLinks.max}
                         onChange={(e) => handleSocialLinkChange('max', e.target.value)}
                         placeholder="https://max.ru/..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         disabled={isSaving || isActionLoading}
                       />
-                      {socialLinks.max && socialLinks.max !== originalSocialLinks.max && (
-                        <button
-                          onClick={() => handleSaveSocialLink('max')}
-                          disabled={isSaving || isActionLoading}
-                          className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium disabled:opacity-50"
-                        >
-                          Сохранить
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -976,9 +889,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                         return (
                           <div 
                             key={task.id} 
-                            className={`border rounded-lg p-4 transition-shadow ${
-                              userCanEdit ? 'hover:shadow-md' : 'bg-gray-50'
-                            }`}
+                            className={`border rounded-lg p-4 transition-shadow ${userCanEdit ? 'hover:shadow-md' : 'bg-gray-50'}`}
                           >
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
                               <div className="sm:w-1/4">
@@ -1031,7 +942,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                                   {userCanEdit && (
                                     <div className="mt-3 pt-3 border-t border-dashed">
                                       <div className="flex items-start gap-2">
-                                        <MessageSquare className="w-4 h-4 text-gray-400 mt-2 flex-shrink-0" />
+                                        <MessageSquare className="w-4 h-4 text-gray-400 mt-2 shrink-0" />
                                         <div className="flex-1">
                                           <AutoResizeTextarea
                                             value={task.feedback}
@@ -1126,7 +1037,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                 )}
               </div>
 
-              {(hasEditableTasks && hasChanges()) && (
+              {(hasEditableTasks || (canManageSocial && post.is_published === true)) && hasChanges() && (
                 <button
                   onClick={handleSaveAll}
                   disabled={isSaving || isActionLoading}
