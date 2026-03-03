@@ -300,7 +300,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       if (socialLinks.telegram !== originalSocialLinks.telegram) {
         if (socialLinks.telegram) {
           socialPromises.push(
-            fetch('/api/posts', {
+            fetch('/api/posts/update', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -313,7 +313,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
           );
         } else {
           socialPromises.push(
-            fetch('/api/posts', {
+            fetch('/api/posts/update', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -329,7 +329,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       if (socialLinks.vkontakte !== originalSocialLinks.vkontakte) {
         if (socialLinks.vkontakte) {
           socialPromises.push(
-            fetch('/api/posts', {
+            fetch('/api/posts/update', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -342,7 +342,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
           );
         } else {
           socialPromises.push(
-            fetch('/api/posts', {
+            fetch('/api/posts/update', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -358,7 +358,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       if (socialLinks.max !== originalSocialLinks.max) {
         if (socialLinks.max) {
           socialPromises.push(
-            fetch('/api/posts', {
+            fetch('/api/posts/update', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -371,7 +371,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
           );
         } else {
           socialPromises.push(
-            fetch('/api/posts', {
+            fetch('/api/posts/update', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -386,7 +386,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
 
       // Отправляем запрос на обновление задач, если есть изменения
       if (Object.keys(linksData).length > 0 || Object.keys(feedbackData).length > 0) {
-        const response = await fetch('/api/posts', {
+        const response = await fetch('/api/posts/update', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -423,7 +423,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
     
     setIsActionLoading(true);
     try {
-      const response = await fetch('/api/posts', {
+      const response = await fetch('/api/posts/update', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -453,7 +453,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
     
     setIsActionLoading(true);
     try {
-      const response = await fetch('/api/posts', {
+      const response = await fetch('/api/posts/update', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -487,7 +487,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
     
     setIsActionLoading(true);
     try {
-      const response = await fetch(`/api/posts?id=${post.post_id}`, {
+      const response = await fetch(`/api/posts/delete?id=${post.post_id}`, {
         method: 'DELETE',
       });
 
