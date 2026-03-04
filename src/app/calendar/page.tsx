@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Header } from '@/components/shared/header';
 import { Calendar } from '../../components/calendar/calendar';
 import { PostDetailsWindow } from '@/components/shared/post_details_window';
@@ -10,6 +10,9 @@ import { getPostStatus, getStatusColor } from '../../lib/post-status';
 import { CalendarAddButton } from '@/components/shared/calendar_add_button';
 import { useUser, ROLE_FILTERS } from '../../hooks/use-roles';
 import { CalendarPost, CalendarTask, CalendarItem } from '../../../types/calendar';
+import { CheckCircle, Circle, Calendar as CalendarIcon, ListTodo } from 'lucide-react';
+
+type SortType = 'all' | 'posts' | 'tasks';
 
 export default function CalendarPage() {
   const [posts, setPosts] = useState<CalendarPost[]>([]);
@@ -22,6 +25,8 @@ export default function CalendarPage() {
   const [showPostDetails, setShowPostDetails] = useState(false);
   const [showTaskDetails, setShowTaskDetails] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showCompletedOnly, setShowCompletedOnly] = useState(false);
+  const [sortType, setSortType] = useState<SortType>('all'); // Новая сортировка
 
   const { user, filterPostByRole } = useUser();
 
@@ -32,7 +37,6 @@ export default function CalendarPage() {
       const postsRes = await fetch('/api/posts?limit=100');
       const postsData = await postsRes.json();
       
-      // Загружаем задачи (автоматически фильтруются на сервере)
       const tasksRes = await fetch('/api/tasks?limit=100');
       const tasksData = await tasksRes.json();
       
@@ -97,11 +101,56 @@ export default function CalendarPage() {
   });
 
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-  const itemsForSelectedDay = itemsByDate.get(selectedDateStr) || [];
+  const allItemsForSelectedDay = itemsByDate.get(selectedDateStr) || [];
+
+  // Фильтруем элементы для отображения в сайдбаре
+  const filteredItems = useMemo(() => {
+    let items = allItemsForSelectedDay;
+    
+    // Фильтр по типу
+    if (sortType === 'posts') {
+      items = items.filter(item => item.type === 'post');
+    } else if (sortType === 'tasks') {
+      items = items.filter(item => item.type === 'task');
+    }
+    
+    // Фильтр по выполненным
+    if (showCompletedOnly) {
+      items = items.filter(item => {
+        if (item.type === 'post') {
+          return item.post_status === 'Завершен';
+        } else {
+          return item.task_status === 'Выполнена';
+        }
+      });
+    }
+    
+    return items;
+  }, [allItemsForSelectedDay, sortType, showCompletedOnly]);
+
+  // Подсчет статистики для выбранного дня
+  const dayStats = useMemo(() => {
+    const total = allItemsForSelectedDay.length;
+    const completed = allItemsForSelectedDay.filter(item => {
+      if (item.type === 'post') {
+        return item.post_status === 'Завершен';
+      } else {
+        return item.task_status === 'Выполнена';
+      }
+    }).length;
+    
+    const postsCount = allItemsForSelectedDay.filter(item => item.type === 'post').length;
+    const tasksCount = allItemsForSelectedDay.filter(item => item.type === 'task').length;
+    
+    return { total, completed, postsCount, tasksCount };
+  }, [allItemsForSelectedDay]);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
     setIsSidebarOpen(true);
+    // Сбрасываем сортировку при открытии нового дня
+    setSortType('all');
+    setShowCompletedOnly(false);
   };
 
   const handleCloseSidebar = () => {
@@ -127,6 +176,14 @@ export default function CalendarPage() {
 
   const handleContentUpdate = async () => {
     await fetchAllContent();
+  };
+
+  const toggleCompletedFilter = () => {
+    setShowCompletedOnly(!showCompletedOnly);
+  };
+
+  const handleSortChange = (type: SortType) => {
+    setSortType(type);
   };
 
   const getTaskPriorityColor = (priority: number) => {
@@ -165,7 +222,7 @@ export default function CalendarPage() {
         selectedTaskFilter={selectedRoleFilter} 
         onTaskFilterChange={setSelectedRoleFilter}
       />
-      <div className="h-[calc(100vh-80px)] w-full px-4 sm:px-6 lg:px-8 py-4">
+      <div className="h-[calc(100vh-100px)] w-full px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col lg:flex-row gap-8 h-full transition-all duration-300">
           <div className={`transition-all duration-300 h-full ${
             isSidebarOpen ? 'lg:w-[70%]' : 'lg:w-full'
@@ -182,14 +239,24 @@ export default function CalendarPage() {
           {isSidebarOpen && (
             <div className="lg:w-[30%] h-full animate-slideIn">
               <div className="bg-white rounded-lg shadow-lg p-6 h-full overflow-hidden flex flex-col">
-                <div className="flex justify-between items-center mb-4 shrink-0">
-                  <h2 className="text-xl font-semibold">
-                    {selectedDate.toLocaleDateString('ru-RU', { 
-                      day: 'numeric', 
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </h2>
+                {/* Заголовок с датой и фильтрами */}
+                <div className="flex justify-between items-start mb-4 shrink-0">
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      {selectedDate.toLocaleDateString('ru-RU', { 
+                        day: 'numeric', 
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </h2>
+                    <div className="text-sm text-gray-500 mt-1">
+                      <span className="mr-3">📄 Постов: {dayStats.postsCount}</span>
+                      <span>✓ Задач: {dayStats.tasksCount}</span>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      Готово: {dayStats.completed}/{dayStats.total}
+                    </div>
+                  </div>
                   <button
                     onClick={handleCloseSidebar}
                     className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -197,19 +264,83 @@ export default function CalendarPage() {
                     ✕
                   </button>
                 </div>
+
+                {/* Панель сортировки */}
+                <div className="flex flex-wrap gap-2 mb-4 shrink-0">
+                  <button
+                    onClick={() => handleSortChange('all')}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
+                      sortType === 'all'
+                        ? 'bg-gray-400 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <CalendarIcon className="w-4 h-4" />
+                    Все
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('posts')}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
+                      sortType === 'posts'
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                    }`}
+                  >
+                    <span>📄</span>
+                    Посты
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('tasks')}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
+                      sortType === 'tasks'
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                    }`}
+                  >
+                    <ListTodo className="w-4 h-4" />
+                    Задачи
+                  </button>
+                  <button
+                    onClick={toggleCompletedFilter}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
+                      showCompletedOnly 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    title={showCompletedOnly ? "Показать все" : "Показать только выполненные"}
+                  >
+                    {showCompletedOnly ? (
+                      <CheckCircle className="w-4 h-4" />
+                    ) : (
+                      <Circle className="w-4 h-4" />
+                    )}
+                    {showCompletedOnly ? 'Готовые' : 'Готовые'}
+                  </button>
+                </div>
                 
-                {itemsForSelectedDay.length === 0 ? (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500">
-                    Нет элементов на этот день
+                {/* Список элементов */}
+                {filteredItems.length === 0 ? (
+                  <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500 flex-1 flex items-center justify-center">
+                    {showCompletedOnly 
+                      ? 'Нет выполненных элементов на этот день' 
+                      : sortType === 'posts'
+                      ? 'Нет постов на этот день'
+                      : sortType === 'tasks'
+                      ? 'Нет задач на этот день'
+                      : 'Нет элементов на этот день'}
                   </div>
                 ) : (
                   <div className="space-y-4 overflow-y-auto flex-1 pr-2">
-                    {itemsForSelectedDay.map((item) => {
+                    {filteredItems.map((item) => {
                       if (item.type === 'post') {
                         return (
                           <div 
                             key={`post-${item.post_id}`} 
-                            className="bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer border-l-4 border-blue-400"
+                            className={`bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
+                              item.post_status === 'Завершен' 
+                                ? 'border-green-400 bg-green-50' 
+                                : 'border-blue-400'
+                            }`}
                             onClick={() => handlePostClick(item)}
                           >
                             <h3 className="font-semibold text-gray-800 truncate" title={item.post_title}>
@@ -228,11 +359,14 @@ export default function CalendarPage() {
                       } else {
                         const priorityColor = getTaskPriorityColor(item.priority);
                         const priorityLabel = getTaskPriorityLabel(item.priority);
+                        const isCompleted = item.task_status === 'Выполнена';
                         
                         return (
                           <div 
                             key={`task-${item.task_id}`} 
-                            className="bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer border-l-4 border-purple-400"
+                            className={`bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
+                              isCompleted ? 'border-green-400 bg-green-50' : 'border-purple-400'
+                            }`}
                             onClick={() => handleTaskClick(item)}
                           >
                             <h3 className="font-semibold text-gray-800 truncate" title={item.title}>
@@ -245,7 +379,11 @@ export default function CalendarPage() {
                               <span className={`text-xs px-2 py-1 rounded-full ${priorityColor}`}>
                                 {priorityLabel}
                               </span>
-                              <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                isCompleted 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-purple-100 text-purple-800'
+                              }`}>
                                 {item.task_status}
                               </span>
                               {item.assignees && item.assignees.length > 0 && (

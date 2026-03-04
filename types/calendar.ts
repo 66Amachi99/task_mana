@@ -64,3 +64,19 @@ export interface DayItems {
   posts: CalendarPost[];
   tasks: CalendarTask[];
 }
+
+// Добавляем интерфейс для статистики дня
+export interface DayStats {
+  total: number;
+  completed: number;
+  postsTotal: number;
+  postsCompleted: number;
+  tasksTotal: number;
+  tasksCompleted: number;
+}
+
+// Добавляем интерфейс для статистики месяца
+export interface MonthStats {
+  postsTotal: number;
+  tasksTotal: number;
+}
