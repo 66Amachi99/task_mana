@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Массив твоих конкретных цветов
+const COLORS = [
+  '#F7ADC499',
+  '#48C88499',
+  '#AB48BF99',
+  '#FE4D3D66',
+  '#44962766',
+  '#41A5F399'
+];
+
 // Получить все теги
 export async function GET() {
   try {
@@ -33,22 +43,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Генерируем случайный цвет для тега
-    const colors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD',
-      '#D4A5A5', '#9B59B6', '#3498DB', '#E67E22', '#2ECC71',
-      '#E74C3C', '#1ABC9C', '#F39C12', '#8E44AD', '#16A085',
-      '#FF9F1C', '#2EC4B6', '#E71D36', '#011627', '#FF9F1C',
-      '#6B4E71', '#F46036', '#2E294E', '#FFB400', '#C5D86D'
-    ];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    // Выбираем случайный цвет из твоего списка
+    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
 
-    // created_at и updated_at устанавливаются автоматически благодаря @default(now()) и @updatedAt
     const tag = await prisma.tag.create({
       data: {
         name: name.trim(),
         color: randomColor,
-        // created_at и updated_at не нужно указывать, они установятся автоматически
       },
     });
 
@@ -88,6 +89,13 @@ export async function PUT(request: NextRequest) {
       updateData.name = name.trim();
     }
     if (color && typeof color === 'string') {
+      // Проверяем, что цвет из разрешенного списка (опционально)
+      if (!COLORS.includes(color)) {
+        return NextResponse.json(
+          { error: 'Недопустимый цвет' },
+          { status: 400 }
+        );
+      }
       updateData.color = color;
     }
 
@@ -98,7 +106,6 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // updated_at обновится автоматически благодаря @updatedAt
     const tag = await prisma.tag.update({
       where: { tag_id: Number(tag_id) },
       data: updateData,

@@ -8,7 +8,7 @@ import { LogoutWindow } from "./logout_window";
 import { LogIn, LogOut } from 'lucide-react';
 
 export const HeaderAuthButton = () => {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [showAuthWindow, setShowAuthWindow] = useState(false);
   const [showLogoutWindow, setShowLogoutWindow] = useState(false);
@@ -17,8 +17,15 @@ export const HeaderAuthButton = () => {
     await signOut({ 
       redirect: false,
     });
-    router.refresh();
+    // Принудительно обновляем страницу
+    window.location.reload();
     setShowLogoutWindow(false);
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthWindow(false);
+    // Принудительно обновляем страницу после успешной авторизации
+    window.location.reload();
   };
 
   if (status === "loading") {
@@ -42,7 +49,7 @@ export const HeaderAuthButton = () => {
         </button>
         
         {showAuthWindow && (
-          <AuthWindow onClose={() => setShowAuthWindow(false)} />
+          <AuthWindow onClose={() => setShowAuthWindow(false)} onSuccess={handleAuthSuccess} />
         )}
       </>
     );

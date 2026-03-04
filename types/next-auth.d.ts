@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import "next-auth";
 
 declare module "next-auth" {
   interface User {
@@ -7,10 +7,10 @@ declare module "next-auth" {
     admin_role: boolean;
     SMM_role: boolean;
     designer_role: boolean;
-    videomaker_role: boolean;
     coordinator_role: boolean;
+    photographer_role: boolean;
   }
-  
+
   interface Session {
     user: {
       id: string;
@@ -18,8 +18,20 @@ declare module "next-auth" {
       admin_role: boolean;
       SMM_role: boolean;
       designer_role: boolean;
-      videomaker_role: boolean;
       coordinator_role: boolean;
-    }
+      photographer_role: boolean;
+    };
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    user_login: string;
+    admin_role: boolean;
+    SMM_role: boolean;
+    designer_role: boolean;
+    coordinator_role: boolean;
+    photographer_role: boolean;
   }
 }

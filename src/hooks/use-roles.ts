@@ -91,6 +91,34 @@ export function useUser() {
   
   const isAdminOrCoordinatorOrSmm = useMemo(() => isAdmin || isCoordinator || isSmm, [isAdmin, isCoordinator, isSmm]);
 
+  // Проверки для задач
+  const canCreateTask = useMemo(() => isAdmin || isSmm, [isAdmin, isSmm]);
+  const canViewAllTasks = useMemo(() => isAdmin || isSmm, [isAdmin, isSmm]);
+  
+  const canEditTask = useCallback((task: any, currentUserId?: number) => {
+    if (!user) return false;
+    if (isAdmin || isSmm) return true;
+    
+    // Проверяем, является ли пользователь исполнителем задачи
+    if (task.assignees && task.assignees.length > 0) {
+      return task.assignees[0]?.user_id === user.id;
+    }
+    
+    return false;
+  }, [user, isAdmin, isSmm]);
+
+  const canViewTask = useCallback((task: any) => {
+    if (!user) return false;
+    if (isAdmin || isSmm) return true;
+    
+    // Пользователь видит только задачи, где он исполнитель
+    if (task.assignees && task.assignees.length > 0) {
+      return task.assignees[0]?.user_id === user.id;
+    }
+    
+    return false;
+  }, [user, isAdmin, isSmm]);
+
   const getRoleFilters = useCallback((): RoleFilter[] => {
     return ROLE_FILTERS;
   }, []);
@@ -102,7 +130,7 @@ export function useUser() {
     return roleFilter.tasks.some(task => post[task.field] === true);
   }, []);
 
-  const canEditTask = useCallback((taskRole: string): boolean => {
+  const canEditPostTask = useCallback((taskRole: string): boolean => {
     if (!user) return false;
     
     if (isAdminOrCoordinatorOrSmm) return true;
@@ -132,8 +160,12 @@ export function useUser() {
     isAdminOrCoordinatorOrSmm,
     canApprove,
     canPublish,
+    canCreateTask,
+    canViewAllTasks,
+    canEditTask,
+    canViewTask,
     getRoleFilters,
     filterPostByRole,
-    canEditTask
+    canEditPostTask
   };
 }

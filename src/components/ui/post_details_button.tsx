@@ -7,7 +7,7 @@ import { Eye } from 'lucide-react';
 interface PostData {
   post_id: number;
   post_title: string;
-  post_description: string | null;
+  post_description: string;
   post_status: string;
   is_published: boolean;
   telegram_published?: string | null;
@@ -32,7 +32,7 @@ interface PostData {
   post_done_link_mini_gallery?: string | null;
   post_done_link_text?: string | null;
   
-  // Поля для фидбэка (могут приходить из БД)
+  // Поля для фидбэка
   post_feedback_mini_video_smm?: string | null;
   post_feedback_video?: string | null;
   post_feedback_cover_photo?: string | null;
@@ -68,7 +68,7 @@ interface PostData {
     color: string;
   }>;
   
-  // Добавляем сигнатуру индекса для совместимости
+  // Добавляем сигнатуру индекса
   [key: string]: unknown;
 }
 

@@ -85,8 +85,12 @@ export const PostDetailsLeftPanel = ({
             {post.tags.map(tag => (
               <span
                 key={tag.tag_id}
-                className="px-2 py-0.5 rounded-full text-xs"
-                style={{ backgroundColor: tag.color + '20', color: tag.color }}
+                className="px-2 py-1 rounded-full text-xs font-medium"
+                style={{ 
+                  backgroundColor: tag.color,
+                  color: 'white',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                }}
               >
                 {tag.name}
               </span>

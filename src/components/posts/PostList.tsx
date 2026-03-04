@@ -32,6 +32,24 @@ interface PostWithRelations {
   post_done_link_mini_gallery?: string | null;
   post_done_link_text?: string | null;
   
+  // Поля для фидбэка
+  post_feedback_mini_video_smm?: string | null;
+  post_feedback_video?: string | null;
+  post_feedback_cover_photo?: string | null;
+  post_feedback_photo_cards?: string | null;
+  post_feedback_photogallery?: string | null;
+  post_feedback_mini_gallery?: string | null;
+  post_feedback_text?: string | null;
+  
+  // Поля для комментариев
+  comments?: Array<{
+    id: number;
+    text: string;
+    status: string;
+    created_at: string;
+    task_type_id?: number;
+  }>;
+  
   post_date: Date | null;
   post_deadline: Date;
   
@@ -49,6 +67,9 @@ interface PostWithRelations {
     name: string;
     color: string;
   }>;
+  
+  // Добавляем сигнатуру индекса
+  [key: string]: unknown;
 }
 
 interface PostListProps {
@@ -247,9 +268,9 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
                           key={tag.tag_id}
                           className="px-2 py-1 rounded-full text-xs font-medium"
                           style={{ 
-                            backgroundColor: tag.color + '20', 
-                            color: tag.color,
-                            border: `1px solid ${tag.color}40`
+                            backgroundColor: tag.color,
+                            color: 'white',
+                            textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                           }}
                         >
                           {tag.name}

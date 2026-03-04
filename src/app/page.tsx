@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { PostList } from '../components/posts/PostList';
+import { TaskCard } from '../components/tasks/task_card';
 import { Header } from '../components/shared/header';
 import { Pagination } from '../components/ui/pagination';
 import { useUser, ROLE_FILTERS } from '../hooks/use-roles';
+import { Task } from '../../types/task';
 
 interface PostWithRelations {
   post_id: number;
@@ -14,7 +16,6 @@ interface PostWithRelations {
   is_published: boolean;
   tz_link?: string | null;
   feedback_comment?: string | null;
-  
   post_needs_mini_video_smm: boolean;
   post_needs_video: boolean;
   post_needs_cover_photo: boolean;
@@ -22,7 +23,6 @@ interface PostWithRelations {
   post_needs_photogallery: boolean;
   post_needs_mini_gallery: boolean;
   post_needs_text: boolean;
-  
   post_done_link_mini_video_smm?: string | null;
   post_done_link_video?: string | null;
   post_done_link_cover_photo?: string | null;
@@ -30,94 +30,122 @@ interface PostWithRelations {
   post_done_link_photogallery?: string | null;
   post_done_link_mini_gallery?: string | null;
   post_done_link_text?: string | null;
-  
   post_date: Date | null;
   post_deadline: Date;
-  
   responsible_person_id: number | null;
   approved_by_id?: number | null;
-  
-  user?: {
-    user_login: string;
-  } | null;
-  approved_by?: {
-    user_login: string;
-  } | null;
-  tags?: Array<{
-    tag_id: number;
-    name: string;
-    color: string;
-  }>;
+  user?: { user_login: string } | null;
+  approved_by?: { user_login: string } | null;
+  tags?: Array<{ tag_id: number; name: string; color: string }>;
+  type: 'post';
+  [key: string]: unknown;
 }
+
+type ContentItem = PostWithRelations | Task;
+
+type ViewMode = 'all' | 'posts' | 'tasks';
 
 export default function HomePage() {
   const [allPosts, setAllPosts] = useState<PostWithRelations[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<PostWithRelations[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [filteredContent, setFilteredContent] = useState<ContentItem[]>([]);
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const postsPerPage = 10;
+  const itemsPerPage = 10;
 
-  const { filterPostByRole } = useUser();
+  const { user, filterPostByRole } = useUser();
 
-  const fetchAllPosts = useCallback(async () => {
+  const fetchAllContent = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/posts?limit=100`);
-      const data = await response.json();
       
-      if (Array.isArray(data.posts)) {
-        const postsWithDates = data.posts.map((post: any) => ({
-          ...post,
-          post_date: post.post_date ? new Date(post.post_date) : null,
-          post_deadline: new Date(post.post_deadline),
-        }));
-        setAllPosts(postsWithDates);
-      } else {
-        setAllPosts([]);
-      }
+      const postsResponse = await fetch(`/api/posts?limit=100`);
+      const postsData = await postsResponse.json();
+      
+      // Загружаем задачи (автоматически фильтруются на сервере)
+      const tasksResponse = await fetch('/api/tasks?limit=100');
+      const tasksData = await tasksResponse.json();
+      
+      const postsWithDates = (postsData.posts || []).map((post: any) => ({
+        ...post,
+        post_date: post.post_date ? new Date(post.post_date) : null,
+        post_deadline: new Date(post.post_deadline),
+        type: 'post' as const,
+      }));
+      
+      const tasksWithDates = (tasksData.tasks || []).map((task: any) => ({
+        ...task,
+        type: 'task' as const,
+      }));
+      
+      setAllPosts(postsWithDates);
+      setAllTasks(tasksWithDates);
+      
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error('Error fetching content:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAllPosts();
-  }, [fetchAllPosts]);
+    fetchAllContent();
+  }, [fetchAllContent]);
 
   useEffect(() => {
-    const handlePostUpdated = () => {
-      fetchAllPosts();
+    const handleContentUpdated = () => {
+      fetchAllContent();
     };
 
-    window.addEventListener('postUpdated', handlePostUpdated);
+    window.addEventListener('contentUpdated', handleContentUpdated);
     return () => {
-      window.removeEventListener('postUpdated', handlePostUpdated);
+      window.removeEventListener('contentUpdated', handleContentUpdated);
     };
-  }, [fetchAllPosts]);
+  }, [fetchAllContent]);
 
   useEffect(() => {
-    let filtered = allPosts;
+    let filtered: ContentItem[] = [];
     
-    if (selectedRoleFilter) {
-      // Фильтруем посты, которые содержат хотя бы одну задачу из выбранной роли
-      filtered = allPosts.filter(post => filterPostByRole(post, selectedRoleFilter));
+    if (viewMode === 'posts') {
+      filtered = [...allPosts];
+    } else if (viewMode === 'tasks') {
+      filtered = [...allTasks];
+    } else {
+      filtered = [...allPosts, ...allTasks];
     }
     
-    setFilteredPosts(filtered);
+    if (selectedRoleFilter && viewMode !== 'tasks') {
+      filtered = filtered.filter(item => {
+        if (item.type === 'post') {
+          return filterPostByRole(item, selectedRoleFilter);
+        }
+        return true;
+      });
+    }
     
-    const total = Math.ceil(filtered.length / postsPerPage);
+    filtered.sort((a, b) => {
+      const dateA = a.type === 'post' 
+        ? (a.post_date?.getTime() || 0) 
+        : new Date(a.created_at).getTime();
+      const dateB = b.type === 'post' 
+        ? (b.post_date?.getTime() || 0) 
+        : new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+    
+    setFilteredContent(filtered);
+    
+    const total = Math.ceil(filtered.length / itemsPerPage);
     setTotalPages(total || 1);
-    
     setCurrentPage(1);
-  }, [selectedRoleFilter, allPosts, filterPostByRole, postsPerPage]);
+  }, [viewMode, selectedRoleFilter, allPosts, allTasks, filterPostByRole]);
 
-  const currentPosts = filteredPosts.slice(
-    (currentPage - 1) * postsPerPage,
-    currentPage * postsPerPage
+  const currentItems = filteredContent.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const handlePageChange = (page: number) => {
@@ -125,12 +153,18 @@ export default function HomePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (loading && allPosts.length === 0) {
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+  };
+
+  if (loading && allPosts.length === 0 && allTasks.length === 0) {
     return (
       <div>
         <Header 
           selectedTaskFilter={selectedRoleFilter} 
-          onTaskFilterChange={setSelectedRoleFilter} 
+          onTaskFilterChange={setSelectedRoleFilter}
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-10">Загрузка...</div>
@@ -143,29 +177,50 @@ export default function HomePage() {
     <div>
       <Header 
         selectedTaskFilter={selectedRoleFilter} 
-        onTaskFilterChange={setSelectedRoleFilter} 
+        onTaskFilterChange={setSelectedRoleFilter}
+        viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PostList 
-          posts={currentPosts} 
-          onPostUpdate={fetchAllPosts}
-        />
+        <div className="space-y-4 md:space-y-6">
+          {currentItems.map((item) => {
+            if (item.type === 'post') {
+              return (
+                <PostList 
+                  key={`post-${item.post_id}`}
+                  posts={[item]} 
+                  onPostUpdate={fetchAllContent}
+                />
+              );
+            } else {
+              return (
+                <TaskCard
+                  key={`task-${item.task_id}`}
+                  task={item}
+                  onTaskUpdate={fetchAllContent}
+                />
+              );
+            }
+          })}
+          
+          {currentItems.length === 0 && (
+            <div className="text-center py-10">
+              <p className="text-gray-500">
+                {viewMode === 'posts' && 'Нет постов для отображения'}
+                {viewMode === 'tasks' && 'Нет задач для отображения'}
+                {viewMode === 'all' && 'Нет элементов для отображения'}
+              </p>
+            </div>
+          )}
+        </div>
         
-        {filteredPosts.length > postsPerPage && (
+        {filteredContent.length > itemsPerPage && (
           <div className="mt-8">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={handlePageChange}
             />
-          </div>
-        )}
-        
-        {filteredPosts.length === 0 && selectedRoleFilter && (
-          <div className="text-center py-10">
-            <p className="text-gray-500">
-              Нет постов с задачами для роли {ROLE_FILTERS.find(r => r.id === selectedRoleFilter)?.label}
-            </p>
           </div>
         )}
       </div>

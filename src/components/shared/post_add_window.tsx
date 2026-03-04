@@ -421,14 +421,18 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                     {selectedTags.map(tag => (
                       <span
                         key={tag.tag_id}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm"
-                        style={{ backgroundColor: tag.color + '20', color: tag.color }}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium"
+                        style={{ 
+                          backgroundColor: tag.color,
+                          color: 'white',
+                          textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                        }}
                       >
                         {tag.name}
                         <button
                           type="button"
                           onClick={() => handleTagRemove(tag.tag_id)}
-                          className="hover:opacity-70"
+                          className="hover:opacity-70 text-white"
                         >
                           <X className="w-3 h-3" />
                         </button>

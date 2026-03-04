@@ -1,151 +1,91 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 
 interface AuthWindowProps {
   onClose: () => void;
+  onSuccess: () => void;
 }
 
-export const AuthWindow = ({ onClose }: AuthWindowProps) => {
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    user_login: '',
-    user_password: '',
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    setError(null);
-  };
+export const AuthWindow = ({ onClose, onSuccess }: AuthWindowProps) => {
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.user_login.trim() || !formData.user_password.trim()) {
-      setError('Введите логин и пароль');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
+    setIsLoading(true);
+    setError('');
 
     try {
       const result = await signIn('credentials', {
-        user_login: formData.user_login,
-        user_password: formData.user_password,
+        user_login: login,
+        user_password: password,
         redirect: false,
       });
 
       if (result?.error) {
         setError('Неверный логин или пароль');
-        return;
-      }
-
-      if (result?.ok) {
-        router.refresh();
-        onClose();
+      } else {
+        onSuccess();
       }
     } catch (error) {
-      setError('Произошла ошибка при авторизации');
+      setError('Произошла ошибка при входе');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div 
-        className="bg-white rounded-lg w-full max-w-md"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b">
-            <div className="flex-1"></div>
-            <h2 className="text-2xl font-bold text-gray-800 text-center">Авторизация</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-md p-6">
+        <h2 className="text-2xl font-bold mb-6">Вход в систему</h2>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Логин</label>
+            <input
+              type="text"
+              value={login}
+              onChange={(e) => setLogin(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-2">Пароль</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              disabled={isSubmitting}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer flex-1 flex justify-end"
-              aria-label="Закрыть"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-red-700">{error}</p>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Логин *
-              </label>
-              <input
-                type="text"
-                name="user_login"
-                value={formData.user_login}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                placeholder="Введите ваш логин"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Пароль *
-              </label>
-              <input
-                type="password"
-                name="user_password"
-                value={formData.user_password}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                placeholder="Введите ваш пароль"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-center gap-4 mt-8 pt-6 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 cursor-pointer min-w-30"
+              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
             >
               Отмена
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 cursor-pointer min-w-30"
+              disabled={isLoading}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
             >
-              {isSubmitting ? 'Вход...' : 'Войти'}
+              {isLoading ? 'Вход...' : 'Войти'}
             </button>
           </div>
         </form>

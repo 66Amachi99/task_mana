@@ -74,7 +74,7 @@ model Task {
   all_day        Boolean  @default(false)
   
   priority         Int    @default(0)
-  post_status      String   @default("Поставлена")
+  task_status      String   @default("Поставлена")
   completed_task   String?
 
   created_at      DateTime @default(now())
