@@ -380,7 +380,6 @@ export const EditTaskWindow = ({ onClose, task, onSuccess }: EditTaskWindowProps
               >
                 <option value="Поставлена">Поставлена</option>
                 <option value="В работе">В работе</option>
-                <option value="На проверке">На проверке</option>
                 <option value="Выполнена">Выполнена</option>
               </select>
             </div>

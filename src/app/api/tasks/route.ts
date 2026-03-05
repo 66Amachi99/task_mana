@@ -56,7 +56,10 @@ export async function GET(request: NextRequest) {
       }
 
       // Проверяем права на просмотр
-      const canView = isAdmin || isSmm || task.assignees.some(a => a.user_id === userId);
+      const isCreator = task.created_by_id === userId;
+      const isAssignee = task.assignees.some(a => a.user_id === userId);
+      const canView = isAdmin || isSmm || isCreator || isAssignee;
+      
       if (!canView) {
         return NextResponse.json(
           { error: 'Нет доступа к задаче' },
@@ -83,20 +86,18 @@ export async function GET(request: NextRequest) {
     // Получаем все задачи с учетом прав
     const where: any = {};
     
-    // Если не админ и не SMM, показываем только свои задачи
+    // Если не админ и не SMM, показываем только свои задачи (созданные или назначенные)
     if (!isAdmin && !isSmm) {
-      where.assignees = {
-        some: {
-          user_id: userId
-        }
-      };
+      where.OR = [
+        { created_by_id: userId },
+        { assignees: { some: { user_id: userId } } }
+      ];
     } else if (filter === 'my') {
       // Если админ/SMM выбрали фильтр "Мои задачи"
-      where.assignees = {
-        some: {
-          user_id: userId
-        }
-      };
+      where.OR = [
+        { created_by_id: userId },
+        { assignees: { some: { user_id: userId } } }
+      ];
     }
 
     const totalTasks = await prisma.task.count({ where });

@@ -27,7 +27,6 @@ interface TaskAddWindowProps {
 }
 
 export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWindowProps) => {
-  const { user: currentUser } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);

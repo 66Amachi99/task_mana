@@ -16,7 +16,6 @@ export async function PUT(request: NextRequest) {
     const userData = session.user as any;
     const userId = parseInt(userData.id);
     const isAdmin = userData.admin_role;
-    const isSmm = userData.SMM_role;
 
     const body = await request.json();
     const { taskId, data } = body;
@@ -43,7 +42,10 @@ export async function PUT(request: NextRequest) {
     }
 
     // Проверяем права на редактирование
-    const canEdit = isAdmin || isSmm || existingTask.assignees.some(a => a.user_id === userId);
+    const isCreator = existingTask.created_by_id === userId;
+    const isAssignee = existingTask.assignees.some(a => a.user_id === userId);
+    const canEdit = isAdmin || isCreator || isAssignee;
+    
     if (!canEdit) {
       return NextResponse.json(
         { error: 'Нет прав на редактирование задачи' },
@@ -178,7 +180,6 @@ export async function PATCH(request: NextRequest) {
     const userData = session.user as any;
     const userId = parseInt(userData.id);
     const isAdmin = userData.admin_role;
-    const isSmm = userData.SMM_role;
 
     const body = await request.json();
     const { taskId, status, completed_task } = body;
@@ -205,7 +206,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Проверяем права на обновление
-    const canEdit = isAdmin || isSmm || existingTask.assignees.some(a => a.user_id === userId);
+    const isCreator = existingTask.created_by_id === userId;
+    const isAssignee = existingTask.assignees.some(a => a.user_id === userId);
+    const canEdit = isAdmin || isCreator || isAssignee;
+    
     if (!canEdit) {
       return NextResponse.json(
         { error: 'Нет прав на обновление задачи' },

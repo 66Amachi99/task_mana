@@ -92,31 +92,40 @@ export function useUser() {
   const isAdminOrCoordinatorOrSmm = useMemo(() => isAdmin || isCoordinator || isSmm, [isAdmin, isCoordinator, isSmm]);
 
   // Проверки для задач
-  const canCreateTask = useMemo(() => isAdmin || isSmm, [isAdmin, isSmm]);
+  const canCreateTask = useMemo(() => true, []); // Любой пользователь может создавать задачи
+  
   const canViewAllTasks = useMemo(() => isAdmin || isSmm, [isAdmin, isSmm]);
   
   const canEditTask = useCallback((task: any, currentUserId?: number) => {
     if (!user) return false;
-    if (isAdmin || isSmm) return true;
+    if (isAdmin) return true; // Админ может всё
     
-    // Проверяем, является ли пользователь исполнителем задачи
-    if (task.assignees && task.assignees.length > 0) {
-      return task.assignees[0]?.user_id === user.id;
-    }
+    const isCreator = task.created_by_id === user.id;
+    const isAssignee = task.assignees && task.assignees.some((a: any) => a.user_id === user.id);
     
-    return false;
-  }, [user, isAdmin, isSmm]);
+    // Редактировать может: создатель, исполнитель или админ
+    return isCreator || isAssignee;
+  }, [user, isAdmin]);
+
+  const canDeleteTask = useCallback((task: any) => {
+    if (!user) return false;
+    if (isAdmin) return true; // Админ может удалять
+    
+    const isCreator = task.created_by_id === user.id;
+    
+    // Удалять может только создатель или админ
+    return isCreator;
+  }, [user, isAdmin]);
 
   const canViewTask = useCallback((task: any) => {
     if (!user) return false;
-    if (isAdmin || isSmm) return true;
+    if (isAdmin || isSmm) return true; // Админ и SMM видят все задачи
     
-    // Пользователь видит только задачи, где он исполнитель
-    if (task.assignees && task.assignees.length > 0) {
-      return task.assignees[0]?.user_id === user.id;
-    }
+    const isCreator = task.created_by_id === user.id;
+    const isAssignee = task.assignees && task.assignees.some((a: any) => a.user_id === user.id);
     
-    return false;
+    // Видеть может: создатель, исполнитель, админ, SMM
+    return isCreator || isAssignee;
   }, [user, isAdmin, isSmm]);
 
   const getRoleFilters = useCallback((): RoleFilter[] => {
@@ -163,6 +172,7 @@ export function useUser() {
     canCreateTask,
     canViewAllTasks,
     canEditTask,
+    canDeleteTask,
     canViewTask,
     getRoleFilters,
     filterPostByRole,

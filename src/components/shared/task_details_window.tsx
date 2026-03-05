@@ -34,7 +34,6 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case 'Поставлена': return 'bg-yellow-100 text-yellow-800';
     case 'В работе': return 'bg-blue-100 text-blue-800';
-    case 'На проверке': return 'bg-purple-100 text-purple-800';
     case 'Выполнена': return 'bg-green-100 text-green-800';
     default: return 'bg-gray-100 text-gray-800';
   }
@@ -61,7 +60,7 @@ const formatDateOnly = (dateString: string) => {
 };
 
 export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindowProps) => {
-  const { user, canEditTask, canViewAllTasks } = useUser();
+  const { user } = useUser();
   const [isSaving, setIsSaving] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -69,8 +68,8 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
   const [completedLink, setCompletedLink] = useState('');
   const [originalCompletedLink, setOriginalCompletedLink] = useState('');
 
-  const isAdminOrSmm = user && (user.admin_role || user.SMM_role);
-  const canEdit = task ? canEditTask(task, user?.id) : false;
+  const canEdit = true; // Все могут редактировать через окно редактирования
+  const canDelete = user?.admin_role || task?.created_by_id === user?.id; // Админ или создатель
 
   useEffect(() => {
     if (task) {
@@ -105,31 +104,6 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
       console.error('Ошибка при сохранении ссылки:', error);
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleStatusChange = async (newStatus: string) => {
-    if (!task) return;
-
-    setIsActionLoading(true);
-    try {
-      const response = await fetch('/api/tasks/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          taskId: task.task_id,
-          status: newStatus
-        })
-      });
-
-      if (response.ok) {
-        await onSuccess();
-        onClose();
-      }
-    } catch (error) {
-      console.error('Ошибка при обновлении статуса:', error);
-    } finally {
-      setIsActionLoading(false);
     }
   };
 
@@ -336,73 +310,47 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
                   </div>
                 )}
 
-                {/* Поле для добавления ссылки на выполненную задачу (только для исполнителей) */}
-                {canEdit && (
-                  <div className="border-t pt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Результат выполнения</h4>
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={completedLink}
-                        onChange={e => handleCompletedLinkChange(e.target.value)}
-                        placeholder="Вставьте ссылку на готовую задачу..."
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        disabled={isSaving || isActionLoading}
-                      />
-                      {completedLink !== originalCompletedLink && (
-                        <div className="flex justify-end">
-                          <button
-                            onClick={handleSaveCompletedLink}
-                            disabled={isSaving || isActionLoading}
-                            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium disabled:opacity-50"
-                          >
-                            {isSaving ? 'Сохранение...' : 'Сохранить ссылку'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                {/* Поле для добавления ссылки на выполненную задачу */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Результат выполнения</h4>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={completedLink}
+                      onChange={e => handleCompletedLinkChange(e.target.value)}
+                      placeholder="Вставьте ссылку на готовую задачу..."
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      disabled={isSaving || isActionLoading}
+                    />
+                    {completedLink !== originalCompletedLink && (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={handleSaveCompletedLink}
+                          disabled={isSaving || isActionLoading}
+                          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium disabled:opacity-50"
+                        >
+                          {isSaving ? 'Сохранение...' : 'Сохранить ссылку'}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
             {/* Нижняя панель с кнопками */}
             <div className="px-6 py-4 border-t shrink-0 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {isAdminOrSmm && (
-                  <button
-                    onClick={handleEditTask}
-                    disabled={isActionLoading}
-                    className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Изменить
-                  </button>
-                )}
+                <button
+                  onClick={handleEditTask}
+                  disabled={isActionLoading}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Edit className="w-4 h-4" />
+                  Изменить
+                </button>
 
-                {canEdit && task.task_status !== 'Выполнена' && (
-                  <button
-                    onClick={() => handleStatusChange('На проверке')}
-                    disabled={isActionLoading}
-                    className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Отправить на проверку
-                  </button>
-                )}
-
-                {isAdminOrSmm && task.task_status === 'На проверке' && (
-                  <button
-                    onClick={() => handleStatusChange('Выполнена')}
-                    disabled={isActionLoading}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Подтвердить выполнение
-                  </button>
-                )}
-
-                {isAdminOrSmm && (
+                {canDelete && (
                   <button
                     onClick={handleDelete}
                     disabled={isActionLoading}
