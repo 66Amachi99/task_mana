@@ -1,270 +1,161 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { X, Calendar, User, Edit, Trash2, ExternalLink, CheckCircle, Save } from 'lucide-react';
 import { useUser } from '@/hooks/use-roles';
 import { Task } from '../../../types/task';
 
+// --- ИНТЕРФЕЙСЫ ---
 interface TaskDetailsWindowProps {
   onClose: () => void;
   task: Task | null;
   onSuccess: () => Promise<void>;
 }
 
-interface Tag {
-  tag_id: number;
-  name: string;
-  color: string;
-}
-
+interface Tag { tag_id: number; name: string; color: string; }
 interface UserType {
-  user_id: number;
-  user_login: string;
-  admin_role: boolean;
-  SMM_role: boolean;
-  designer_role: boolean;
-  coordinator_role: boolean;
-  photographer_role: boolean;
+  user_id: number; user_login: string; admin_role: boolean;
+  SMM_role: boolean; designer_role: boolean;
+  coordinator_role: boolean; photographer_role: boolean;
 }
 
-const getPriorityColor = (priority: number) => {
-  switch (priority) {
-    case 1: return 'text-blue-600 bg-blue-50';
-    case 2: return 'text-yellow-600 bg-yellow-50';
-    case 3: return 'text-red-600 bg-red-50';
-    default: return 'text-gray-600 bg-gray-50';
-  }
+// Единый стейт для формы редактирования
+interface FormData {
+  title: string; description: string; start_time: string; end_time: string;
+  all_day: boolean; priority: number; task_status: string;
+  completed_task: string; assignee: UserType | null; tags: Tag[];
+}
+
+// --- КОНСТАНТЫ И УТИЛИТЫ ---
+const PRIORITIES: Record<number, { label: string; color: string }> = {
+  1: { label: 'Низкий', color: 'text-blue-600 bg-blue-50' },
+  2: { label: 'Средний', color: 'text-yellow-600 bg-yellow-50' },
+  3: { label: 'Высокий', color: 'text-red-600 bg-red-50' },
+};
+const DEFAULT_PRIORITY = { label: 'Обычный', color: 'text-gray-600 bg-gray-50' };
+
+const STATUS_COLORS: Record<string, string> = {
+  'Поставлена': 'bg-yellow-100 text-yellow-800',
+  'В работе': 'bg-blue-100 text-blue-800',
+  'Выполнена': 'bg-green-100 text-green-800',
 };
 
-const getPriorityLabel = (priority: number) => {
-  switch (priority) {
-    case 1: return 'Низкий';
-    case 2: return 'Средний';
-    case 3: return 'Высокий';
-    default: return 'Обычный';
-  }
+const formatDisplayDate = (dateStr: string, allDay = false) => {
+  const options: Intl.DateTimeFormatOptions = allDay
+    ? { day: '2-digit', month: '2-digit', year: 'numeric' }
+    : { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+  return new Date(dateStr).toLocaleString('ru-RU', options);
 };
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Поставлена': return 'bg-yellow-100 text-yellow-800';
-    case 'В работе': return 'bg-blue-100 text-blue-800';
-    case 'Выполнена': return 'bg-green-100 text-green-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
+const formatDateForInput = (dateStr: string | Date) => {
+  const d = new Date(dateStr);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 };
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+// Хук для закрытия дропдаунов по клику вне
+const useOutsideClick = (callback: () => void) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) callback();
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [callback]);
+  return ref;
 };
 
-const formatDateOnly = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-};
+// --- КОМПОНЕНТЫ-ПОМОЩНИКИ ---
 
-const formatDateForInput = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
-const DatePicker = ({ 
-  value, 
-  onChange 
-}: { 
-  value: Date; 
-  onChange: (date: Date) => void;
+const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
+  selectedTags: Tag[]; availableTags: Tag[]; onChange: (tags: Tag[]) => void;
+  onCreate: (name: string) => Promise<Tag | null>; disabled: boolean;
 }) => {
-  return (
-    <div className="absolute z-50 mt-2 p-4 bg-white border rounded-lg shadow-xl">
-      <input
-        type="datetime-local"
-        value={formatDateForInput(value)}
-        onChange={e => onChange(new Date(e.target.value))}
-        className="w-full px-3 py-2 border rounded-lg"
-      />
-    </div>
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useOutsideClick(() => setIsOpen(false));
+
+  const filtered = availableTags.filter(t => 
+    t.name.toLowerCase().includes(search.toLowerCase()) && !selectedTags.some(st => st.tag_id === t.tag_id)
   );
-};
 
-const TagSelector = ({
-  selectedTags,
-  onTagSelect,
-  onTagRemove,
-  onSearchChange,
-  searchQuery,
-  onCreateTag,
-  filteredTags,
-  showDropdown,
-  setShowDropdown,
-  dropdownRef,
-  disabled,
-}: {
-  selectedTags: Tag[];
-  onTagSelect: (tag: Tag) => void;
-  onTagRemove: (tagId: number) => void;
-  onSearchChange: (value: string) => void;
-  searchQuery: string;
-  onCreateTag: () => void;
-  filteredTags: Tag[];
-  showDropdown: boolean;
-  setShowDropdown: (show: boolean) => void;
-  dropdownRef: React.RefObject<HTMLDivElement | null>;
-  disabled: boolean;
-}) => {
+  const handleSelect = (tag: Tag) => {
+    onChange([...selectedTags, tag]);
+    setSearch('');
+    setIsOpen(false);
+  };
+
+  const handleCreate = async () => {
+    if (!search.trim()) return;
+    const newTag = await onCreate(search);
+    if (newTag) handleSelect(newTag);
+  };
+
   return (
-    <div className="relative" ref={dropdownRef}>
-      <div className="flex flex-wrap gap-2 mb-2 min-h-10 p-2 border rounded-lg bg-white">
+    <div className="relative" ref={ref}>
+      <div className="flex flex-wrap gap-2 mb-2 min-h-[40px] p-2 border rounded-lg bg-white">
         {selectedTags.map(tag => (
-          <span
-            key={tag.tag_id}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium"
-            style={{
-              backgroundColor: tag.color,
-              color: 'white',
-              textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-            }}
-          >
+          <span key={tag.tag_id} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium text-white shadow-sm" style={{ backgroundColor: tag.color }}>
             {tag.name}
-            <button type="button" onClick={() => onTagRemove(tag.tag_id)} className="hover:opacity-80 ml-1" disabled={disabled}>
+            <button type="button" onClick={() => onChange(selectedTags.filter(t => t.tag_id !== tag.tag_id))} disabled={disabled} className="hover:opacity-80 ml-1">
               <X className="w-3 h-3" />
             </button>
           </span>
         ))}
-
         <input
-          type="text"
-          value={searchQuery}
-          onChange={e => {
-            onSearchChange(e.target.value);
-            setShowDropdown(true);
-          }}
-          onFocus={() => setShowDropdown(true)}
-          onBlur={() => {
-            setTimeout(() => setShowDropdown(false), 120);
-          }}
-          placeholder="Поиск тегов..."
-          disabled={disabled}
-          className="flex-1 min-w-30 outline-none text-sm"
+          type="text" value={search} onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
+          onFocus={() => setIsOpen(true)} placeholder="Поиск тегов..." disabled={disabled}
+          className="flex-1 min-w-[120px] outline-none text-sm bg-transparent"
         />
       </div>
-
-      {showDropdown && (
+      {isOpen && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {filteredTags.length > 0 ? (
-            filteredTags.map(tag => (
-              <div
-                key={tag.tag_id}
-                onClick={() => onTagSelect(tag)}
-                className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2"
-              >
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
-                {tag.name}
-              </div>
-            ))
-          ) : searchQuery.trim() ? (
-            <div onClick={onCreateTag} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-blue-600">
-              + Создать "{searchQuery}"
+          {filtered.length > 0 ? filtered.map(tag => (
+            <div key={tag.tag_id} onClick={() => handleSelect(tag)} className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />{tag.name}
             </div>
-          ) : (
-            <div className="px-4 py-2 text-gray-500">Введите текст для поиска</div>
-          )}
+          )) : search.trim() ? (
+            <div onClick={handleCreate} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-blue-600">+ Создать "{search}"</div>
+          ) : <div className="px-4 py-2 text-gray-500">Введите текст для поиска</div>}
         </div>
       )}
     </div>
   );
 };
 
-const UserSelector = ({
-  selectedUser,
-  onUserSelect,
-  onUserClear,
-  searchQuery,
-  onSearchChange,
-  users,
-  showDropdown,
-  setShowDropdown,
-  dropdownRef,
-  disabled,
-}: {
-  selectedUser: UserType | null;
-  onUserSelect: (user: UserType) => void;
-  onUserClear: () => void;
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
-  users: UserType[];
-  showDropdown: boolean;
-  setShowDropdown: (show: boolean) => void;
-  dropdownRef: React.RefObject<HTMLDivElement | null>;
-  disabled: boolean;
+const UserSelector = ({ selectedUser, users, onChange, disabled }: {
+  selectedUser: UserType | null; users: UserType[]; onChange: (user: UserType | null) => void; disabled: boolean;
 }) => {
-  const filteredUsers = users.filter(user =>
-    user.user_login.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (!selectedUser || user.user_id !== selectedUser.user_id)
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useOutsideClick(() => setIsOpen(false));
+
+  const filtered = users.filter(u => 
+    u.user_login.toLowerCase().includes(search.toLowerCase()) && u.user_id !== selectedUser?.user_id
   );
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={ref}>
       {selectedUser && (
         <div className="mb-2">
           <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
             {selectedUser.user_login}
-            <button
-              type="button"
-              onClick={onUserClear}
-              className="hover:opacity-70"
-              disabled={disabled}
-            >
-              <X className="w-3 h-3" />
-            </button>
+            <button type="button" onClick={() => onChange(null)} disabled={disabled} className="hover:opacity-70"><X className="w-3 h-3" /></button>
           </span>
         </div>
       )}
       <input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => {
-          onSearchChange(e.target.value);
-          setShowDropdown(true);
-        }}
-        onFocus={() => setShowDropdown(true)}
-        onBlur={() => {
-          setTimeout(() => setShowDropdown(false), 120);
-        }}
-        placeholder="Поиск исполнителя..."
-        disabled={disabled}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+        type="text" value={search} onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
+        onFocus={() => setIsOpen(true)} placeholder="Поиск исполнителя..." disabled={disabled}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
       />
-      {showDropdown && filteredUsers.length > 0 && (
+      {isOpen && filtered.length > 0 && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {filteredUsers.map(user => (
-            <div
-              key={user.user_id}
-              onClick={() => onUserSelect(user)}
-              className="px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
-            >
+          {filtered.map(user => (
+            <div key={user.user_id} onClick={() => { onChange(user); setSearch(''); setIsOpen(false); }} className="px-4 py-2 cursor-pointer hover:bg-blue-50">
               <div className="font-medium">{user.user_login}</div>
               <div className="text-xs text-gray-500">
-                {user.admin_role && 'Админ '}
-                {user.coordinator_role && 'Координатор '}
-                {user.designer_role && 'Дизайнер '}
-                {user.SMM_role && 'SMM '}
-                {user.photographer_role && 'Фотограф'}
+                {[user.admin_role && 'Админ', user.coordinator_role && 'Координатор', user.designer_role && 'Дизайнер', user.SMM_role && 'SMM', user.photographer_role && 'Фотограф'].filter(Boolean).join(', ')}
               </div>
             </div>
           ))}
@@ -274,737 +165,332 @@ const UserSelector = ({
   );
 };
 
+// --- ГЛАВНЫЙ КОМПОНЕНТ ---
+
 export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindowProps) => {
   const { user } = useUser();
   
-  // Состояния для данных
-  const [originalTask, setOriginalTask] = useState<Task | null>(null);
-  
-  // Состояния для редактирования
   const [isEditing, setIsEditing] = useState(false);
-  
-  // Редактируемые поля
-  const [editedTitle, setEditedTitle] = useState('');
-  const [editedDescription, setEditedDescription] = useState('');
-  const [editedStartTime, setEditedStartTime] = useState('');
-  const [editedEndTime, setEditedEndTime] = useState('');
-  const [editedAllDay, setEditedAllDay] = useState(false);
-  const [editedPriority, setEditedPriority] = useState('0');
-  const [editedStatus, setEditedStatus] = useState('');
-  const [editedCompletedLink, setEditedCompletedLink] = useState('');
-  const [originalCompletedLink, setOriginalCompletedLink] = useState('');
-  
-  // Исполнитель
-  const [selectedAssignee, setSelectedAssignee] = useState<UserType | null>(null);
-  const [originalAssignee, setOriginalAssignee] = useState<UserType | null>(null);
-  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState('');
-  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
-  const assigneeDropdownRef = useRef<HTMLDivElement>(null);
-  
-  // Теги
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  const [originalTags, setOriginalTags] = useState<Tag[]>([]);
-  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-  const [tagSearchQuery, setTagSearchQuery] = useState('');
-  const [showTagDropdown, setShowTagDropdown] = useState(false);
-  const tagDropdownRef = useRef<HTMLDivElement>(null);
-  
-  // Датапикеры
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const startDatePickerRef = useRef<HTMLDivElement>(null);
-  const endDatePickerRef = useRef<HTMLDivElement>(null);
-  
-  // Пользователи для выбора исполнителя
+  const [isLoading, setIsLoading] = useState({ data: true, action: false });
   const [users, setUsers] = useState<UserType[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   
-  // Состояния загрузки
-  const [isSaving, setIsSaving] = useState(false);
-  const [isActionLoading, setIsActionLoading] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [isClosingDetails, setIsClosingDetails] = useState(false);
+  // Единое состояние формы
+  const [formData, setFormData] = useState<FormData | null>(null);
+  const [initialData, setInitialData] = useState<FormData | null>(null);
 
-  const canEdit = true; // Все могут редактировать
-  const canDelete = user?.admin_role || task?.created_by_id === user?.id; // Админ или создатель
+  const canDelete = user?.admin_role || task?.created_by_id === user?.id;
 
-  // Блокировка прокрутки background
+  // Блокировка скролла
   useEffect(() => {
     if (!task) return;
-    const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [task]);
 
-  // Закрытие дропдаунов по клику вне
+  // Загрузка справочников
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (tagDropdownRef.current && !tagDropdownRef.current.contains(event.target as Node)) {
-        setShowTagDropdown(false);
-      }
-      if (assigneeDropdownRef.current && !assigneeDropdownRef.current.contains(event.target as Node)) {
-        setShowAssigneeDropdown(false);
-      }
-      if (startDatePickerRef.current && !startDatePickerRef.current.contains(event.target as Node)) {
-        setShowStartDatePicker(false);
-      }
-      if (endDatePickerRef.current && !endDatePickerRef.current.contains(event.target as Node)) {
-        setShowEndDatePicker(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Загрузка пользователей
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch('/api/users');
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error('Ошибка загрузки пользователей:', error);
-      } finally {
-        setLoadingUsers(false);
-      }
-    };
-    fetchUsers();
-  }, []);
-
-  // Загрузка тегов
-  useEffect(() => {
-    const fetchTags = async () => {
-      try {
-        const response = await fetch('/api/tags');
-        const data = await response.json();
-        setAvailableTags(data);
-      } catch (error) {
-        console.error('Ошибка загрузки тегов:', error);
-      }
-    };
-    fetchTags();
+    Promise.all([
+      fetch('/api/users').then(r => r.json()),
+      fetch('/api/tags').then(r => r.json())
+    ])
+    .then(([usersData, tagsData]) => {
+      setUsers(usersData);
+      setAvailableTags(tagsData);
+    })
+    .catch(err => console.error('Ошибка загрузки данных:', err))
+    .finally(() => setIsLoading(prev => ({ ...prev, data: false })));
   }, []);
 
   // Инициализация данных
   useEffect(() => {
-    if (!task) return;
+    if (!task || isLoading.data) return;
 
-    setOriginalTask(task);
+    const assignee = task.assignees?.length ? users.find(u => u.user_id === task.assignees![0].user_id) || null : null;
+    
+    const state: FormData = {
+      title: task.title || '', description: task.description || '',
+      start_time: formatDateForInput(task.start_time), end_time: formatDateForInput(task.end_time),
+      all_day: task.all_day || false, priority: task.priority || 0,
+      task_status: task.task_status || 'Поставлена', completed_task: task.completed_task || '',
+      assignee, tags: task.tags || []
+    };
 
-    const startDate = new Date(task.start_time);
-    const endDate = new Date(task.end_time);
+    setFormData(state);
+    setInitialData(state);
+  }, [task, users, isLoading.data]);
 
-    setEditedTitle(task.title || '');
-    setEditedDescription(task.description || '');
-    setEditedStartTime(formatDateForInput(startDate));
-    setEditedEndTime(formatDateForInput(endDate));
-    setEditedAllDay(task.all_day || false);
-    setEditedPriority(task.priority.toString());
-    setEditedStatus(task.task_status || 'Поставлена');
-    setEditedCompletedLink(task.completed_task || '');
-    setOriginalCompletedLink(task.completed_task || '');
+  const handleChange = useCallback((field: keyof FormData, value: any) => {
+    setFormData(prev => prev ? { ...prev, [field]: value } : null);
+  }, []);
 
-    // Исполнитель
-    if (task.assignees && task.assignees.length > 0 && users.length > 0) {
-      const assigneeUser = users.find(u => u.user_id === task.assignees[0].user_id);
-      if (assigneeUser) {
-        setSelectedAssignee(assigneeUser);
-        setOriginalAssignee(assigneeUser);
-        setAssigneeSearchQuery(assigneeUser.user_login);
-      }
-    }
+  // Вычисление изменений (сортируем ID тегов для корректного сравнения массивов)
+  const hasChanges = useMemo(() => {
+    if (!formData || !initialData) return false;
+    const current = { ...formData, tags: formData.tags.map(t => t.tag_id).sort() };
+    const initial = { ...initialData, tags: initialData.tags.map(t => t.tag_id).sort() };
+    return JSON.stringify(current) !== JSON.stringify(initial);
+  }, [formData, initialData]);
 
-    // Теги
-    setSelectedTags(task.tags || []);
-    setOriginalTags(task.tags || []);
-  }, [task, users]);
-
-  // Фильтрация тегов
-  const filteredTags = availableTags.filter(tag =>
-    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
-    !selectedTags.find(t => t.tag_id === tag.tag_id)
-  );
-
-  const handleTagSelect = (tag: Tag) => {
-    if (!selectedTags.find(t => t.tag_id === tag.tag_id)) {
-      setSelectedTags([...selectedTags, tag]);
-    }
-    setTagSearchQuery('');
-    setShowTagDropdown(false);
-  };
-
-  const handleTagRemove = (tagId: number) => {
-    setSelectedTags(selectedTags.filter(t => t.tag_id !== tagId));
-  };
-
-  const handleCreateTag = async () => {
-    if (!tagSearchQuery.trim()) return;
-
+  const handleCreateTag = async (name: string) => {
     try {
-      const response = await fetch('/api/tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tagSearchQuery }),
+      const res = await fetch('/api/tags', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }),
       });
-
-      if (response.ok) {
-        const newTag = await response.json();
-        setAvailableTags([...availableTags, newTag]);
-        setSelectedTags([...selectedTags, newTag]);
-        setTagSearchQuery('');
-        setShowTagDropdown(false);
+      if (res.ok) {
+        const newTag = await res.json();
+        setAvailableTags(prev => [...prev, newTag]);
+        return newTag;
       }
-    } catch (error) {
-      console.error('Ошибка создания тега:', error);
-    }
-  };
-
-  const handleAssigneeSelect = (user: UserType) => {
-    setSelectedAssignee(user);
-    setAssigneeSearchQuery(user.user_login);
-    setShowAssigneeDropdown(false);
-  };
-
-  const handleAssigneeClear = () => {
-    setSelectedAssignee(null);
-    setAssigneeSearchQuery('');
-  };
-
-  const handleEditStart = () => {
-    setIsEditing(true);
-  };
-
-  const handleEditCancel = () => {
-    setIsEditing(false);
-    if (task) {
-      setEditedTitle(task.title || '');
-      setEditedDescription(task.description || '');
-      
-      const startDate = new Date(task.start_time);
-      const endDate = new Date(task.end_time);
-      setEditedStartTime(formatDateForInput(startDate));
-      setEditedEndTime(formatDateForInput(endDate));
-      
-      setEditedAllDay(task.all_day || false);
-      setEditedPriority(task.priority.toString());
-      setEditedStatus(task.task_status || 'Поставлена');
-      setEditedCompletedLink(task.completed_task || '');
-      
-      if (task.assignees && task.assignees.length > 0 && users.length > 0) {
-        const assigneeUser = users.find(u => u.user_id === task.assignees[0].user_id);
-        if (assigneeUser) {
-          setSelectedAssignee(assigneeUser);
-          setAssigneeSearchQuery(assigneeUser.user_login);
-        }
-      } else {
-        setSelectedAssignee(null);
-        setAssigneeSearchQuery('');
-      }
-      
-      setSelectedTags(task.tags || []);
-    }
-  };
-
-  // Сохранение всех изменений задачи
-  const handleSaveTask = async () => {
-    if (!task) return;
-
-    if (!editedTitle.trim() || !editedStartTime || !editedEndTime) {
-      alert('Пожалуйста, заполните все обязательные поля');
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      const response = await fetch('/api/tasks/update', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          taskId: task.task_id,
-          data: {
-            title: editedTitle,
-            description: editedDescription || null,
-            start_time: new Date(editedStartTime).toISOString(),
-            end_time: new Date(editedEndTime).toISOString(),
-            all_day: editedAllDay,
-            priority: parseInt(editedPriority),
-            task_status: editedStatus,
-            assignee_id: selectedAssignee?.user_id || null,
-            tag_ids: selectedTags.map(t => t.tag_id),
-            completed_task: editedCompletedLink.trim() || null,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка при обновлении задачи');
-      }
-
-      await onSuccess();
-      setIsEditing(false);
-      
-      // Обновляем оригинальные значения
-      setOriginalAssignee(selectedAssignee);
-      setOriginalTags(selectedTags);
-      setOriginalCompletedLink(editedCompletedLink);
-      
-    } catch (error) {
-      console.error('Ошибка при обновлении задачи:', error);
-      alert(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!task) return;
-
-    const isConfirmed = window.confirm('Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.');
-    if (!isConfirmed) return;
-
-    setIsActionLoading(true);
-    try {
-      const response = await fetch(`/api/tasks/delete?id=${task.task_id}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        await onSuccess();
-        onClose();
-      }
-    } catch (error) {
-      console.error('Ошибка при удалении задачи:', error);
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  const handleEditTask = () => {
-    setIsClosingDetails(true);
-    setTimeout(() => setShowEditModal(true), 100);
-  };
-
-  const handleCloseEditModal = () => {
-    setShowEditModal(false);
-    setTimeout(() => onClose(), 100);
-  };
-
-  const handleSuccessEdit = async () => {
-    await onSuccess();
-    setShowEditModal(false);
-    onClose();
+    } catch (err) { console.error('Ошибка создания тега:', err); }
+    return null;
   };
 
   const handleLinkClick = (url: string, e: React.MouseEvent) => {
     e.preventDefault();
     if (!url) return;
-    
-    let fullUrl = url.trim();
-    if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
-      fullUrl = 'https://' + fullUrl;
+    const fullUrl = url.trim().match(/^https?:\/\//) ? url.trim() : `https://${url.trim()}`;
+    window.open(fullUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleSave = async () => {
+    if (!task || !formData) return;
+    if (!formData.title.trim() || !formData.start_time || !formData.end_time) {
+      return alert('Пожалуйста, заполните все обязательные поля');
     }
-    
+
+    setIsLoading(prev => ({ ...prev, action: true }));
     try {
-      window.open(fullUrl, '_blank', 'noopener,noreferrer');
-    } catch {
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const response = await fetch('/api/tasks/update', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId: task.task_id,
+          data: {
+            title: formData.title, description: formData.description || null,
+            start_time: new Date(formData.start_time).toISOString(),
+            end_time: new Date(formData.end_time).toISOString(),
+            all_day: formData.all_day, priority: Number(formData.priority),
+            task_status: formData.task_status, assignee_id: formData.assignee?.user_id || null,
+            tag_ids: formData.tags.map(t => t.tag_id), completed_task: formData.completed_task.trim() || null,
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error((await response.json()).error || 'Ошибка обновления');
+      
+      await onSuccess();
+      setInitialData(formData);
+      setIsEditing(false);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Неизвестная ошибка');
+    } finally {
+      setIsLoading(prev => ({ ...prev, action: false }));
     }
   };
 
-  if (!task) return null;
+  const handleDelete = async () => {
+    if (!task || !window.confirm('Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.')) return;
+    
+    setIsLoading(prev => ({ ...prev, action: true }));
+    try {
+      const res = await fetch(`/api/tasks/delete?id=${task.task_id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await onSuccess();
+        onClose();
+      }
+    } catch (err) {
+      console.error('Ошибка удаления:', err);
+      setIsLoading(prev => ({ ...prev, action: false }));
+    }
+  };
 
-  const priorityColor = getPriorityColor(task.priority);
-  const statusColor = getStatusColor(task.task_status);
-  const hasCompletedLink = task.completed_task && task.completed_task.trim() !== '';
-
-  // Проверка наличия изменений
-  const hasChanges = 
-    editedTitle !== task.title ||
-    editedDescription !== (task.description || '') ||
-    editedStartTime !== formatDateForInput(new Date(task.start_time)) ||
-    editedEndTime !== formatDateForInput(new Date(task.end_time)) ||
-    editedAllDay !== task.all_day ||
-    editedPriority !== task.priority.toString() ||
-    editedStatus !== task.task_status ||
-    editedCompletedLink !== (task.completed_task || '') ||
-    selectedAssignee?.user_id !== originalAssignee?.user_id ||
-    JSON.stringify(selectedTags.map(t => t.tag_id).sort()) !== JSON.stringify(originalTags.map(t => t.tag_id).sort());
+  if (!task || !formData) return null;
 
   return (
-    <>
-      {!showEditModal && !isClosingDetails && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={onClose}
-        >
-          <div
-            className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Заголовок */}
-            <div className="flex justify-between items-start px-6 py-4 border-b shrink-0">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+        
+        {/* ХЕДЕР (Заголовок) */}
+        <div className="flex justify-between items-start px-6 py-4 border-b shrink-0">
+          {isEditing ? (
+            <input
+              type="text" value={formData.title} onChange={e => handleChange('title', e.target.value)}
+              className="text-xl font-semibold text-gray-800 border-2 border-blue-300 rounded-lg px-3 py-2 w-full mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Название задачи"
+            />
+          ) : (
+            <h2 className="text-xl font-semibold text-gray-800 truncate pr-2" title={formData.title}>
+              {formData.title}
+            </h2>
+          )}
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors p-1 shrink-0"><X size={24} /></button>
+        </div>
+
+        {/* ОСНОВНОЙ КОНТЕНТ (Скроллируемый) */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-6">
+            
+            {/* Статус и приоритет */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {isEditing ? (
+                <>
+                  <select value={formData.task_status} onChange={e => handleChange('task_status', e.target.value)} className="px-3 py-1 text-sm font-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {Object.keys(STATUS_COLORS).map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <select value={formData.priority} onChange={e => handleChange('priority', e.target.value)} className="px-3 py-1 text-sm font-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="0">Обычный</option><option value="1">Низкий</option><option value="2">Средний</option><option value="3">Высокий</option>
+                  </select>
+                </>
+              ) : (
+                <>
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${STATUS_COLORS[formData.task_status] || 'bg-gray-100 text-gray-800'}`}>{formData.task_status}</span>
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${(PRIORITIES[formData.priority] || DEFAULT_PRIORITY).color}`}>
+                    {(PRIORITIES[formData.priority] || DEFAULT_PRIORITY).label}
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Теги */}
+            {isEditing ? (
+              <TagSelector selectedTags={formData.tags} availableTags={availableTags} onChange={tags => handleChange('tags', tags)} onCreate={handleCreateTag} disabled={isLoading.action} />
+            ) : formData.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.map(t => (
+                  <span key={t.tag_id} className="px-3 py-1 rounded-full text-sm font-medium text-white shadow-sm" style={{ backgroundColor: t.color }}>{t.name}</span>
+                ))}
+              </div>
+            )}
+
+            {/* Описание */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Описание</h3>
+              {isEditing ? (
+                <textarea value={formData.description} onChange={e => handleChange('description', e.target.value)} rows={4} className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Описание задачи..." />
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="max-h-48 overflow-y-auto p-4"><p className="text-sm text-gray-600 whitespace-pre-line">{formData.description || 'Нет описания'}</p></div>
+                </div>
+              )}
+            </div>
+
+            {/* Даты */}
+            <div className="grid grid-cols-2 gap-4">
+              {(['start_time', 'end_time'] as const).map(field => (
+                <div key={field}>
+                  <h4 className="text-xs font-medium text-gray-500 mb-1">{field === 'start_time' ? 'Начало' : 'Окончание'}</h4>
+                  {isEditing ? (
+                    <input
+                      type={formData.all_day ? "date" : "datetime-local"}
+                      value={formData.all_day ? formData[field].split('T')[0] : formData[field]}
+                      onChange={e => handleChange(field, e.target.value)}
+                      className="w-full p-3 bg-blue-50 rounded-lg border-2 border-blue-200 focus:outline-none focus:border-blue-400 focus:ring-0 text-sm font-medium text-blue-800 transition-colors"
+                    />
+                  ) : (
+                    <div className="p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium">{formatDisplayDate(formData[field], formData.all_day)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Весь день */}
+            {isEditing && (
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="edit_all_day" checked={formData.all_day} onChange={e => handleChange('all_day', e.target.checked)} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                <label htmlFor="edit_all_day" className="text-sm text-gray-700">Весь день</label>
+              </div>
+            )}
+
+            {/* Исполнитель */}
+            <div>
+               <h4 className="text-xs font-medium text-gray-500 mb-2">Исполнитель</h4>
+               {isEditing ? (
+                  <UserSelector selectedUser={formData.assignee} users={users} onChange={u => handleChange('assignee', u)} disabled={isLoading.action || isLoading.data} />
+               ) : formData.assignee ? (
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-100">
+                      <User className="w-4 h-4 text-blue-500" />
+                      <span className="text-sm font-medium text-blue-700">{formData.assignee.user_login}</span>
+                    </div>
+                  </div>
+               ) : <p className="text-sm text-gray-500">Не назначен</p>}
+            </div>
+
+            {/* Создатель (ВОССТАНОВЛЕНО) */}
+            {task.created_by && (
+              <div>
+                <h4 className="text-xs font-medium text-gray-500 mb-1">Создатель</h4>
+                <div className="p-3 bg-gray-50 rounded-lg border">
+                  <span className="text-sm font-medium">{task.created_by.user_login}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Результат выполнения (ОРИГИНАЛЬНЫЙ СТИЛЬ ВОССТАНОВЛЕН) */}
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Результат выполнения</h4>
               {isEditing ? (
                 <input
-                  type="text"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  className="text-xl font-semibold text-gray-800 border-2 border-blue-300 rounded-lg px-3 py-2 w-full mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Название задачи"
+                  type="text" value={formData.completed_task} onChange={e => handleChange('completed_task', e.target.value)}
+                  placeholder="Вставьте ссылку на готовую задачу..." disabled={isLoading.action}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-              ) : (
-                <h2 className="text-xl font-semibold text-gray-800 truncate pr-2" title={task.title}>
-                  {task.title}
-                </h2>
-              )}
-              <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors p-1 cursor-pointer shrink-0">
-                <X size={24} />
-              </button>
+              ) : formData.completed_task ? (
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+                    <p className="text-sm text-green-700 truncate" title={formData.completed_task}>{formData.completed_task}</p>
+                  </div>
+                  <button
+                    onClick={e => handleLinkClick(formData.completed_task, e)}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-white text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium shrink-0 ml-2"
+                    title="Открыть ссылку"
+                  >
+                    <ExternalLink className="w-4 h-4" /> Открыть
+                  </button>
+                </div>
+              ) : <p className="text-sm text-gray-500 italic">Ссылка не добавлена</p>}
             </div>
 
-            {/* Основной контент */}
-            <div className="flex-1 overflow-y-auto px-6 py-4">
-              <div className="space-y-6">
-                {/* Статус и приоритет */}
-                <div className="flex items-center gap-3 flex-wrap">
-                  {isEditing ? (
-                    <>
-                      <select
-                        value={editedStatus}
-                        onChange={(e) => setEditedStatus(e.target.value)}
-                        className="px-3 py-1 text-sm font-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="Поставлена">Поставлена</option>
-                        <option value="В работе">В работе</option>
-                        <option value="Выполнена">Выполнена</option>
-                      </select>
-                      <select
-                        value={editedPriority}
-                        onChange={(e) => setEditedPriority(e.target.value)}
-                        className="px-3 py-1 text-sm font-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="0">Обычный</option>
-                        <option value="1">Низкий</option>
-                        <option value="2">Средний</option>
-                        <option value="3">Высокий</option>
-                      </select>
-                    </>
-                  ) : (
-                    <>
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full ${statusColor}`}>
-                        {task.task_status}
-                      </span>
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full ${priorityColor}`}>
-                        {getPriorityLabel(task.priority)}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                {/* Теги */}
-                {isEditing ? (
-                  <TagSelector
-                    selectedTags={selectedTags}
-                    onTagSelect={handleTagSelect}
-                    onTagRemove={handleTagRemove}
-                    onSearchChange={setTagSearchQuery}
-                    searchQuery={tagSearchQuery}
-                    onCreateTag={handleCreateTag}
-                    filteredTags={filteredTags}
-                    showDropdown={showTagDropdown}
-                    setShowDropdown={setShowTagDropdown}
-                    dropdownRef={tagDropdownRef}
-                    disabled={isSaving}
-                  />
-                ) : (
-                  task.tags && task.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {task.tags.map(tag => (
-                        <span
-                          key={tag.tag_id}
-                          className="px-3 py-1 rounded-full text-sm font-medium"
-                          style={{ 
-                            backgroundColor: tag.color,
-                            color: 'white',
-                            textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-                          }}
-                        >
-                          {tag.name}
-                        </span>
-                      ))}
-                    </div>
-                  )
-                )}
-
-                {/* Описание */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Описание</h3>
-                  {isEditing ? (
-                    <textarea
-                      value={editedDescription}
-                      onChange={(e) => setEditedDescription(e.target.value)}
-                      rows={4}
-                      className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                      placeholder="Описание задачи..."
-                    />
-                  ) : (
-                    <div className="border rounded-lg overflow-hidden">
-                      <div className="max-h-48 overflow-y-auto p-4">
-                        <p className="text-sm text-gray-600 whitespace-pre-line">
-                          {task.description || 'Нет описания'}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Время */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-xs font-medium text-gray-500 mb-1">Начало</h4>
-                    <div className="relative" ref={startDatePickerRef}>
-                      {isEditing ? (
-                        <button
-                          onClick={() => setShowStartDatePicker(!showStartDatePicker)}
-                          className="w-full text-left p-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition-colors"
-                        >
-                          <span className="text-sm text-blue-600 block">Начало</span>
-                          <span className="text-sm font-medium text-blue-800">
-                            {editedAllDay 
-                              ? formatDateOnly(editedStartTime)
-                              : formatDate(editedStartTime)}
-                          </span>
-                        </button>
-                      ) : (
-                        <div className="p-3 bg-gray-50 rounded-lg border">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm font-medium">
-                              {task.all_day ? formatDateOnly(task.start_time) : formatDate(task.start_time)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      {showStartDatePicker && isEditing && (
-                        <DatePicker
-                          value={new Date(editedStartTime)}
-                          onChange={(date) => {
-                            setEditedStartTime(formatDateForInput(date));
-                            setShowStartDatePicker(false);
-                          }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-medium text-gray-500 mb-1">Окончание</h4>
-                    <div className="relative" ref={endDatePickerRef}>
-                      {isEditing ? (
-                        <button
-                          onClick={() => setShowEndDatePicker(!showEndDatePicker)}
-                          className="w-full text-left p-3 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition-colors"
-                        >
-                          <span className="text-sm text-blue-600 block">Окончание</span>
-                          <span className="text-sm font-medium text-blue-800">
-                            {editedAllDay 
-                              ? formatDateOnly(editedEndTime)
-                              : formatDate(editedEndTime)}
-                          </span>
-                        </button>
-                      ) : (
-                        <div className="p-3 bg-gray-50 rounded-lg border">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm font-medium">
-                              {task.all_day ? formatDateOnly(task.end_time) : formatDate(task.end_time)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      {showEndDatePicker && isEditing && (
-                        <DatePicker
-                          value={new Date(editedEndTime)}
-                          onChange={(date) => {
-                            setEditedEndTime(formatDateForInput(date));
-                            setShowEndDatePicker(false);
-                          }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Весь день */}
-                {isEditing && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="edit_all_day"
-                      checked={editedAllDay}
-                      onChange={(e) => setEditedAllDay(e.target.checked)}
-                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="edit_all_day" className="text-sm text-gray-700">
-                      Весь день
-                    </label>
-                  </div>
-                )}
-
-                {/* Исполнитель */}
-                {isEditing ? (
-                  <div>
-                    <h4 className="text-xs font-medium text-gray-500 mb-2">Исполнитель</h4>
-                    <UserSelector
-                      selectedUser={selectedAssignee}
-                      onUserSelect={handleAssigneeSelect}
-                      onUserClear={handleAssigneeClear}
-                      searchQuery={assigneeSearchQuery}
-                      onSearchChange={setAssigneeSearchQuery}
-                      users={users}
-                      showDropdown={showAssigneeDropdown}
-                      setShowDropdown={setShowAssigneeDropdown}
-                      dropdownRef={assigneeDropdownRef}
-                      disabled={isSaving || loadingUsers}
-                    />
-                  </div>
-                ) : (
-                  task.assignees && task.assignees.length > 0 && (
-                    <div>
-                      <h4 className="text-xs font-medium text-gray-500 mb-2">Исполнители</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {task.assignees.map(assignee => (
-                          <div
-                            key={assignee.user_id}
-                            className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-100"
-                          >
-                            <User className="w-4 h-4 text-blue-500" />
-                            <span className="text-sm font-medium text-blue-700">{assignee.user_login}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                )}
-
-                {/* Создатель */}
-                {task.created_by && (
-                  <div>
-                    <h4 className="text-xs font-medium text-gray-500 mb-1">Создатель</h4>
-                    <div className="p-3 bg-gray-50 rounded-lg border">
-                      <span className="text-sm font-medium">{task.created_by.user_login}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Ссылка на выполненную задачу */}
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Результат выполнения</h4>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedCompletedLink}
-                      onChange={(e) => setEditedCompletedLink(e.target.value)}
-                      placeholder="Вставьте ссылку на готовую задачу..."
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      disabled={isSaving}
-                    />
-                  ) : hasCompletedLink ? (
-                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
-                        <p className="text-sm text-green-700 truncate" title={task.completed_task || ''}>
-                          {task.completed_task}
-                        </p>
-                      </div>
-                      <button
-                        onClick={e => handleLinkClick(task.completed_task || '', e)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-white text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium shrink-0 ml-2"
-                        title="Открыть ссылку"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Открыть
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 italic">Ссылка не добавлена</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Нижняя панель с кнопками */}
-            <div className="px-6 py-4 border-t shrink-0 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {!isEditing && (
-                  <>
-                    <button
-                      onClick={handleEditStart}
-                      disabled={isActionLoading}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Изменить
-                    </button>
-
-                    {canDelete && (
-                      <button
-                        onClick={handleDelete}
-                        disabled={isActionLoading}
-                        className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50 ml-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Удалить
-                      </button>
-                    )}
-                  </>
-                )}
-
-                {isEditing && (
-                  <>
-                    <button
-                      onClick={handleSaveTask}
-                      disabled={isSaving || !hasChanges}
-                      className={`
-                        px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2
-                        ${hasChanges 
-                          ? 'bg-green-600 text-white hover:bg-green-700' 
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }
-                        transition-colors disabled:opacity-50
-                      `}
-                    >
-                      <Save className="w-4 h-4" />
-                      {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
-                    </button>
-                    <button
-                      onClick={handleEditCancel}
-                      disabled={isSaving}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <X className="w-4 h-4" />
-                      Отмена
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {/* Индикатор наличия изменений */}
-              {isEditing && hasChanges && (
-                <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg">
-                  Есть несохраненные изменения
-                </span>
-              )}
-            </div>
           </div>
         </div>
-      )}
-    </>
+
+        {/* ФУТЕР (Кнопки) */}
+        <div className="px-6 py-4 border-t shrink-0 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {!isEditing ? (
+              <>
+                <button onClick={() => setIsEditing(true)} disabled={isLoading.action} className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50">
+                  <Edit className="w-4 h-4"/> Изменить
+                </button>
+                {canDelete && (
+                  <button onClick={handleDelete} disabled={isLoading.action} className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50 ml-2">
+                    <Trash2 className="w-4 h-4"/> Удалить
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <button onClick={handleSave} disabled={isLoading.action || !hasChanges} className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50 ${hasChanges ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
+                  <Save className="w-4 h-4"/> {isLoading.action ? 'Сохранение...' : 'Сохранить изменения'}
+                </button>
+                <button onClick={() => { setFormData(initialData); setIsEditing(false); }} disabled={isLoading.action} className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50">
+                  <X className="w-4 h-4"/> Отмена
+                </button>
+              </>
+            )}
+          </div>
+          {isEditing && hasChanges && (
+            <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg">Есть несохраненные изменения</span>
+          )}
+        </div>
+
+      </div>
+    </div>
   );
 };
