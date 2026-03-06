@@ -15,16 +15,8 @@ export async function POST(request: NextRequest) {
 
     const userData = session.user as any;
     const createdById = parseInt(userData.id);
-    const isAdmin = userData.admin_role;
-    const isSmm = userData.SMM_role;
 
-    // Только админ и SMM могут создавать задачи
-    if (!isAdmin && !isSmm) {
-      return NextResponse.json(
-        { error: 'Недостаточно прав для создания задачи' },
-        { status: 403 }
-      );
-    }
+    // УБИРАЕМ ПРОВЕРКУ НА РОЛИ - теперь все могут создавать задачи
 
     const body = await request.json();
     const {
@@ -34,7 +26,7 @@ export async function POST(request: NextRequest) {
       end_time,
       all_day,
       priority,
-      assignee_id,
+      assignee_ids, // Массив ID исполнителей
       tag_ids
     } = body;
 
@@ -57,11 +49,11 @@ export async function POST(request: NextRequest) {
         priority: priority || 0,
         task_status: 'Поставлена',
         completed_task: null,
-        // Создаем исполнителя, если указан
-        assignees: assignee_id ? {
-          create: {
-            user_id: assignee_id
-          }
+        // Создаем исполнителей, если указаны
+        assignees: assignee_ids && assignee_ids.length > 0 ? {
+          create: assignee_ids.map((userId: number) => ({
+            user_id: userId
+          }))
         } : undefined,
         // Создаем теги, если указаны
         tags: tag_ids && tag_ids.length > 0 ? {

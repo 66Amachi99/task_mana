@@ -62,7 +62,7 @@ export async function PUT(request: NextRequest) {
       priority,
       task_status,
       completed_task,
-      assignee_id,
+      assignee_ids, // Изменено: теперь массив ID
       tag_ids
     } = data;
 
@@ -83,20 +83,20 @@ export async function PUT(request: NextRequest) {
       data: updateData
     });
 
-    // Обновляем исполнителя, если передан
-    if (assignee_id !== undefined) {
+    // Обновляем исполнителей, если передан массив
+    if (assignee_ids !== undefined) {
       // Удаляем всех текущих исполнителей
       await prisma.taskAssignee.deleteMany({
         where: { task_id: Number(taskId) }
       });
 
-      // Создаем нового исполнителя, если ID не null
-      if (assignee_id) {
-        await prisma.taskAssignee.create({
-          data: {
+      // Создаем новых исполнителей
+      if (assignee_ids.length > 0) {
+        await prisma.taskAssignee.createMany({
+          data: assignee_ids.map((userId: number) => ({
             task_id: Number(taskId),
-            user_id: assignee_id
-          }
+            user_id: userId
+          }))
         });
       }
     }

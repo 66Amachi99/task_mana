@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { X, Calendar, User, Edit, Trash2, ExternalLink, CheckCircle, Save } from 'lucide-react';
+import { X, Calendar, User, Edit, Trash2, ExternalLink, CheckCircle, Save, Users } from 'lucide-react';
 import { useUser } from '@/hooks/use-roles';
 import { Task } from '../../../types/task';
 
@@ -12,18 +12,33 @@ interface TaskDetailsWindowProps {
   onSuccess: () => Promise<void>;
 }
 
-interface Tag { tag_id: number; name: string; color: string; }
+interface Tag {
+  tag_id: number;
+  name: string;
+  color: string;
+}
+
 interface UserType {
-  user_id: number; user_login: string; admin_role: boolean;
-  SMM_role: boolean; designer_role: boolean;
-  coordinator_role: boolean; photographer_role: boolean;
+  user_id: number;
+  user_login: string;
+  admin_role: boolean;
+  SMM_role: boolean;
+  designer_role: boolean;
+  coordinator_role: boolean;
+  photographer_role: boolean;
 }
 
 // Единый стейт для формы редактирования
 interface FormData {
-  title: string; description: string; start_time: string; end_time: string;
-  all_day: boolean; priority: number; task_status: string;
-  completed_task: string; assignee: UserType | null; tags: Tag[];
+  title: string;
+  description: string;
+  start_time: string;
+  end_time: string;
+  all_day: boolean;
+  priority: number;
+  task_status: string;
+  assignees: UserType[];
+  tags: Tag[];
 }
 
 // --- КОНСТАНТЫ И УТИЛИТЫ ---
@@ -68,8 +83,11 @@ const useOutsideClick = (callback: () => void) => {
 // --- КОМПОНЕНТЫ-ПОМОЩНИКИ ---
 
 const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
-  selectedTags: Tag[]; availableTags: Tag[]; onChange: (tags: Tag[]) => void;
-  onCreate: (name: string) => Promise<Tag | null>; disabled: boolean;
+  selectedTags: Tag[];
+  availableTags: Tag[];
+  onChange: (tags: Tag[]) => void;
+  onCreate: (name: string) => Promise<Tag | null>;
+  disabled: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -123,39 +141,76 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
   );
 };
 
-const UserSelector = ({ selectedUser, users, onChange, disabled }: {
-  selectedUser: UserType | null; users: UserType[]; onChange: (user: UserType | null) => void; disabled: boolean;
+// Компонент выбора нескольких исполнителей
+const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
+  selectedUsers: UserType[];
+  users: UserType[];
+  onChange: (users: UserType[]) => void;
+  disabled: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const ref = useOutsideClick(() => setIsOpen(false));
 
   const filtered = users.filter(u => 
-    u.user_login.toLowerCase().includes(search.toLowerCase()) && u.user_id !== selectedUser?.user_id
+    u.user_login.toLowerCase().includes(search.toLowerCase()) && 
+    !selectedUsers.some(selected => selected.user_id === u.user_id)
   );
+
+  const handleSelect = (user: UserType) => {
+    onChange([...selectedUsers, user]);
+    setSearch('');
+  };
+
+  const handleRemove = (userId: number) => {
+    onChange(selectedUsers.filter(u => u.user_id !== userId));
+  };
 
   return (
     <div className="relative" ref={ref}>
-      {selectedUser && (
-        <div className="mb-2">
-          <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-            {selectedUser.user_login}
-            <button type="button" onClick={() => onChange(null)} disabled={disabled} className="hover:opacity-70"><X className="w-3 h-3" /></button>
-          </span>
+      {/* Выбранные пользователи */}
+      {selectedUsers.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {selectedUsers.map(user => (
+            <span key={user.user_id} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              {user.user_login}
+              <button type="button" onClick={() => handleRemove(user.user_id)} disabled={disabled} className="hover:opacity-70">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
         </div>
       )}
+      
+      {/* Поле поиска */}
       <input
-        type="text" value={search} onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
-        onFocus={() => setIsOpen(true)} placeholder="Поиск исполнителя..." disabled={disabled}
+        type="text"
+        value={search}
+        onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
+        onFocus={() => setIsOpen(true)}
+        placeholder="Поиск исполнителей..."
+        disabled={disabled}
         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
       />
+      
+      {/* Выпадающий список */}
       {isOpen && filtered.length > 0 && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           {filtered.map(user => (
-            <div key={user.user_id} onClick={() => { onChange(user); setSearch(''); setIsOpen(false); }} className="px-4 py-2 cursor-pointer hover:bg-blue-50">
+            <div
+              key={user.user_id}
+              onClick={() => handleSelect(user)}
+              className="px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+            >
               <div className="font-medium">{user.user_login}</div>
               <div className="text-xs text-gray-500">
-                {[user.admin_role && 'Админ', user.coordinator_role && 'Координатор', user.designer_role && 'Дизайнер', user.SMM_role && 'SMM', user.photographer_role && 'Фотограф'].filter(Boolean).join(', ')}
+                {[
+                  user.admin_role && 'Админ',
+                  user.coordinator_role && 'Координатор',
+                  user.designer_role && 'Дизайнер',
+                  user.SMM_role && 'SMM',
+                  user.photographer_role && 'Фотограф'
+                ].filter(Boolean).join(', ')}
               </div>
             </div>
           ))}
@@ -175,7 +230,12 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
   const [users, setUsers] = useState<UserType[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   
-  // Единое состояние формы
+  // Состояние для результата выполнения (всегда доступно)
+  const [completedTaskInput, setCompletedTaskInput] = useState('');
+  const [savedCompletedTask, setSavedCompletedTask] = useState('');
+  const [isSavingCompleted, setIsSavingCompleted] = useState(false);
+  
+  // Единое состояние формы для остальных полей
   const [formData, setFormData] = useState<FormData | null>(null);
   const [initialData, setInitialData] = useState<FormData | null>(null);
 
@@ -206,43 +266,71 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
   useEffect(() => {
     if (!task || isLoading.data) return;
 
-    const assignee = task.assignees?.length ? users.find(u => u.user_id === task.assignees![0].user_id) || null : null;
+    // Получаем всех исполнителей
+    const assignees = task.assignees?.length 
+      ? users.filter(u => task.assignees!.some(a => a.user_id === u.user_id))
+      : [];
+    
+    // Устанавливаем результат выполнения
+    setCompletedTaskInput(task.completed_task || '');
+    setSavedCompletedTask(task.completed_task || '');
     
     const state: FormData = {
-      title: task.title || '', description: task.description || '',
-      start_time: formatDateForInput(task.start_time), end_time: formatDateForInput(task.end_time),
-      all_day: task.all_day || false, priority: task.priority || 0,
-      task_status: task.task_status || 'Поставлена', completed_task: task.completed_task || '',
-      assignee, tags: task.tags || []
+      title: task.title || '',
+      description: task.description || '',
+      start_time: formatDateForInput(task.start_time),
+      end_time: formatDateForInput(task.end_time),
+      all_day: task.all_day || false,
+      priority: task.priority || 0,
+      task_status: task.task_status || 'Поставлена',
+      assignees,
+      tags: task.tags || []
     };
 
     setFormData(state);
     setInitialData(state);
   }, [task, users, isLoading.data]);
 
-  const handleChange = useCallback((field: keyof FormData, value: any) => {
+  const handleChange = useCallback(<K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
   }, []);
 
-  // Вычисление изменений (сортируем ID тегов для корректного сравнения массивов)
+  // Вычисление изменений
   const hasChanges = useMemo(() => {
     if (!formData || !initialData) return false;
-    const current = { ...formData, tags: formData.tags.map(t => t.tag_id).sort() };
-    const initial = { ...initialData, tags: initialData.tags.map(t => t.tag_id).sort() };
+    
+    // Сортируем для сравнения
+    const sortIds = (items: any[]) => items.map(i => i.user_id || i.tag_id).sort();
+    
+    const current = {
+      ...formData,
+      assignees: sortIds(formData.assignees),
+      tags: sortIds(formData.tags)
+    };
+    const initial = {
+      ...initialData,
+      assignees: sortIds(initialData.assignees),
+      tags: sortIds(initialData.tags)
+    };
+    
     return JSON.stringify(current) !== JSON.stringify(initial);
   }, [formData, initialData]);
 
   const handleCreateTag = async (name: string) => {
     try {
       const res = await fetch('/api/tags', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
       });
       if (res.ok) {
         const newTag = await res.json();
         setAvailableTags(prev => [...prev, newTag]);
         return newTag;
       }
-    } catch (err) { console.error('Ошибка создания тега:', err); }
+    } catch (err) {
+      console.error('Ошибка создания тега:', err);
+    }
     return null;
   };
 
@@ -253,6 +341,38 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
     window.open(fullUrl, '_blank', 'noopener,noreferrer');
   };
 
+  // Сохранение результата выполнения
+  const handleSaveCompleted = async () => {
+    if (!task) return;
+    
+    setIsSavingCompleted(true);
+    try {
+      const response = await fetch('/api/tasks/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId: task.task_id,
+          completed_task: completedTaskInput.trim() || null,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Ошибка сохранения');
+      
+      // Обновляем сохраненное значение
+      setSavedCompletedTask(completedTaskInput);
+      
+      // Обновляем задачу в родительском компоненте
+      await onSuccess();
+      
+    } catch (error) {
+      console.error('Ошибка сохранения результата:', error);
+      alert('Не удалось сохранить результат выполнения');
+    } finally {
+      setIsSavingCompleted(false);
+    }
+  };
+
+  // Сохранение всех остальных полей
   const handleSave = async () => {
     if (!task || !formData) return;
     if (!formData.title.trim() || !formData.start_time || !formData.end_time) {
@@ -262,16 +382,20 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
     setIsLoading(prev => ({ ...prev, action: true }));
     try {
       const response = await fetch('/api/tasks/update', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           taskId: task.task_id,
           data: {
-            title: formData.title, description: formData.description || null,
+            title: formData.title,
+            description: formData.description || null,
             start_time: new Date(formData.start_time).toISOString(),
             end_time: new Date(formData.end_time).toISOString(),
-            all_day: formData.all_day, priority: Number(formData.priority),
-            task_status: formData.task_status, assignee_id: formData.assignee?.user_id || null,
-            tag_ids: formData.tags.map(t => t.tag_id), completed_task: formData.completed_task.trim() || null,
+            all_day: formData.all_day,
+            priority: Number(formData.priority),
+            task_status: formData.task_status,
+            assignee_ids: formData.assignees.map(a => a.user_id),
+            tag_ids: formData.tags.map(t => t.tag_id),
           },
         }),
       });
@@ -306,6 +430,8 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
 
   if (!task || !formData) return null;
 
+  const hasCompletedChanges = completedTaskInput !== savedCompletedTask;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -314,7 +440,9 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
         <div className="flex justify-between items-start px-6 py-4 border-b shrink-0">
           {isEditing ? (
             <input
-              type="text" value={formData.title} onChange={e => handleChange('title', e.target.value)}
+              type="text"
+              value={formData.title}
+              onChange={e => handleChange('title', e.target.value)}
               className="text-xl font-semibold text-gray-800 border-2 border-blue-300 rounded-lg px-3 py-2 w-full mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Название задачи"
             />
@@ -323,7 +451,9 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               {formData.title}
             </h2>
           )}
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors p-1 shrink-0"><X size={24} /></button>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors p-1 shrink-0">
+            <X size={24} />
+          </button>
         </div>
 
         {/* ОСНОВНОЙ КОНТЕНТ (Скроллируемый) */}
@@ -334,16 +464,29 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
             <div className="flex items-center gap-3 flex-wrap">
               {isEditing ? (
                 <>
-                  <select value={formData.task_status} onChange={e => handleChange('task_status', e.target.value)} className="px-3 py-1 text-sm font-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    value={formData.task_status}
+                    onChange={e => handleChange('task_status', e.target.value)}
+                    className="px-3 py-1 text-sm font-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     {Object.keys(STATUS_COLORS).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  <select value={formData.priority} onChange={e => handleChange('priority', e.target.value)} className="px-3 py-1 text-sm font-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="0">Обычный</option><option value="1">Низкий</option><option value="2">Средний</option><option value="3">Высокий</option>
+                  <select
+                    value={formData.priority}
+                    onChange={e => handleChange('priority', Number(e.target.value))}
+                    className="px-3 py-1 text-sm font-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="0">Обычный</option>
+                    <option value="1">Низкий</option>
+                    <option value="2">Средний</option>
+                    <option value="3">Высокий</option>
                   </select>
                 </>
               ) : (
                 <>
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${STATUS_COLORS[formData.task_status] || 'bg-gray-100 text-gray-800'}`}>{formData.task_status}</span>
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${STATUS_COLORS[formData.task_status] || 'bg-gray-100 text-gray-800'}`}>
+                    {formData.task_status}
+                  </span>
                   <span className={`px-3 py-1 text-sm font-medium rounded-full ${(PRIORITIES[formData.priority] || DEFAULT_PRIORITY).color}`}>
                     {(PRIORITIES[formData.priority] || DEFAULT_PRIORITY).label}
                   </span>
@@ -353,11 +496,23 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
 
             {/* Теги */}
             {isEditing ? (
-              <TagSelector selectedTags={formData.tags} availableTags={availableTags} onChange={tags => handleChange('tags', tags)} onCreate={handleCreateTag} disabled={isLoading.action} />
+              <TagSelector
+                selectedTags={formData.tags}
+                availableTags={availableTags}
+                onChange={tags => handleChange('tags', tags)}
+                onCreate={handleCreateTag}
+                disabled={isLoading.action}
+              />
             ) : formData.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {formData.tags.map(t => (
-                  <span key={t.tag_id} className="px-3 py-1 rounded-full text-sm font-medium text-white shadow-sm" style={{ backgroundColor: t.color }}>{t.name}</span>
+                  <span
+                    key={t.tag_id}
+                    className="px-3 py-1 rounded-full text-sm font-medium text-white shadow-sm"
+                    style={{ backgroundColor: t.color }}
+                  >
+                    {t.name}
+                  </span>
                 ))}
               </div>
             )}
@@ -366,10 +521,20 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">Описание</h3>
               {isEditing ? (
-                <textarea value={formData.description} onChange={e => handleChange('description', e.target.value)} rows={4} className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Описание задачи..." />
+                <textarea
+                  value={formData.description}
+                  onChange={e => handleChange('description', e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="Описание задачи..."
+                />
               ) : (
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="max-h-48 overflow-y-auto p-4"><p className="text-sm text-gray-600 whitespace-pre-line">{formData.description || 'Нет описания'}</p></div>
+                  <div className="max-h-48 overflow-y-auto p-4">
+                    <p className="text-sm text-gray-600 whitespace-pre-line">
+                      {formData.description || 'Нет описания'}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -378,7 +543,9 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
             <div className="grid grid-cols-2 gap-4">
               {(['start_time', 'end_time'] as const).map(field => (
                 <div key={field}>
-                  <h4 className="text-xs font-medium text-gray-500 mb-1">{field === 'start_time' ? 'Начало' : 'Окончание'}</h4>
+                  <h4 className="text-xs font-medium text-gray-500 mb-1">
+                    {field === 'start_time' ? 'Начало' : 'Окончание'}
+                  </h4>
                   {isEditing ? (
                     <input
                       type={formData.all_day ? "date" : "datetime-local"}
@@ -390,7 +557,9 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
                     <div className="p-3 bg-gray-50 rounded-lg border">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium">{formatDisplayDate(formData[field], formData.all_day)}</span>
+                        <span className="text-sm font-medium">
+                          {formatDisplayDate(formData[field], formData.all_day)}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -401,62 +570,97 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
             {/* Весь день */}
             {isEditing && (
               <div className="flex items-center gap-2">
-                <input type="checkbox" id="edit_all_day" checked={formData.all_day} onChange={e => handleChange('all_day', e.target.checked)} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
-                <label htmlFor="edit_all_day" className="text-sm text-gray-700">Весь день</label>
+                <input
+                  type="checkbox"
+                  id="edit_all_day"
+                  checked={formData.all_day}
+                  onChange={e => handleChange('all_day', e.target.checked)}
+                  className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="edit_all_day" className="text-sm text-gray-700">
+                  Весь день
+                </label>
               </div>
             )}
 
-            {/* Исполнитель */}
+            {/* Исполнители */}
             <div>
-               <h4 className="text-xs font-medium text-gray-500 mb-2">Исполнитель</h4>
-               {isEditing ? (
-                  <UserSelector selectedUser={formData.assignee} users={users} onChange={u => handleChange('assignee', u)} disabled={isLoading.action || isLoading.data} />
-               ) : formData.assignee ? (
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-100">
+              <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                Исполнители
+              </h4>
+              {isEditing ? (
+                <AssigneesSelector
+                  selectedUsers={formData.assignees}
+                  users={users}
+                  onChange={assignees => handleChange('assignees', assignees)}
+                  disabled={isLoading.action || isLoading.data}
+                />
+              ) : formData.assignees.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {formData.assignees.map(assignee => (
+                    <div
+                      key={assignee.user_id}
+                      className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-100"
+                    >
                       <User className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm font-medium text-blue-700">{formData.assignee.user_login}</span>
+                      <span className="text-sm font-medium text-blue-700">{assignee.user_login}</span>
                     </div>
-                  </div>
-               ) : <p className="text-sm text-gray-500">Не назначен</p>}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 italic">Не назначены</p>
+              )}
             </div>
 
-            {/* Создатель (ВОССТАНОВЛЕНО) */}
-            {task.created_by && (
-              <div>
-                <h4 className="text-xs font-medium text-gray-500 mb-1">Создатель</h4>
-                <div className="p-3 bg-gray-50 rounded-lg border">
-                  <span className="text-sm font-medium">{task.created_by.user_login}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Результат выполнения (ОРИГИНАЛЬНЫЙ СТИЛЬ ВОССТАНОВЛЕН) */}
+            {/* Результат выполнения - ВСЕГДА ДОСТУПЕН ДЛЯ РЕДАКТИРОВАНИЯ */}
             <div className="border-t pt-4">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Результат выполнения</h4>
-              {isEditing ? (
-                <input
-                  type="text" value={formData.completed_task} onChange={e => handleChange('completed_task', e.target.value)}
-                  placeholder="Вставьте ссылку на готовую задачу..." disabled={isLoading.action}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : formData.completed_task ? (
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
-                    <p className="text-sm text-green-700 truncate" title={formData.completed_task}>{formData.completed_task}</p>
+              
+              {/* Поле для ввода ссылки */}
+              <input
+                type="text"
+                value={completedTaskInput}
+                onChange={(e) => setCompletedTaskInput(e.target.value)}
+                placeholder="Вставьте ссылку на готовую задачу..."
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+              />
+              
+              {/* Отображение сохраненного результата */}
+              {savedCompletedTask && (
+                <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+                      <span className="text-sm text-green-700 truncate" title={savedCompletedTask}>
+                        Сохраненная ссылка: {savedCompletedTask}
+                      </span>
+                    </div>
+                    <button
+                      onClick={e => handleLinkClick(savedCompletedTask, e)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-white text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium shrink-0 ml-2"
+                      title="Открыть ссылку"
+                    >
+                      <ExternalLink className="w-4 h-4" /> Открыть
+                    </button>
                   </div>
+                </div>
+              )}
+              
+              {/* Кнопка сохранения результата */}
+              {hasCompletedChanges && (
+                <div className="flex justify-end mt-3">
                   <button
-                    onClick={e => handleLinkClick(formData.completed_task, e)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-white text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium shrink-0 ml-2"
-                    title="Открыть ссылку"
+                    onClick={handleSaveCompleted}
+                    disabled={isSavingCompleted}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
                   >
-                    <ExternalLink className="w-4 h-4" /> Открыть
+                    <Save className="w-4 h-4" />
+                    {isSavingCompleted ? 'Сохранение...' : 'Сохранить результат'}
                   </button>
                 </div>
-              ) : <p className="text-sm text-gray-500 italic">Ссылка не добавлена</p>}
+              )}
             </div>
-
           </div>
         </div>
 
@@ -465,28 +669,56 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
           <div className="flex items-center gap-2">
             {!isEditing ? (
               <>
-                <button onClick={() => setIsEditing(true)} disabled={isLoading.action} className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  disabled={isLoading.action}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                >
                   <Edit className="w-4 h-4"/> Изменить
                 </button>
                 {canDelete && (
-                  <button onClick={handleDelete} disabled={isLoading.action} className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50 ml-2">
+                  <button
+                    onClick={handleDelete}
+                    disabled={isLoading.action}
+                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50 ml-2"
+                  >
                     <Trash2 className="w-4 h-4"/> Удалить
                   </button>
                 )}
               </>
             ) : (
               <>
-                <button onClick={handleSave} disabled={isLoading.action || !hasChanges} className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50 ${hasChanges ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
-                  <Save className="w-4 h-4"/> {isLoading.action ? 'Сохранение...' : 'Сохранить изменения'}
+                <button
+                  onClick={handleSave}
+                  disabled={isLoading.action || !hasChanges}
+                  className={`
+                    px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50
+                    ${hasChanges 
+                      ? 'bg-green-600 text-white hover:bg-green-700' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  <Save className="w-4 h-4"/>
+                  {isLoading.action ? 'Сохранение...' : 'Сохранить изменения'}
                 </button>
-                <button onClick={() => { setFormData(initialData); setIsEditing(false); }} disabled={isLoading.action} className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50">
+                <button
+                  onClick={() => { 
+                    setFormData(initialData); 
+                    setIsEditing(false); 
+                  }}
+                  disabled={isLoading.action}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                >
                   <X className="w-4 h-4"/> Отмена
                 </button>
               </>
             )}
           </div>
           {isEditing && hasChanges && (
-            <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg">Есть несохраненные изменения</span>
+            <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg">
+              Есть несохраненные изменения
+            </span>
           )}
         </div>
 

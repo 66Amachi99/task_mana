@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/hooks/use-roles';
-import { Search, X } from 'lucide-react';
+import { X, Users } from 'lucide-react';
 
 interface User {
   user_id: number;
@@ -26,22 +26,206 @@ interface TaskAddWindowProps {
   initialDate?: Date;
 }
 
+// Хук для закрытия дропдаунов по клику вне
+const useOutsideClick = (callback: () => void) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) callback();
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [callback]);
+  return ref;
+};
+
+// Компонент выбора нескольких исполнителей
+const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
+  selectedUsers: User[];
+  users: User[];
+  onChange: (users: User[]) => void;
+  disabled: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useOutsideClick(() => setIsOpen(false));
+
+  const filtered = users.filter(u => 
+    u.user_login.toLowerCase().includes(search.toLowerCase()) && 
+    !selectedUsers.some(selected => selected.user_id === u.user_id)
+  );
+
+  const handleSelect = (user: User) => {
+    onChange([...selectedUsers, user]);
+    setSearch('');
+    // Не закрываем дропдаун, чтобы можно было выбрать нескольких
+  };
+
+  const handleRemove = (userId: number) => {
+    onChange(selectedUsers.filter(u => u.user_id !== userId));
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* Выбранные пользователи */}
+      {selectedUsers.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {selectedUsers.map(user => (
+            <span key={user.user_id} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              {user.user_login}
+              <button type="button" onClick={() => handleRemove(user.user_id)} disabled={disabled} className="hover:opacity-70">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      
+      {/* Поле поиска */}
+      <input
+        type="text"
+        value={search}
+        onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
+        onFocus={() => setIsOpen(true)}
+        placeholder="Поиск исполнителей..."
+        disabled={disabled}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+      />
+      
+      {/* Выпадающий список */}
+      {isOpen && filtered.length > 0 && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {filtered.map(user => (
+            <div
+              key={user.user_id}
+              onClick={() => handleSelect(user)}
+              className="px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+            >
+              <div className="font-medium">{user.user_login}</div>
+              <div className="text-xs text-gray-500">
+                {[
+                  user.admin_role && 'Админ',
+                  user.coordinator_role && 'Координатор',
+                  user.designer_role && 'Дизайнер',
+                  user.SMM_role && 'SMM',
+                  user.photographer_role && 'Фотограф'
+                ].filter(Boolean).join(', ')}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Пустой результат */}
+      {isOpen && filtered.length === 0 && search.trim() && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-gray-500">
+          Пользователи не найдены
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Компонент выбора тегов
+const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
+  selectedTags: Tag[];
+  availableTags: Tag[];
+  onChange: (tags: Tag[]) => void;
+  onCreate: (name: string) => Promise<Tag | null>;
+  disabled: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useOutsideClick(() => setIsOpen(false));
+
+  const filtered = availableTags.filter(t => 
+    t.name.toLowerCase().includes(search.toLowerCase()) && 
+    !selectedTags.some(st => st.tag_id === t.tag_id)
+  );
+
+  const handleSelect = (tag: Tag) => {
+    onChange([...selectedTags, tag]);
+    setSearch('');
+    setIsOpen(false);
+  };
+
+  const handleCreate = async () => {
+    if (!search.trim()) return;
+    const newTag = await onCreate(search);
+    if (newTag) handleSelect(newTag);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <div className="flex flex-wrap gap-2 mb-2 min-h-[40px] p-2 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500">
+        {selectedTags.map(tag => (
+          <span
+            key={tag.tag_id}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium text-white shadow-sm"
+            style={{ backgroundColor: tag.color }}
+          >
+            {tag.name}
+            <button
+              type="button"
+              onClick={() => onChange(selectedTags.filter(t => t.tag_id !== tag.tag_id))}
+              disabled={disabled}
+              className="hover:opacity-80 ml-1"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={search}
+          onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
+          onFocus={() => setIsOpen(true)}
+          placeholder="Поиск или создание тега..."
+          disabled={disabled}
+          className="flex-1 min-w-[140px] outline-none text-sm bg-transparent py-1"
+        />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {filtered.length > 0 ? (
+            filtered.map(tag => (
+              <div
+                key={tag.tag_id}
+                onClick={() => handleSelect(tag)}
+                className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2"
+              >
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
+                {tag.name}
+              </div>
+            ))
+          ) : search.trim() ? (
+            <div
+              onClick={handleCreate}
+              className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-blue-600"
+            >
+              + Создать "{search}"
+            </div>
+          ) : (
+            <div className="px-4 py-2 text-gray-500">Введите текст для поиска</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWindowProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  const [tagSearchQuery, setTagSearchQuery] = useState('');
-  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
-  const tagDropdownRef = useRef<HTMLDivElement>(null);
   
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedAssignee, setSelectedAssignee] = useState<User | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
+  // Состояния формы
+  const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -51,6 +235,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     priority: '0',
   });
 
+  // Загрузка тегов
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -64,6 +249,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     fetchTags();
   }, []);
 
+  // Загрузка пользователей
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -79,6 +265,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     fetchUsers();
   }, []);
 
+  // Форматирование даты для input
   const formatDateForInput = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -88,6 +275,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  // Установка начальных дат
   const getDefaultDateTime = (): string => {
     if (initialDate) {
       const date = new Date(initialDate);
@@ -110,23 +298,10 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     }));
   }, [initialDate]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-      if (tagDropdownRef.current && !tagDropdownRef.current.contains(event.target as Node)) {
-        setIsTagDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
+  // Блокировка скролла
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = 'hidden';
-    
     return () => {
       document.body.style.overflow = originalStyle;
     };
@@ -149,65 +324,24 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     }
   };
 
-  const handleAssigneeSelect = (user: User) => {
-    setSelectedAssignee(user);
-    setSearchQuery(user.user_login);
-    setIsDropdownOpen(false);
-  };
-
-  const clearAssignee = () => {
-    setSelectedAssignee(null);
-    setSearchQuery('');
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setIsDropdownOpen(true);
-  };
-
-  const handleTagSelect = (tag: Tag) => {
-    if (!selectedTags.find(t => t.tag_id === tag.tag_id)) {
-      setSelectedTags([...selectedTags, tag]);
-    }
-    setTagSearchQuery('');
-    setIsTagDropdownOpen(false);
-  };
-
-  const handleTagRemove = (tagId: number) => {
-    setSelectedTags(selectedTags.filter(t => t.tag_id !== tagId));
-  };
-
-  const handleCreateTag = async () => {
-    if (!tagSearchQuery.trim()) return;
-    
+  const handleCreateTag = async (name: string) => {
     try {
       const response = await fetch('/api/tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tagSearchQuery }),
+        body: JSON.stringify({ name }),
       });
       
       if (response.ok) {
         const newTag = await response.json();
-        setTags([...tags, newTag]);
-        setSelectedTags([...selectedTags, newTag]);
-        setTagSearchQuery('');
-        setIsTagDropdownOpen(false);
+        setTags(prev => [...prev, newTag]);
+        return newTag;
       }
     } catch (error) {
       console.error('Ошибка создания тега:', error);
     }
+    return null;
   };
-
-  const filteredTags = tags.filter(tag =>
-    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
-    !selectedTags.find(t => t.tag_id === tag.tag_id)
-  );
-
-  const filteredUsers = users.filter(user =>
-    user.user_login.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (!selectedAssignee || user.user_id !== selectedAssignee.user_id)
-  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,7 +367,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
           end_time: new Date(formData.end_time).toISOString(),
           all_day: formData.all_day,
           priority: parseInt(formData.priority),
-          assignee_id: selectedAssignee?.user_id || null,
+          assignee_ids: selectedAssignees.map(a => a.user_id), // Массив ID
           tag_ids: selectedTags.map(t => t.tag_id),
         }),
       });
@@ -283,6 +417,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
           )}
 
           <div className="space-y-6">
+            {/* Название задачи */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Название задачи *
@@ -299,6 +434,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
               />
             </div>
 
+            {/* Описание */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Описание
@@ -314,6 +450,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
               />
             </div>
 
+            {/* Даты */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -345,6 +482,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
               </div>
             </div>
 
+            {/* Весь день */}
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -360,6 +498,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
               </label>
             </div>
 
+            {/* Приоритет */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Приоритет
@@ -378,125 +517,36 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
               </select>
             </div>
 
+            {/* Исполнители - ОБНОВЛЕНО: множественный выбор */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Исполнитель
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                Исполнители
               </label>
-              <div className="relative" ref={dropdownRef}>
-                {selectedAssignee && (
-                  <div className="mb-2">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                      {selectedAssignee.user_login}
-                      <button
-                        type="button"
-                        onClick={clearAssignee}
-                        className="hover:opacity-70"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  </div>
-                )}
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  onFocus={() => setIsDropdownOpen(true)}
-                  placeholder="Поиск исполнителя..."
-                  disabled={isSubmitting || loadingUsers}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                />
-                {isDropdownOpen && !loadingUsers && filteredUsers.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {filteredUsers.map(user => (
-                      <div
-                        key={user.user_id}
-                        onClick={() => handleAssigneeSelect(user)}
-                        className="px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
-                      >
-                        <div className="font-medium">{user.user_login}</div>
-                        <div className="text-xs text-gray-500">
-                          {user.admin_role && 'Админ '}
-                          {user.coordinator_role && 'Координатор '}
-                          {user.designer_role && 'Дизайнер '}
-                          {user.SMM_role && 'SMM '}
-                          {user.photographer_role && 'Фотограф'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <AssigneesSelector
+                selectedUsers={selectedAssignees}
+                users={users}
+                onChange={setSelectedAssignees}
+                disabled={isSubmitting || loadingUsers}
+              />
             </div>
 
+            {/* Теги */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Теги
               </label>
-              <div className="relative" ref={tagDropdownRef}>
-                <div className="flex flex-wrap gap-2 mb-2 min-h-[40px] p-2 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
-                  {selectedTags.map(tag => (
-                    <span
-                      key={tag.tag_id}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium text-white shadow-sm"
-                      style={{ backgroundColor: tag.color }}
-                    >
-                      {tag.name}
-                      <button
-                        type="button"
-                        onClick={() => handleTagRemove(tag.tag_id)}
-                        disabled={isSubmitting}
-                        className="hover:opacity-80 ml-1 disabled:opacity-50"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <input
-                    type="text"
-                    value={tagSearchQuery}
-                    onChange={(e) => {
-                      setTagSearchQuery(e.target.value);
-                      setIsTagDropdownOpen(true);
-                    }}
-                    onFocus={() => setIsTagDropdownOpen(true)}
-                    placeholder="Поиск или создание тега..."
-                    disabled={isSubmitting}
-                    className="flex-1 min-w-[140px] outline-none text-sm bg-transparent py-1"
-                  />
-                </div>
-                {isTagDropdownOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {filteredTags.length > 0 ? (
-                      filteredTags.map(tag => (
-                        <div
-                          key={tag.tag_id}
-                          onClick={() => handleTagSelect(tag)}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2"
-                        >
-                          <span
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: tag.color }}
-                          />
-                          {tag.name}
-                        </div>
-                      ))
-                    ) : tagSearchQuery.trim() ? (
-                      <div
-                        onClick={handleCreateTag}
-                        className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-blue-600"
-                      >
-                        + Создать "{tagSearchQuery}"
-                      </div>
-                    ) : (
-                      <div className="px-4 py-2 text-gray-500">Введите текст для поиска</div>
-                    )}
-                  </div>
-                )}
-              </div>
+              <TagSelector
+                selectedTags={selectedTags}
+                availableTags={tags}
+                onChange={setSelectedTags}
+                onCreate={handleCreateTag}
+                disabled={isSubmitting}
+              />
             </div>
           </div>
 
+          {/* Кнопки */}
           <div className="flex justify-end gap-4 mt-8 pt-6 border-t">
             <button
               type="button"
