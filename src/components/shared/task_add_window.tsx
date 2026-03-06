@@ -434,36 +434,37 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
                 Теги
               </label>
               <div className="relative" ref={tagDropdownRef}>
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className="flex flex-wrap gap-2 mb-2 min-h-[40px] p-2 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
                   {selectedTags.map(tag => (
                     <span
                       key={tag.tag_id}
-                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm"
-                      style={{ backgroundColor: tag.color, color: tag.color }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium text-white shadow-sm"
+                      style={{ backgroundColor: tag.color }}
                     >
                       {tag.name}
                       <button
                         type="button"
                         onClick={() => handleTagRemove(tag.tag_id)}
-                        className="hover:opacity-70"
+                        disabled={isSubmitting}
+                        className="hover:opacity-80 ml-1 disabled:opacity-50"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </span>
                   ))}
+                  <input
+                    type="text"
+                    value={tagSearchQuery}
+                    onChange={(e) => {
+                      setTagSearchQuery(e.target.value);
+                      setIsTagDropdownOpen(true);
+                    }}
+                    onFocus={() => setIsTagDropdownOpen(true)}
+                    placeholder="Поиск или создание тега..."
+                    disabled={isSubmitting}
+                    className="flex-1 min-w-[140px] outline-none text-sm bg-transparent py-1"
+                  />
                 </div>
-                <input
-                  type="text"
-                  value={tagSearchQuery}
-                  onChange={(e) => {
-                    setTagSearchQuery(e.target.value);
-                    setIsTagDropdownOpen(true);
-                  }}
-                  onFocus={() => setIsTagDropdownOpen(true)}
-                  placeholder="Поиск или создание тега..."
-                  disabled={isSubmitting}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                />
                 {isTagDropdownOpen && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {filteredTags.length > 0 ? (

@@ -27,7 +27,6 @@ export default function CalendarPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showCompletedOnly, setShowCompletedOnly] = useState(false);
   const [sortType, setSortType] = useState<SortType>('all'); // Новая сортировка
-
   const { user, filterPostByRole } = useUser();
 
   const fetchAllContent = useCallback(async () => {
