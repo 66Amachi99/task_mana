@@ -234,6 +234,8 @@ export default function CalendarPage() {
                 itemsByDate={itemsByDate}
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
+                onPostClick={handlePostClick}
+                onTaskClick={handleTaskClick}
               />
             </div>
           </div>

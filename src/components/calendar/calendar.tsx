@@ -13,12 +13,14 @@ import {
   getDay,
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { CalendarItem, DayStats, MonthStats } from '../../../types/calendar';
+import { CalendarItem, DayStats, MonthStats, CalendarPost, CalendarTask } from '../../../types/calendar';
 
 interface CalendarProps {
   itemsByDate: Map<string, CalendarItem[]>;
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
+  onPostClick?: (post: CalendarPost) => void;
+  onTaskClick?: (task: CalendarTask) => void;
 }
 
 // Функция для получения дня недели в формате "ПН", "ВТ" и т.д.
@@ -65,6 +67,8 @@ export const Calendar: React.FC<CalendarProps> = ({
   itemsByDate,
   selectedDate,
   onDateSelect,
+  onPostClick,
+  onTaskClick,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -190,8 +194,12 @@ export const Calendar: React.FC<CalendarProps> = ({
                     return (
                       <div
                         key={`post-${item.post_id}-${idx}`}
-                        className="text-xs bg-blue-100 text-blue-800 rounded px-1 py-0.5 mb-0.5 truncate"
+                        className="text-xs bg-blue-100 text-blue-800 rounded px-1 py-0.5 mb-0.5 truncate cursor-pointer hover:bg-blue-200 transition-colors"
                         title={item.post_title}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPostClick?.(item as CalendarPost);
+                        }}
                       >
                         📄 {truncateText(item.post_title, 12)}
                       </div>
@@ -200,8 +208,12 @@ export const Calendar: React.FC<CalendarProps> = ({
                     return (
                       <div
                         key={`task-${item.task_id}-${idx}`}
-                        className="text-xs bg-purple-100 text-purple-800 rounded px-1 py-0.5 mb-0.5 truncate"
+                        className="text-xs bg-purple-100 text-purple-800 rounded px-1 py-0.5 mb-0.5 truncate cursor-pointer hover:bg-purple-200 transition-colors"
                         title={item.title}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTaskClick?.(item as CalendarTask);
+                        }}
                       >
                         ✓ {truncateText(item.title, 12)}
                       </div>
