@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
-import { Lock, ExternalLink, Plus, Circle, CheckCircle, MessageSquare } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { Lock, ExternalLink, Circle, CheckCircle, MessageSquare } from 'lucide-react';
 import { TASK_CONFIG, COMMENT_STATUS, TaskWithComments, CommentData } from './post_details_window';
+import { useUser } from '../../hooks/use-roles';
 
 interface PostData {
   [key: string]: unknown;
@@ -11,16 +12,17 @@ interface PostData {
 interface PostDetailsRightPanelProps {
   tasks: TaskWithComments[];
   post: PostData;
-  canEditTask: (role: string) => boolean;
+  // ИЗМЕНЕНО: принимаем canEditPostTask
+  canEditPostTask: (role: string) => boolean;
   onLinkChange: (id: number, value: string) => void;
   onNewCommentChange: (id: number, value: string) => void;
-  onAddComment: (taskId: number) => void;
+  onAddComment: (taskId: number) => Promise<void>;
   onCommentStatusChange: (commentId: number, newStatus: string) => void;
   isSaving: boolean;
   isActionLoading: boolean;
 }
 
-// Компонент для автоматического изменения высоты textarea
+// Вспомогательные компоненты (без изменений)
 const AutoResizeTextarea = ({ value, onChange, placeholder, disabled }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -28,14 +30,12 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, disabled }: {
   disabled?: boolean;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
   }, [value]);
-
   return (
     <textarea
       ref={textareaRef}
@@ -49,12 +49,12 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, disabled }: {
   );
 };
 
-// Компонент отдельного комментария
 const CommentItem = ({ comment, onStatusChange, userCanEdit }: {
   comment: CommentData;
   onStatusChange: (commentId: number, newStatus: string) => void;
   userCanEdit: boolean;
 }) => {
+  const [isUpdating, setIsUpdating] = useState(false);
   const getStatusColor = (status: string) => {
     switch (status) {
       case COMMENT_STATUS.RED: return 'bg-red-50 border-red-200';
@@ -63,7 +63,6 @@ const CommentItem = ({ comment, onStatusChange, userCanEdit }: {
       default: return 'bg-gray-50 border-gray-200';
     }
   };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case COMMENT_STATUS.RED: return <Circle className="w-3 h-3 text-red-500 fill-red-500" />;
@@ -72,51 +71,42 @@ const CommentItem = ({ comment, onStatusChange, userCanEdit }: {
       default: return <Circle className="w-3 h-3 text-gray-400" />;
     }
   };
-
   const formatCommentDate = (dateString: string) => {
     const date = new Date(dateString);
-    const formatter = new Intl.DateTimeFormat('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-    return formatter.format(date);
+    return new Intl.DateTimeFormat('ru-RU', {
+      day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+    }).format(date);
   };
-
-  const canChangeStatus = () => {
-    if (comment.status === COMMENT_STATUS.RED && userCanEdit) return true;
-    if (comment.status === COMMENT_STATUS.YELLOW && userCanEdit) return true;
-    return false;
+  const canChangeStatus = () => (comment.status === COMMENT_STATUS.RED || comment.status === COMMENT_STATUS.YELLOW) && userCanEdit;
+  const handleStatusClick = async () => {
+    if (!canChangeStatus()) return;
+    setIsUpdating(true);
+    const newStatus = comment.status === COMMENT_STATUS.RED ? COMMENT_STATUS.YELLOW : COMMENT_STATUS.GREEN;
+    try {
+      const response = await fetch('/api/posts/comments', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId: comment.id, status: newStatus }),
+      });
+      if (response.ok) onStatusChange(comment.id, newStatus);
+    } catch (error) { console.error('Ошибка:', error); } finally { setIsUpdating(false); }
   };
-
-  const handleStatusClick = () => {
-    if (comment.status === COMMENT_STATUS.RED) {
-      onStatusChange(comment.id, COMMENT_STATUS.YELLOW);
-    } else if (comment.status === COMMENT_STATUS.YELLOW) {
-      onStatusChange(comment.id, COMMENT_STATUS.GREEN);
-    }
-  };
-
   return (
     <div className={`mt-2 p-3 rounded-lg border ${getStatusColor(comment.status)}`}>
       <div className="flex items-start gap-2">
-        <div className="shrink-0 mt-1">
-          {getStatusIcon(comment.status)}
-        </div>
+        <div className="shrink-0 mt-1">{getStatusIcon(comment.status)}</div>
         <div className="flex-1">
           <p className="text-sm text-gray-800 whitespace-pre-wrap">{comment.text}</p>
-          <p className="text-xs text-gray-500 mt-1">
-            {formatCommentDate(comment.created_at)}
-          </p>
+          <p className="text-xs text-gray-500 mt-1">{formatCommentDate(comment.created_at)}</p>
         </div>
         {canChangeStatus() && (
           <button
             onClick={handleStatusClick}
-            className="shrink-0 px-2 py-1 text-xs bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            disabled={isUpdating}
+            className="shrink-0 px-2 py-1 text-xs bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
             title={comment.status === COMMENT_STATUS.RED ? "Отметить как выполненное" : "Подтвердить"}
           >
-            {comment.status === COMMENT_STATUS.RED ? "✓ Выполнено" : "✓ Подтвердить"}
+            {isUpdating ? '...' : (comment.status === COMMENT_STATUS.RED ? "✓ Выполнено" : "✓ Подтвердить")}
           </button>
         )}
       </div>
@@ -139,7 +129,7 @@ const normalizeUrl = (url: string): string => {
 export const PostDetailsRightPanel = ({
   tasks,
   post,
-  canEditTask,
+  canEditPostTask,   // ИСПОЛЬЗУЕМ
   onLinkChange,
   onNewCommentChange,
   onAddComment,
@@ -147,35 +137,39 @@ export const PostDetailsRightPanel = ({
   isSaving,
   isActionLoading
 }: PostDetailsRightPanelProps) => {
+  const { user, canAddComment } = useUser();
+  const [addingCommentFor, setAddingCommentFor] = useState<number | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+
   const handleLinkClick = (url: string, e: React.MouseEvent) => {
     e.preventDefault();
     if (!url) return;
-    try {
-      window.open(normalizeUrl(url), '_blank', 'noopener,noreferrer');
-    } catch {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
+    try { window.open(normalizeUrl(url), '_blank', 'noopener,noreferrer'); } catch { window.open(url, '_blank', 'noopener,noreferrer'); }
+  };
+
+  const handleAddCommentClick = async (taskId: number) => {
+    setAddingCommentFor(taskId);
+    setIsAdding(true);
+    try { await onAddComment(taskId); } finally { setIsAdding(false); setAddingCommentFor(null); }
   };
 
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-sm md:text-lg font-medium text-gray-700">Задачи</h3>
-        <span className="text-xs md:text-sm text-gray-500">
-          {tasks.length} {pluralizeTasks(tasks.length)}
-        </span>
+        <span className="text-xs md:text-sm text-gray-500">{tasks.length} {pluralizeTasks(tasks.length)}</span>
       </div>
-
       <div className="space-y-4 max-h-[40vh] md:max-h-none overflow-y-auto pr-1">
         {tasks.length > 0 ? (
           tasks.map(task => {
             const originalLink = (post[task.linkKey] as string) || '';
             const hasLink = originalLink.trim() !== '';
-            const userCanEdit = canEditTask(task.role);
+            // ИСПОЛЬЗУЕМ canEditPostTask для проверки прав на редактирование ссылки
+            const userCanEdit = canEditPostTask(task.role);
+            const userCanAddComment = canAddComment ? canAddComment(task.role) : userCanEdit;
 
             return (
               <div key={task.id} className="border rounded-lg p-4">
-                {/* Заголовок задачи и ссылка */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
                   <div className="sm:w-1/4">
                     <h4 className="font-medium text-gray-800 text-base flex items-center gap-1">
@@ -200,8 +194,6 @@ export const PostDetailsRightPanel = ({
                     )}
                   </div>
                 </div>
-
-                {/* Ссылка на выполненную задачу */}
                 {hasLink && (
                   <div className="mt-2 pt-2 border-t">
                     <div className="flex items-center justify-between">
@@ -214,14 +206,11 @@ export const PostDetailsRightPanel = ({
                         className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-sm font-medium shrink-0 ml-2 cursor-pointer"
                         title="Открыть в новой вкладке"
                       >
-                        <ExternalLink className="w-4 h-4" />
-                        Открыть
+                        <ExternalLink className="w-4 h-4" /> Открыть
                       </button>
                     </div>
                   </div>
                 )}
-
-                {/* Комментарии к задаче */}
                 {task.comments.length > 0 && (
                   <div className="mt-3 space-y-2">
                     {task.comments.map(comment => (
@@ -234,9 +223,7 @@ export const PostDetailsRightPanel = ({
                     ))}
                   </div>
                 )}
-
-                {/* Поле для нового комментария */}
-                {userCanEdit && (
+                {userCanAddComment && (
                   <div className="mt-3 pt-3 border-t border-dashed">
                     <div className="flex items-start gap-2">
                       <MessageSquare className="w-4 h-4 text-gray-400 mt-2 shrink-0" />
@@ -245,16 +232,16 @@ export const PostDetailsRightPanel = ({
                           value={task.newCommentText}
                           onChange={e => onNewCommentChange(task.id, e.target.value)}
                           placeholder="Добавить комментарий..."
-                          disabled={isSaving || isActionLoading}
+                          disabled={isSaving || isActionLoading || isAdding}
                         />
                         {task.newCommentText.trim() && (
                           <div className="flex justify-end mt-2">
                             <button
-                              onClick={() => onAddComment(task.id)}
-                              disabled={isSaving || isActionLoading}
-                              className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs font-medium"
+                              onClick={() => handleAddCommentClick(task.id)}
+                              disabled={isSaving || isActionLoading || isAdding}
+                              className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs font-medium disabled:opacity-50"
                             >
-                              Добавить комментарий
+                              {isAdding && addingCommentFor === task.id ? 'Добавление...' : 'Добавить комментарий'}
                             </button>
                           </div>
                         )}

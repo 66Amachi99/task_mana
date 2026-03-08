@@ -6,7 +6,7 @@ import { useUser } from '../../hooks/use-roles';
 import { PostDetailsLeftPanel } from './post_details_left_panel';
 import { PostDetailsRightPanel } from './post_details_right_panel';
 
-// Конфигурация задач - ЭКСПОРТИРУЕМ
+// Конфигурация задач
 export const TASK_CONFIG = [
   { id: 1, name: 'mini_video_smm', label: 'Мини-видео для SMM', needsKey: 'post_needs_mini_video_smm', linkKey: 'post_done_link_mini_video_smm', role: 'smm' },
   { id: 2, name: 'video', label: 'Видео', needsKey: 'post_needs_video', linkKey: 'post_done_link_video', role: 'photographer' },
@@ -17,21 +17,18 @@ export const TASK_CONFIG = [
   { id: 7, name: 'mini_gallery', label: 'Мини-фотогалерея', needsKey: 'post_needs_mini_gallery', linkKey: 'post_done_link_mini_gallery', role: 'smm' },
 ] as const;
 
-// Конфигурация соцсетей - ЭКСПОРТИРУЕМ
 export const SOCIAL_CONFIG = [
   { key: 'telegram', label: 'Telegram', icon: '/icons/telegram.svg', placeholder: 'https://t.me/...', publishedKey: 'telegram_published' },
   { key: 'vkontakte', label: 'VK', icon: '/icons/vk.svg', placeholder: 'https://vk.com/...', publishedKey: 'vkontakte_published' },
   { key: 'max', label: 'MAX', icon: '/icons/max.svg', placeholder: 'https://max.ru/...', publishedKey: 'MAX_published' },
 ] as const;
 
-// Статусы комментариев - ЭКСПОРТИРУЕМ
 export const COMMENT_STATUS = {
   RED: '#FF4C4C33',
   YELLOW: '#FFD70033',
   GREEN: '#4CAF5033',
 } as const;
 
-// Типы - ЭКСПОРТИРУЕМ
 export type SocialKey = typeof SOCIAL_CONFIG[number]['key'];
 export type SocialLinks = Record<SocialKey, string>;
 
@@ -102,25 +99,20 @@ export interface PostDetailsWindowProps {
   onSuccess: () => Promise<void>;
 }
 
-// Получение комментариев для конкретной задачи
 export const getCommentsForTask = (post: PostData | null, taskTypeId: number): CommentData[] => {
   if (!post || !post.comments) return [];
   return post.comments.filter(c => c.task_type_id === taskTypeId);
 };
 
 export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindowProps) => {
-  const { user, canEditTask, canApprove, canPublish } = useUser();
+  // ВАЖНО: используем canEditPostTask для задач поста
+  const { user, canEditPostTask, canApprove, canPublish } = useUser();
 
-  // Состояния для данных
   const [tasks, setTasks] = useState<TaskWithComments[]>([]);
   const [originalTasks, setOriginalTasks] = useState<TaskWithComments[]>([]);
   const [socialLinks, setSocialLinks] = useState<SocialLinks>({ telegram: '', vkontakte: '', max: '' });
   const [originalSocialLinks, setOriginalSocialLinks] = useState<SocialLinks>({ telegram: '', vkontakte: '', max: '' });
-
-  // Дедлайн (локально редактируемый)
   const [editedDeadline, setEditedDeadline] = useState<Date | null>(null);
-
-  // Состояния для редактирования (контент поста)
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
@@ -131,75 +123,46 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
   const [tagSearchQuery, setTagSearchQuery] = useState('');
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const tagDropdownRef = useRef<HTMLDivElement>(null);
-
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
-
-  // Состояния для загрузки
   const [isSaving, setIsSaving] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isClosingDetails, setIsClosingDetails] = useState(false);
 
-  // Права
   const canEditPost = !!(user && (user.admin_role || user.SMM_role));
   const canDelete = !!(user && (user.admin_role || user.SMM_role));
   const canManageSocial = !!(user && (user.admin_role || user.SMM_role));
 
-  // Блокировка прокрутки background при открытой модалке
   useEffect(() => {
     if (!post) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return () => { document.body.style.overflow = prev; };
   }, [post]);
 
-  // Закрытие dropdown тегов по клику вне
   useEffect(() => {
     const onDocMouseDown = (e: MouseEvent) => {
-      const el = tagDropdownRef.current;
-      if (!el) return;
-      if (!el.contains(e.target as Node)) {
-        setIsTagDropdownOpen(false);
-      }
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node)) setIsTagDropdownOpen(false);
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) setShowDatePicker(false);
     };
     document.addEventListener('mousedown', onDocMouseDown);
     return () => document.removeEventListener('mousedown', onDocMouseDown);
   }, []);
 
-  // Закрытие datepicker по клику вне
-  useEffect(() => {
-    const onDocMouseDown = (e: MouseEvent) => {
-      const el = datePickerRef.current;
-      if (!el) return;
-      if (!el.contains(e.target as Node)) {
-        setShowDatePicker(false);
-      }
-    };
-    document.addEventListener('mousedown', onDocMouseDown);
-    return () => document.removeEventListener('mousedown', onDocMouseDown);
-  }, []);
-
-  // Загрузка тегов
   useEffect(() => {
     const fetchTags = async () => {
       try {
         const response = await fetch('/api/tags');
         const data = await response.json();
         setAvailableTags(data);
-      } catch (error) {
-        console.error('Ошибка загрузки тегов:', error);
-      }
+      } catch (error) { console.error('Ошибка загрузки тегов:', error); }
     };
     fetchTags();
   }, []);
 
-  // Инициализация данных
   useEffect(() => {
     if (!post) return;
-
     const tasksWithComments = TASK_CONFIG
       .filter(cfg => post[cfg.needsKey] as boolean)
       .map(cfg => ({
@@ -213,7 +176,6 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
         comments: getCommentsForTask(post, cfg.id),
         newCommentText: '',
       }));
-
     setTasks(tasksWithComments);
     setOriginalTasks(tasksWithComments.map(t => ({ ...t, comments: [...t.comments] })));
 
@@ -225,50 +187,30 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
     setSocialLinks(social);
     setOriginalSocialLinks({ ...social });
 
-    // дедлайн
     setEditedDeadline(post.post_deadline ? new Date(post.post_deadline) : null);
-
-    // Инициализация полей редактирования
     setEditedTitle(post.post_title || '');
     setEditedDescription(post.post_description || '');
     setEditedTzLink(post.tz_link || '');
-
-    // Инициализация выбранных задач
     const taskSelection = TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false);
     setSelectedTasks(taskSelection);
-
-    // Инициализация тегов
     setSelectedTags(post.tags || []);
   }, [post]);
 
-  // Фильтрация тегов
   const filteredTags = availableTags.filter(tag =>
     tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
-    !selectedTags.find(t => t.tag_id === tag.tag_id),
+    !selectedTags.find(t => t.tag_id === tag.tag_id)
   );
 
   const handleTagSelect = (tag: Tag) => {
-    if (!selectedTags.find(t => t.tag_id === tag.tag_id)) {
-      setSelectedTags([...selectedTags, tag]);
-    }
+    if (!selectedTags.find(t => t.tag_id === tag.tag_id)) setSelectedTags([...selectedTags, tag]);
     setTagSearchQuery('');
     setIsTagDropdownOpen(false);
   };
-
-  const handleTagRemove = (tagId: number) => {
-    setSelectedTags(selectedTags.filter(t => t.tag_id !== tagId));
-  };
-
+  const handleTagRemove = (tagId: number) => setSelectedTags(selectedTags.filter(t => t.tag_id !== tagId));
   const handleCreateTag = async () => {
     if (!tagSearchQuery.trim()) return;
-
     try {
-      const response = await fetch('/api/tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tagSearchQuery }),
-      });
-
+      const response = await fetch('/api/tags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: tagSearchQuery }) });
       if (response.ok) {
         const newTag = await response.json();
         setAvailableTags([...availableTags, newTag]);
@@ -276,27 +218,15 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
         setTagSearchQuery('');
         setIsTagDropdownOpen(false);
       }
-    } catch (error) {
-      console.error('Ошибка создания тега:', error);
-    }
+    } catch (error) { console.error('Ошибка создания тега:', error); }
   };
-
-  const handleTaskToggle = (taskId: number) => {
-    setSelectedTasks(prev => {
-      const newSelection = [...prev];
-      newSelection[taskId - 1] = !newSelection[taskId - 1];
-      return newSelection;
-    });
-  };
-
-  const handleDeadlineChange = (newDate: Date) => {
-    setEditedDeadline(newDate);
-  };
-
-  const handleEditStart = () => {
-    setIsEditing(true);
-  };
-
+  const handleTaskToggle = (taskId: number) => setSelectedTasks(prev => {
+    const newSelection = [...prev];
+    newSelection[taskId - 1] = !newSelection[taskId - 1];
+    return newSelection;
+  });
+  const handleDeadlineChange = (newDate: Date) => setEditedDeadline(newDate);
+  const handleEditStart = () => setIsEditing(true);
   const handleEditCancel = () => {
     setIsEditing(false);
     if (post) {
@@ -304,18 +234,13 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       setEditedDescription(post.post_description || '');
       setEditedTzLink(post.tz_link || '');
       setEditedDeadline(post.post_deadline ? new Date(post.post_deadline) : null);
-
-      const taskSelection = TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false);
-      setSelectedTasks(taskSelection);
+      setSelectedTasks(TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false));
       setSelectedTags(post.tags || []);
     }
   };
-
-  // Сохранение "контентного" редактирования (заголовок/описание/ТЗ/needs/tags/дедлайн)
   const handleSave = async () => {
     if (!post) return;
     setIsSaving(true);
-
     try {
       const updateData: any = {
         post_title: editedTitle,
@@ -323,22 +248,12 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
         tz_link: editedTzLink || null,
         post_deadline: editedDeadline ? editedDeadline.toISOString() : null,
       };
-
-      TASK_CONFIG.forEach(cfg => {
-        updateData[cfg.needsKey] = selectedTasks[cfg.id - 1] || false;
-      });
-
+      TASK_CONFIG.forEach(cfg => { updateData[cfg.needsKey] = selectedTasks[cfg.id - 1] || false; });
       updateData.tag_ids = selectedTags.map(t => t.tag_id);
-
       const response = await fetch('/api/posts/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          postId: post.post_id,
-          data: updateData,
-        }),
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.post_id, data: updateData }),
       });
-
       if (response.ok) {
         await refreshPostData();
         await onSuccess();
@@ -347,16 +262,11 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
         const err = await response.json().catch(() => null);
         alert(err?.error || 'Ошибка сохранения');
       }
-    } catch (error) {
-      console.error('❌ Ошибка при сохранении:', error);
-    } finally {
-      setIsSaving(false);
-    }
+    } catch (error) { console.error('❌ Ошибка при сохранении:', error); } finally { setIsSaving(false); }
   };
 
   const refreshPostData = useCallback(async () => {
     if (!post?.post_id) return;
-
     try {
       const response = await fetch(`/api/posts?id=${post.post_id}`);
       if (response.ok) {
@@ -376,170 +286,127 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
               comments: getCommentsForTask(updatedPost, cfg.id),
               newCommentText: '',
             }));
-
           setTasks(updatedTasks);
           setOriginalTasks(updatedTasks.map(t => ({ ...t, comments: [...t.comments] })));
-
-          const social = {
+          setSocialLinks({
             telegram: updatedPost.telegram_published || '',
             vkontakte: updatedPost.vkontakte_published || '',
             max: updatedPost.MAX_published || '',
-          };
-          setSocialLinks(social);
-          setOriginalSocialLinks({ ...social });
-
+          });
+          setOriginalSocialLinks({ ...socialLinks });
           setEditedDeadline(updatedPost.post_deadline ? new Date(updatedPost.post_deadline) : null);
         }
       }
-    } catch (error) {
-      console.error('Ошибка при обновлении данных:', error);
-    }
+    } catch (error) { console.error('Ошибка при обновлении данных:', error); }
   }, [post?.post_id]);
 
   const handleLinkChange = useCallback((id: number, value: string) => {
     setTasks(prev => prev.map(t => (t.id === id ? { ...t, link: value } : t)));
   }, []);
-
   const handleNewCommentChange = useCallback((id: number, value: string) => {
     setTasks(prev => prev.map(t => (t.id === id ? { ...t, newCommentText: value } : t)));
   }, []);
+  const handleCommentStatusChange = useCallback((commentId: number, newStatus: string) => {
+    setTasks(prev => prev.map(t => ({
+      ...t,
+      comments: t.comments.map(c => (c.id === commentId ? { ...c, status: newStatus } : c)),
+    })));
+  }, []);
 
-  const handleAddComment = useCallback((taskId: number) => {
-    setTasks(prev =>
-      prev.map(t => {
+  // ИСПРАВЛЕННАЯ функция добавления комментария с вызовом API
+  const handleAddComment = useCallback(async (taskId: number) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || !task.newCommentText.trim()) return;
+
+    try {
+      const response = await fetch('/api/posts/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: post?.post_id,
+          taskTypeId: taskId,
+          text: task.newCommentText,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Ошибка при добавлении комментария');
+      }
+
+      const newComment = await response.json();
+
+      // Локально добавляем комментарий и очищаем поле
+      setTasks(prev => prev.map(t => {
         if (t.id !== taskId) return t;
-        if (!t.newCommentText.trim()) return t;
-
-        const newComment: CommentData = {
-          id: Date.now(),
-          text: t.newCommentText,
-          status: COMMENT_STATUS.RED,
-          created_at: new Date().toISOString(),
-          task_type_id: taskId,
-        };
-
         return {
           ...t,
-          comments: [...t.comments, newComment],
+          comments: [...t.comments, { ...newComment, id: newComment.id }],
           newCommentText: '',
         };
-      }),
-    );
-  }, []);
+      }));
 
-  const handleCommentStatusChange = useCallback((commentId: number, newStatus: string) => {
-    setTasks(prev =>
-      prev.map(t => ({
-        ...t,
-        comments: t.comments.map(c => (c.id === commentId ? { ...c, status: newStatus } : c)),
-      })),
-    );
-  }, []);
+      // Не вызываем refreshPostData и onSuccess, чтобы не перезагружать страницу
+    } catch (error) {
+      console.error('Ошибка при добавлении комментария:', error);
+      alert('Не удалось добавить комментарий');
+    }
+  }, [tasks, post?.post_id]);
 
   const handleSocialLinkChange = useCallback((social: string, value: string) => {
     setSocialLinks(prev => ({ ...prev, [social]: value }));
   }, []);
 
-  // ЕДИНАЯ кнопка "Сохранить изменения" для:
-  // - ссылок готовых задач
-  // - ссылок публикации
-  // - дедлайна
   const handleSaveChanges = useCallback(async () => {
     if (!post) return;
-
     setIsSaving(true);
     try {
       const data: Record<string, any> = {};
-
-      // task links
-      for (const t of tasks) {
-        data[t.linkKey] = t.link?.trim() ? t.link.trim() : null;
-      }
-
-      // social links
-      data.telegram_published = socialLinks.telegram?.trim() ? socialLinks.telegram.trim() : null;
-      data.vkontakte_published = socialLinks.vkontakte?.trim() ? socialLinks.vkontakte.trim() : null;
-      data.MAX_published = socialLinks.max?.trim() ? socialLinks.max.trim() : null;
-
-      // deadline
+      for (const t of tasks) data[t.linkKey] = t.link?.trim() ? t.link.trim() : null;
+      data.telegram_published = socialLinks.telegram?.trim() || null;
+      data.vkontakte_published = socialLinks.vkontakte?.trim() || null;
+      data.MAX_published = socialLinks.max?.trim() || null;
       if (editedDeadline) data.post_deadline = editedDeadline.toISOString();
-
       const res = await fetch('/api/posts/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId: post.post_id, data }),
       });
-
       if (!res.ok) {
         const err = await res.json().catch(() => null);
         alert(err?.error || 'Ошибка сохранения');
         return;
       }
-
       await refreshPostData();
       await onSuccess();
-    } catch (e) {
-      console.error('Ошибка:', e);
-    } finally {
-      setIsSaving(false);
-    }
+    } catch (e) { console.error('Ошибка:', e); } finally { setIsSaving(false); }
   }, [post, tasks, socialLinks, editedDeadline, refreshPostData, onSuccess]);
 
-  const handleAction = useCallback(
-    async (action: string, confirmMsg?: string) => {
-      if (!post) return;
-      if (confirmMsg && !window.confirm(confirmMsg)) return;
-
-      setIsActionLoading(true);
-      try {
-        const isDelete = action === 'delete';
-        const response = await fetch(
-          isDelete ? `/api/posts/delete?id=${post.post_id}` : '/api/posts/update',
-          isDelete
-            ? { method: 'DELETE' }
-            : {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ postId: post.post_id, action }),
-              },
-        );
-
-        if (response.ok) {
-          if (action !== 'delete') {
-            await refreshPostData();
-            await onSuccess();
-          } else {
-            await onSuccess();
-            onClose();
-          }
+  const handleAction = useCallback(async (action: string, confirmMsg?: string) => {
+    if (!post) return;
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
+    setIsActionLoading(true);
+    try {
+      const isDelete = action === 'delete';
+      const response = await fetch(
+        isDelete ? `/api/posts/delete?id=${post.post_id}` : '/api/posts/update',
+        isDelete
+          ? { method: 'DELETE' }
+          : { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: post.post_id, action }) }
+      );
+      if (response.ok) {
+        if (action !== 'delete') {
+          await refreshPostData();
+          await onSuccess();
         } else {
-          const error = await response.json();
-          alert(error.error || 'Ошибка');
+          await onSuccess();
+          onClose();
         }
-      } catch (error) {
-        console.error('Ошибка:', error);
-      } finally {
-        setIsActionLoading(false);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Ошибка');
       }
-    },
-    [post, onSuccess, onClose, refreshPostData],
-  );
-
-  const handleEditPost = useCallback(() => {
-    setIsClosingDetails(true);
-    setTimeout(() => setShowEditModal(true), 100);
-  }, []);
-
-  const handleCloseEditModal = useCallback(() => {
-    setShowEditModal(false);
-    setTimeout(() => onClose(), 100);
-  }, [onClose]);
-
-  const handleSuccessEdit = useCallback(async () => {
-    await refreshPostData();
-    await onSuccess();
-    setShowEditModal(false);
-  }, [onSuccess, refreshPostData]);
+    } catch (error) { console.error('Ошибка:', error); } finally { setIsActionLoading(false); }
+  }, [post, onSuccess, onClose, refreshPostData]);
 
   if (!post) return null;
 
@@ -557,30 +424,19 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
     (Object.keys(socialLinks) as SocialKey[]).some(key => socialLinks[key] !== originalSocialLinks[key]) ||
     (!!editedDeadline && new Date(post.post_deadline).getTime() !== editedDeadline.getTime());
 
-  const canShowApprove = !!(
-    canApprove &&
-    !post.approved_by &&
-    TASK_CONFIG.every(cfg => !post[cfg.needsKey] || (post[cfg.linkKey] as string)?.trim())
-  );
+  const canShowApprove = !!(canApprove && !post.approved_by && TASK_CONFIG.every(cfg => !post[cfg.needsKey] || (post[cfg.linkKey] as string)?.trim()));
 
   return (
     <>
       {!showEditModal && !isClosingDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-          <div
-            className="bg-white rounded-lg w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] flex flex-col overflow-hidden"
-            onClick={e => e.stopPropagation()}
-          >
+          <div className="bg-white rounded-lg w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-start px-6 py-4 border-b shrink-0">
               <div className="flex-1 min-w-0" />
-              <button
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 transition-colors p-1 cursor-pointer shrink-0"
-              >
+              <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors p-1 cursor-pointer shrink-0">
                 <X size={24} />
               </button>
             </div>
-
             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
               <div className="lg:w-2/5 overflow-y-auto px-6 py-4 border-r">
                 <PostDetailsLeftPanel
@@ -613,13 +469,11 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                   showTagDropdown={isTagDropdownOpen}
                   setShowTagDropdown={setIsTagDropdownOpen}
                   tagDropdownRef={tagDropdownRef}
-                  // дедлайн
                   deadlineValue={editedDeadline ?? new Date(post.post_deadline)}
                   onDeadlineChange={handleDeadlineChange}
                   showDatePicker={showDatePicker}
                   setShowDatePicker={setShowDatePicker}
                   datePickerRef={datePickerRef}
-                  // actions
                   onApprove={() => handleAction('approve')}
                   onPublishToggle={() => handleAction(post.is_published ? 'unpublish' : 'publish')}
                   onDelete={() => handleAction('delete', 'Вы уверены, что хотите удалить этот пост? Это действие нельзя отменить.')}
@@ -627,17 +481,16 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                   canPublish={!!canPublish}
                   canDelete={canDelete}
                   canEditPost={canEditPost}
-                  // единая кнопка сохранения
                   onSaveChanges={handleSaveChanges}
                   hasChanges={hasChanges}
                 />
               </div>
-
               <div className="lg:w-3/5 overflow-y-auto px-6 py-4">
                 <PostDetailsRightPanel
                   tasks={tasks}
                   post={post}
-                  canEditTask={canEditTask}
+                  // ПЕРЕДАЁМ ПРАВИЛЬНУЮ ФУНКЦИЮ
+                  canEditPostTask={canEditPostTask}
                   onLinkChange={handleLinkChange}
                   onNewCommentChange={handleNewCommentChange}
                   onAddComment={handleAddComment}

@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { PostList } from '../components/posts/PostList';
 import { TaskCard } from '../components/tasks/task_card';
 import { Header } from '../components/shared/header';
 import { Pagination } from '../components/ui/pagination';
-import { useUser, ROLE_FILTERS } from '../hooks/use-roles';
+import { useUser } from '../hooks/use-roles';
 import { Task } from '../../types/task';
 
 interface PostWithRelations {
@@ -42,13 +42,11 @@ interface PostWithRelations {
 }
 
 type ContentItem = PostWithRelations | Task;
-
 type ViewMode = 'all' | 'posts' | 'tasks';
 
 export default function HomePage() {
   const [allPosts, setAllPosts] = useState<PostWithRelations[]>([]);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
-  const [filteredContent, setFilteredContent] = useState<ContentItem[]>([]);
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [loading, setLoading] = useState(true);
@@ -56,34 +54,30 @@ export default function HomePage() {
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
-  const { user, filterPostByRole } = useUser();
+  const { filterPostByRole } = useUser();
 
   const fetchAllContent = useCallback(async () => {
     try {
       setLoading(true);
-      
       const postsResponse = await fetch(`/api/posts?limit=100`);
       const postsData = await postsResponse.json();
-      
-      // Загружаем задачи (автоматически фильтруются на сервере)
       const tasksResponse = await fetch('/api/tasks?limit=100');
       const tasksData = await tasksResponse.json();
-      
+
       const postsWithDates = (postsData.posts || []).map((post: any) => ({
         ...post,
         post_date: post.post_date ? new Date(post.post_date) : null,
         post_deadline: new Date(post.post_deadline),
         type: 'post' as const,
       }));
-      
+
       const tasksWithDates = (tasksData.tasks || []).map((task: any) => ({
         ...task,
         type: 'task' as const,
       }));
-      
+
       setAllPosts(postsWithDates);
       setAllTasks(tasksWithDates);
-      
     } catch (error) {
       console.error('Error fetching content:', error);
     } finally {
@@ -96,27 +90,18 @@ export default function HomePage() {
   }, [fetchAllContent]);
 
   useEffect(() => {
-    const handleContentUpdated = () => {
-      fetchAllContent();
-    };
-
+    const handleContentUpdated = () => fetchAllContent();
     window.addEventListener('contentUpdated', handleContentUpdated);
-    return () => {
-      window.removeEventListener('contentUpdated', handleContentUpdated);
-    };
+    return () => window.removeEventListener('contentUpdated', handleContentUpdated);
   }, [fetchAllContent]);
 
-  useEffect(() => {
+  const filteredContent = useMemo(() => {
     let filtered: ContentItem[] = [];
-    
-    if (viewMode === 'posts') {
-      filtered = [...allPosts];
-    } else if (viewMode === 'tasks') {
-      filtered = [...allTasks];
-    } else {
-      filtered = [...allPosts, ...allTasks];
-    }
-    
+
+    if (viewMode === 'posts') filtered = [...allPosts];
+    else if (viewMode === 'tasks') filtered = [...allTasks];
+    else filtered = [...allPosts, ...allTasks];
+
     if (selectedRoleFilter && viewMode !== 'tasks') {
       filtered = filtered.filter(item => {
         if (item.type === 'post') {
@@ -125,28 +110,32 @@ export default function HomePage() {
         return true;
       });
     }
-    
+
     filtered.sort((a, b) => {
-      const dateA = a.type === 'post' 
-        ? (a.post_date?.getTime() || 0) 
+      const dateA = a.type === 'post'
+        ? (a.post_date?.getTime() || 0)
         : new Date(a.created_at).getTime();
-      const dateB = b.type === 'post' 
-        ? (b.post_date?.getTime() || 0) 
+      const dateB = b.type === 'post'
+        ? (b.post_date?.getTime() || 0)
         : new Date(b.created_at).getTime();
       return dateB - dateA;
     });
-    
-    setFilteredContent(filtered);
-    
-    const total = Math.ceil(filtered.length / itemsPerPage);
-    setTotalPages(total || 1);
-    setCurrentPage(1);
+
+    return filtered;
   }, [viewMode, selectedRoleFilter, allPosts, allTasks, filterPostByRole]);
 
-  const currentItems = filteredContent.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  useEffect(() => {
+    const total = Math.ceil(filteredContent.length / itemsPerPage);
+    setTotalPages(total || 1);
+    setCurrentPage(1);
+  }, [filteredContent]);
+
+  const currentItems = useMemo(() => {
+    return filteredContent.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredContent, currentPage]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -160,8 +149,8 @@ export default function HomePage() {
   if (loading && allPosts.length === 0 && allTasks.length === 0) {
     return (
       <div>
-        <Header 
-          selectedTaskFilter={selectedRoleFilter} 
+        <Header
+          selectedTaskFilter={selectedRoleFilter}
           onTaskFilterChange={setSelectedRoleFilter}
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
@@ -175,8 +164,8 @@ export default function HomePage() {
 
   return (
     <div>
-      <Header 
-        selectedTaskFilter={selectedRoleFilter} 
+      <Header
+        selectedTaskFilter={selectedRoleFilter}
         onTaskFilterChange={setSelectedRoleFilter}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
@@ -186,9 +175,9 @@ export default function HomePage() {
           {currentItems.map((item) => {
             if (item.type === 'post') {
               return (
-                <PostList 
+                <PostList
                   key={`post-${item.post_id}`}
-                  posts={[item]} 
+                  posts={[item]}
                   onPostUpdate={fetchAllContent}
                 />
               );
@@ -202,7 +191,6 @@ export default function HomePage() {
               );
             }
           })}
-          
           {currentItems.length === 0 && (
             <div className="text-center py-10">
               <p className="text-gray-500">
@@ -213,7 +201,6 @@ export default function HomePage() {
             </div>
           )}
         </div>
-        
         {filteredContent.length > itemsPerPage && (
           <div className="mt-8">
             <Pagination

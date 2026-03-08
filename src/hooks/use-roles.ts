@@ -17,36 +17,33 @@ export interface RoleFilter {
   id: string;
   label: string;
   icon?: string;
-  tasks: {
-    field: string;
-    label: string;
-  }[];
+  tasks: { field: string; label: string }[];
 }
 
 export const ROLE_FILTERS: RoleFilter[] = [
-  { 
-    id: 'smm', 
+  {
+    id: 'smm',
     label: 'SMM',
     tasks: [
       { field: 'post_needs_mini_video_smm', label: 'Мини-видео для SMM' },
-      { field: 'post_needs_mini_gallery', label: 'Мини-фотогалерея' }
-    ]
+      { field: 'post_needs_mini_gallery', label: 'Мини-фотогалерея' },
+    ],
   },
-  { 
-    id: 'photographer', 
+  {
+    id: 'photographer',
     label: 'Фотограф',
     tasks: [
       { field: 'post_needs_video', label: 'Видео' },
-      { field: 'post_needs_photogallery', label: 'Фотогалерея' }
-    ]
+      { field: 'post_needs_photogallery', label: 'Фотогалерея' },
+    ],
   },
-  { 
-    id: 'designer', 
+  {
+    id: 'designer',
     label: 'Дизайнер',
     tasks: [
       { field: 'post_needs_cover_photo', label: 'Обложка' },
-      { field: 'post_needs_photo_cards', label: 'Фотокарточки' }
-    ]
+      { field: 'post_needs_photo_cards', label: 'Фотокарточки' },
+    ],
   },
 ];
 
@@ -63,7 +60,6 @@ export function useUser() {
 
     if (session?.user) {
       const userData = session.user as any;
-      
       setUser({
         id: parseInt(userData.id) || 0,
         login: userData.user_login || '',
@@ -76,7 +72,6 @@ export function useUser() {
     } else {
       setUser(null);
     }
-    
     setLoading(false);
   }, [session, status]);
 
@@ -85,67 +80,43 @@ export function useUser() {
   const isCoordinator = useMemo(() => user?.coordinator_role === true, [user?.coordinator_role]);
   const isAdmin = useMemo(() => user?.admin_role === true, [user?.admin_role]);
   const isPhotographer = useMemo(() => user?.photographer_role === true, [user?.photographer_role]);
-  
+
   const canApprove = useMemo(() => isAdmin || isCoordinator, [isAdmin, isCoordinator]);
   const canPublish = useMemo(() => isAdmin || isSmm, [isAdmin, isSmm]);
-  
   const isAdminOrCoordinatorOrSmm = useMemo(() => isAdmin || isCoordinator || isSmm, [isAdmin, isCoordinator, isSmm]);
 
-  // Проверки для задач
-  const canCreateTask = useMemo(() => true, []); // Любой пользователь может создавать задачи
-  
-  const canViewAllTasks = useMemo(() => isAdmin || isSmm, [isAdmin, isSmm]);
-  
+  // Для обычных задач (тасков)
   const canEditTask = useCallback((task: any, currentUserId?: number) => {
     if (!user) return false;
-    if (isAdmin) return true; // Админ может всё
-    
+    if (isAdmin) return true;
     const isCreator = task.created_by_id === user.id;
     const isAssignee = task.assignees && task.assignees.some((a: any) => a.user_id === user.id);
-    
-    // Редактировать может: создатель, исполнитель или админ
     return isCreator || isAssignee;
   }, [user, isAdmin]);
 
   const canDeleteTask = useCallback((task: any) => {
     if (!user) return false;
-    if (isAdmin) return true; // Админ может удалять
-    
-    const isCreator = task.created_by_id === user.id;
-    
-    // Удалять может только создатель или админ
-    return isCreator;
+    if (isAdmin) return true;
+    return task.created_by_id === user.id;
   }, [user, isAdmin]);
 
   const canViewTask = useCallback((task: any) => {
     if (!user) return false;
-    if (isAdmin || isSmm) return true; // Админ и SMM видят все задачи
-    
+    if (isAdmin || isSmm) return true;
     const isCreator = task.created_by_id === user.id;
     const isAssignee = task.assignees && task.assignees.some((a: any) => a.user_id === user.id);
-    
-    // Видеть может: создатель, исполнитель, админ, SMM
     return isCreator || isAssignee;
   }, [user, isAdmin, isSmm]);
 
-  const getRoleFilters = useCallback((): RoleFilter[] => {
-    return ROLE_FILTERS;
-  }, []);
+  const canCreateTask = useMemo(() => true, []);
 
-  const filterPostByRole = useCallback((post: any, roleId: string): boolean => {
-    const roleFilter = ROLE_FILTERS.find(r => r.id === roleId);
-    if (!roleFilter) return false;
-    
-    return roleFilter.tasks.some(task => post[task.field] === true);
-  }, []);
-
+  // Для задач внутри ПОСТА – проверка по роли задачи
   const canEditPostTask = useCallback((taskRole: string): boolean => {
     if (!user) return false;
-    
-    if (isAdminOrCoordinatorOrSmm) return true;
-    
-    if (taskRole === 'text') return true;
-    
+
+    // Админ, координатор, SMM могут редактировать любые задачи в постах
+    if (isAdmin || isCoordinator || isSmm) return true;
+
     switch (taskRole) {
       case 'designer':
         return isDesigner;
@@ -153,13 +124,32 @@ export function useUser() {
         return isSmm;
       case 'photographer':
         return isPhotographer;
+      case 'text':
+        return true; // текст могут редактировать все
       default:
         return false;
     }
-  }, [user, isAdminOrCoordinatorOrSmm, isDesigner, isSmm, isPhotographer]);
+  }, [user, isAdmin, isCoordinator, isSmm, isDesigner, isPhotographer]);
 
-  return { 
-    user, 
+  const canAddComment = useCallback((taskRole: string): boolean => {
+    if (!user) return false;
+    if (isAdmin || isCoordinator || isSmm) return true;
+    switch (taskRole) {
+      case 'designer':
+        return isDesigner;
+      case 'smm':
+        return isSmm;
+      case 'photographer':
+        return isPhotographer;
+      case 'text':
+        return true;
+      default:
+        return false;
+    }
+  }, [user, isAdmin, isCoordinator, isSmm, isDesigner, isPhotographer]);
+
+  return {
+    user,
     loading,
     isDesigner,
     isSmm,
@@ -170,12 +160,17 @@ export function useUser() {
     canApprove,
     canPublish,
     canCreateTask,
-    canViewAllTasks,
+    canViewAllTasks: isAdmin || isSmm,
     canEditTask,
     canDeleteTask,
     canViewTask,
-    getRoleFilters,
-    filterPostByRole,
-    canEditPostTask
+    getRoleFilters: () => ROLE_FILTERS,
+    filterPostByRole: (post: any, roleId: string) => {
+      const roleFilter = ROLE_FILTERS.find(r => r.id === roleId);
+      if (!roleFilter) return false;
+      return roleFilter.tasks.some(task => post[task.field] === true);
+    },
+    canEditPostTask,
+    canAddComment,
   };
 }
