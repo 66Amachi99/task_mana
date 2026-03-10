@@ -3,10 +3,10 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { PostList } from '../components/posts/PostList';
 import { TaskCard } from '../components/tasks/task_card';
-import { Header } from '../components/shared/header';
 import { Pagination } from '../components/ui/pagination';
 import { useUser } from '../hooks/use-roles';
 import { Task } from '../../types/task';
+import { Header } from '../components/layout/Header/Header';
 
 interface PostWithRelations {
   post_id: number;
@@ -148,69 +148,74 @@ export default function HomePage() {
 
   if (loading && allPosts.length === 0 && allTasks.length === 0) {
     return (
-      <div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="pb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center py-10">Загрузка...</div>
+          </div>
+        </div>
         <Header
           selectedTaskFilter={selectedRoleFilter}
           onTaskFilterChange={setSelectedRoleFilter}
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
         />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-10">Загрузка...</div>
-        </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="space-y-4 md:space-y-6">
+            {currentItems.map((item) => {
+              if (item.type === 'post') {
+                return (
+                  <PostList
+                    key={`post-${item.post_id}`}
+                    posts={[item]}
+                    onPostUpdate={fetchAllContent}
+                  />
+                );
+              } else {
+                return (
+                  <TaskCard
+                    key={`task-${item.task_id}`}
+                    task={item}
+                    onTaskUpdate={fetchAllContent}
+                  />
+                );
+              }
+            })}
+            {currentItems.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-gray-500">
+                  {viewMode === 'posts' && 'Нет постов для отображения'}
+                  {viewMode === 'tasks' && 'Нет задач для отображения'}
+                  {viewMode === 'all' && 'Нет элементов для отображения'}
+                </p>
+              </div>
+            )}
+          </div>
+          {filteredContent.length > itemsPerPage && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
       <Header
         selectedTaskFilter={selectedRoleFilter}
         onTaskFilterChange={setSelectedRoleFilter}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-4 md:space-y-6">
-          {currentItems.map((item) => {
-            if (item.type === 'post') {
-              return (
-                <PostList
-                  key={`post-${item.post_id}`}
-                  posts={[item]}
-                  onPostUpdate={fetchAllContent}
-                />
-              );
-            } else {
-              return (
-                <TaskCard
-                  key={`task-${item.task_id}`}
-                  task={item}
-                  onTaskUpdate={fetchAllContent}
-                />
-              );
-            }
-          })}
-          {currentItems.length === 0 && (
-            <div className="text-center py-10">
-              <p className="text-gray-500">
-                {viewMode === 'posts' && 'Нет постов для отображения'}
-                {viewMode === 'tasks' && 'Нет задач для отображения'}
-                {viewMode === 'all' && 'Нет элементов для отображения'}
-              </p>
-            </div>
-          )}
-        </div>
-        {filteredContent.length > itemsPerPage && (
-          <div className="mt-8">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        )}
-      </div>
     </div>
   );
 }
