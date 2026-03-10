@@ -9,9 +9,8 @@ import { format } from 'date-fns';
 import { getPostStatus, getStatusColor } from '../../lib/post-status';
 import { useUser } from '../../hooks/use-roles';
 import { CalendarPost, CalendarTask, CalendarItem } from '../../../types/calendar';
-import { CheckCircle, Circle } from 'lucide-react';
-
-type SortType = 'all' | 'posts' | 'tasks';
+import { CheckCircle, Circle, X } from 'lucide-react';
+import { ru } from 'date-fns/locale'; // Импортируем локаль напрямую
 
 export default function CalendarPage() {
   const [posts, setPosts] = useState<CalendarPost[]>([]);
@@ -19,38 +18,36 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedPost, setSelectedPost] = useState<CalendarPost | null>(null);
-  const [selectedTask, setSelectedTask] = useState<CalendarTask | null>(null);
-  const [showPostDetails, setShowPostDetails] = useState(false);
-  const [showTaskDetails, setShowTaskDetails] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<{ post?: CalendarPost; task?: CalendarTask } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showCompletedOnly, setShowCompletedOnly] = useState(false);
   const [viewMode, setViewMode] = useState<'all' | 'posts' | 'tasks'>('all');
 
   const { filterPostByRole } = useUser();
 
+  // --- Данные ---
   const fetchAllContent = useCallback(async () => {
     try {
       setLoading(true);
-      const postsRes = await fetch('/api/posts?limit=100');
+      const [postsRes, tasksRes] = await Promise.all([
+        fetch('/api/posts?limit=100'),
+        fetch('/api/tasks?limit=100')
+      ]);
+      
       const postsData = await postsRes.json();
-      const tasksRes = await fetch('/api/tasks?limit=100');
       const tasksData = await tasksRes.json();
 
-      const postsWithDates = (postsData.posts || []).map((p: any) => ({
+      setPosts((postsData.posts || []).map((p: any) => ({
         ...p,
         post_date: p.post_date ? new Date(p.post_date) : null,
         post_deadline: new Date(p.post_deadline),
-        type: 'post' as const,
-      }));
+        type: 'post',
+      })));
 
-      const tasksWithDates = (tasksData.tasks || []).map((t: any) => ({
+      setTasks((tasksData.tasks || []).map((t: any) => ({
         ...t,
-        type: 'task' as const,
-      }));
-
-      setPosts(postsWithDates);
-      setTasks(tasksWithDates);
+        type: 'task',
+      })));
     } catch (error) {
       console.error('Error fetching content:', error);
     } finally {
@@ -63,63 +60,55 @@ export default function CalendarPage() {
   }, [fetchAllContent]);
 
   useEffect(() => {
-    const handleContentUpdated = () => fetchAllContent();
-    window.addEventListener('contentUpdated', handleContentUpdated);
-    return () => window.removeEventListener('contentUpdated', handleContentUpdated);
+    const handleUpdate = () => fetchAllContent();
+    window.addEventListener('contentUpdated', handleUpdate);
+    return () => window.removeEventListener('contentUpdated', handleUpdate);
   }, [fetchAllContent]);
 
-  const filterContentForCalendar = useCallback((): CalendarItem[] => {
-    let filteredPosts = posts;
-    let filteredTasks = tasks;
-
-    if (selectedRoleFilter) {
-      filteredPosts = posts.filter(post => filterPostByRole(post, selectedRoleFilter));
+  // --- Фильтрация ---
+  const itemsByDate = useMemo(() => {
+    const map = new Map<string, CalendarItem[]>();
+    
+    const allItems: CalendarItem[] = [];
+    if (viewMode !== 'tasks') {
+      const filtered = selectedRoleFilter 
+        ? posts.filter(p => filterPostByRole(p, selectedRoleFilter))
+        : posts;
+      allItems.push(...filtered);
     }
+    if (viewMode !== 'posts') allItems.push(...tasks);
 
-    if (viewMode === 'posts') {
-      return filteredPosts;
-    } else if (viewMode === 'tasks') {
-      return filteredTasks;
-    } else {
-      return [...filteredPosts, ...filteredTasks];
-    }
-  }, [posts, tasks, selectedRoleFilter, filterPostByRole, viewMode]);
-
-  const itemsByDate = new Map<string, CalendarItem[]>();
-  filterContentForCalendar().forEach(item => {
-    const dateStr = item.type === 'post'
-      ? format(item.post_deadline, 'yyyy-MM-dd')
-      : format(new Date(item.end_time), 'yyyy-MM-dd');
-    if (!itemsByDate.has(dateStr)) {
-      itemsByDate.set(dateStr, []);
-    }
-    itemsByDate.get(dateStr)!.push(item);
-  });
-
-  const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-  const allItemsForSelectedDay = itemsByDate.get(selectedDateStr) || [];
-
-  const filteredItems = useMemo(() => {
-    let items = allItemsForSelectedDay;
-    if (showCompletedOnly) {
-      items = items.filter(item => {
-        if (item.type === 'post') return item.post_status === 'Завершен';
-        else return item.task_status === 'Выполнена';
-      });
-    }
-    return items;
-  }, [allItemsForSelectedDay, showCompletedOnly]);
+    allItems.forEach(item => {
+      const date = item.type === 'post' ? item.post_deadline : new Date(item.end_time);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      if (!map.has(dateStr)) map.set(dateStr, []);
+      map.get(dateStr)!.push(item);
+    });
+    return map;
+  }, [posts, tasks, viewMode, selectedRoleFilter, filterPostByRole]);
 
   const dayStats = useMemo(() => {
-    const total = allItemsForSelectedDay.length;
-    const completed = allItemsForSelectedDay.filter(item => {
-      if (item.type === 'post') return item.post_status === 'Завершен';
-      else return item.task_status === 'Выполнена';
-    }).length;
-    const postsCount = allItemsForSelectedDay.filter(item => item.type === 'post').length;
-    const tasksCount = allItemsForSelectedDay.filter(item => item.type === 'task').length;
-    return { total, completed, postsCount, tasksCount };
-  }, [allItemsForSelectedDay]);
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    const items = itemsByDate.get(dateStr) || [];
+    const completed = items.filter(i => 
+      i.type === 'post' ? i.post_status === 'Завершен' : i.task_status === 'Выполнена'
+    ).length;
+
+    return { 
+      items,
+      total: items.length, 
+      completed, 
+      postsCount: items.filter(i => i.type === 'post').length, 
+      tasksCount: items.filter(i => i.type === 'task').length 
+    };
+  }, [itemsByDate, selectedDate]);
+
+  const filteredDayItems = useMemo(() => {
+    if (!showCompletedOnly) return dayStats.items;
+    return dayStats.items.filter(i => 
+      i.type === 'post' ? i.post_status === 'Завершен' : i.task_status === 'Выполнена'
+    );
+  }, [dayStats.items, showCompletedOnly]);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
@@ -127,37 +116,54 @@ export default function CalendarPage() {
     setShowCompletedOnly(false);
   };
 
-  const handleCloseSidebar = () => setIsSidebarOpen(false);
-
-  const handlePostClick = (post: CalendarPost) => {
-    setSelectedPost(post);
-    setShowPostDetails(true);
+  const handleItemClick = (item: CalendarItem) => {
+    if (item.type === 'post') setSelectedItem({ post: item });
+    else setSelectedItem({ task: item });
   };
 
-  const handleTaskClick = (task: CalendarTask) => {
-    setSelectedTask(task);
-    setShowTaskDetails(true);
-  };
+  const renderCard = (item: CalendarItem) => {
+    const isPost = item.type === 'post';
+    const isCompleted = isPost ? item.post_status === 'Завершен' : item.task_status === 'Выполнена';
+    const accentClass = isPost 
+      ? (isCompleted ? 'border-green-400 bg-green-50' : 'border-blue-400')
+      : (isCompleted ? 'border-green-400 bg-green-50' : 'border-purple-400');
 
-  const handleCloseDetails = () => {
-    setShowPostDetails(false);
-    setShowTaskDetails(false);
-    setSelectedPost(null);
-    setSelectedTask(null);
+    return (
+      <div
+        key={`${item.type}-${isPost ? item.post_id : item.task_id}`}
+        onClick={() => handleItemClick(item)}
+        className={`p-4 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border-l-4 bg-gray-50 ${accentClass}`}
+      >
+        <h3 className="font-semibold text-gray-800 truncate">
+          {isPost ? item.post_title : item.title}
+        </h3>
+        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+          {isPost ? item.post_description : (item.description || 'Нет описания')}
+        </p>
+        <div className="mt-3">
+          <span className={`text-xs px-2 py-1 rounded-full ${
+            isPost ? getStatusColor(getPostStatus(item)) : (isCompleted ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800')
+          }`}>
+            {isPost ? getPostStatus(item) : item.task_status}
+          </span>
+        </div>
+      </div>
+    );
   };
-
-  const handleContentUpdate = async () => {
-    await fetchAllContent();
-  };
-
-  const toggleCompletedFilter = () => setShowCompletedOnly(!showCompletedOnly);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">Загрузка...</div>
-        </div>
+      <div className="h-screen flex items-center justify-center flex-col gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+        <span className="text-gray-500">Загрузка...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-screen w-screen flex flex-col bg-white overflow-hidden relative">
+      {/* HEADER ПОВЕРХ ВСЕГО */}
+      <div className="fixed bottom-0 left-0 w-full z-50">
         <Header
           selectedTaskFilter={selectedRoleFilter}
           onTaskFilterChange={setSelectedRoleFilter}
@@ -165,142 +171,82 @@ export default function CalendarPage() {
           onViewModeChange={setViewMode}
         />
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen flex">
-      {/* Основной контент – занимает всё свободное место, с отступом снизу под хэдер */}
-      <div className="flex-1 pb-16 flex flex-col min-h-0">
-        <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col lg:flex-row h-full gap-4">
-            {/* Календарь */}
-            <div className={`transition-all duration-300 ease-in-out h-full ${isSidebarOpen ? 'w-full lg:w-[70%]' : 'w-full'}`}>
-              <div className="h-full">
-                <Calendar
-                  itemsByDate={itemsByDate}
-                  selectedDate={selectedDate}
-                  onDateSelect={handleDateSelect}
-                  onPostClick={handlePostClick}
-                  onTaskClick={handleTaskClick}
-                />
-              </div>
+      <main className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex w-full h-full overflow-hidden">
+          
+          {/* Календарь во всю страницу */}
+          <div className={`transition-all duration-500 ease-in-out h-full ${isSidebarOpen ? 'w-full lg:w-2/3 xl:w-3/4' : 'w-full'}`}>
+            <div className="h-full w-full pb-20">
+              <Calendar
+                itemsByDate={itemsByDate}
+                selectedDate={selectedDate}
+                onDateSelect={handleDateSelect}
+                onPostClick={(p) => handleItemClick(p)}
+                onTaskClick={(t) => handleItemClick(t)}
+              />
             </div>
+          </div>
 
-            {/* Сайдбар */}
-            <div className={`transition-all duration-300 ease-in-out h-full overflow-hidden ${isSidebarOpen ? 'w-full lg:w-[30%] opacity-100' : 'w-0 opacity-0'}`}>
-              <div className="bg-white rounded-lg h-full flex flex-col w-full min-w-[320px]">
-                {/* Заголовок */}
-                <div className="flex justify-between items-start mb-4 shrink-0">
-                  <div>
-                    <h2 className="text-xl font-semibold">
-                      {selectedDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </h2>
-                    <div className="text-sm text-gray-500 mt-1">
-                      <span className="mr-3">📄 Постов: {dayStats.postsCount}</span>
-                      <span>✓ Задач: {dayStats.tasksCount}</span>
-                    </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      Готово: {dayStats.completed}/{dayStats.total}
-                    </div>
+          {/* Сайдбар во всю страницу */}
+          <aside className={`transition-all duration-500 ease-in-out bg-white flex flex-col overflow-hidden h-full ${
+            isSidebarOpen ? 'w-full lg:w-1/3 xl:w-1/4 opacity-100' : 'w-0 opacity-0 invisible'
+          }`}>
+            <div className="p-4 pl-0 flex flex-col h-full min-w-[320px]">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
+                  </h2>
+                  <div className="flex gap-3 mt-1 text-xs font-medium text-gray-500">
+                    <span>📄 {dayStats.postsCount} постов</span>
+                    <span>✅ {dayStats.tasksCount} задач</span>
+                    <span className="text-green-600">✓ {dayStats.completed} выполнено</span>
                   </div>
-                  <button onClick={handleCloseSidebar} className="text-gray-500 hover:text-gray-700 transition-colors">
-                    ✕
-                  </button>
                 </div>
+                <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
 
-                {/* Фильтр выполненных */}
-                <div className="flex flex-wrap gap-2 mb-4 shrink-0">
-                  <button
-                    onClick={toggleCompletedFilter}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
-                      showCompletedOnly ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {showCompletedOnly ? <CheckCircle className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
-                    {showCompletedOnly ? 'Готовые' : 'Готовые'}
-                  </button>
-                </div>
+              <button
+                onClick={() => setShowCompletedOnly(!showCompletedOnly)}
+                className={`mb-4 flex items-center justify-center gap-2 w-full py-2 rounded-lg border transition-all text-sm font-medium ${
+                  showCompletedOnly ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {showCompletedOnly ? <CheckCircle className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                {showCompletedOnly ? 'Только выполненные' : 'Все статусы'}
+              </button>
 
-                {/* Список элементов */}
-                {filteredItems.length === 0 ? (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500 flex-1 flex items-center justify-center">
-                    {showCompletedOnly ? 'Нет выполненных элементов на этот день' : 'Нет элементов на этот день'}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                {filteredDayItems.length === 0 ? (
+                  <div className="h-40 flex flex-col items-center justify-center text-gray-400 text-sm bg-gray-50 rounded-lg border-2 border-dashed">
+                    <p>{showCompletedOnly ? 'Нет выполненных' : 'Событий нет'}</p>
                   </div>
                 ) : (
-                  <div className="space-y-4 overflow-y-auto flex-1">
-                    {filteredItems.map((item) => {
-                      if (item.type === 'post') {
-                        return (
-                          <div
-                            key={`post-${item.post_id}`}
-                            className={`bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
-                              item.post_status === 'Завершен' ? 'border-green-400 bg-green-50' : 'border-blue-400'
-                            }`}
-                            onClick={() => handlePostClick(item)}
-                          >
-                            <h3 className="font-semibold text-gray-800 truncate" title={item.post_title}>
-                              {item.post_title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2" title={item.post_description}>
-                              {item.post_description}
-                            </p>
-                            <div className="flex items-center mt-3">
-                              <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(getPostStatus(item))}`}>
-                                {getPostStatus(item)}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      } else {
-                        const isCompleted = item.task_status === 'Выполнена';
-                        return (
-                          <div
-                            key={`task-${item.task_id}`}
-                            className={`bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
-                              isCompleted ? 'border-green-400 bg-green-50' : 'border-purple-400'
-                            }`}
-                            onClick={() => handleTaskClick(item)}
-                          >
-                            <h3 className="font-semibold text-gray-800 truncate" title={item.title}>
-                              {item.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2" title={item.description || ''}>
-                              {item.description || 'Нет описания'}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-2 mt-3">
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                isCompleted ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'
-                              }`}>
-                                {item.task_status}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      }
-                    })}
-                  </div>
+                  filteredDayItems.map(renderCard)
                 )}
               </div>
             </div>
-          </div>
+          </aside>
         </div>
-      </div>
+      </main>
 
-      {/* Хэдер снизу */}
-      <Header
-        selectedTaskFilter={selectedRoleFilter}
-        onTaskFilterChange={setSelectedRoleFilter}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
-
-      {/* Модалки */}
-      {showPostDetails && selectedPost && (
-        <PostDetailsWindow post={selectedPost} onClose={handleCloseDetails} onSuccess={handleContentUpdate} />
+      {/* Модальные окна */}
+      {selectedItem?.post && (
+        <PostDetailsWindow 
+          post={selectedItem.post} 
+          onClose={() => setSelectedItem(null)} 
+          onSuccess={fetchAllContent} 
+        />
       )}
-      {showTaskDetails && selectedTask && (
-        <TaskDetailsWindow task={selectedTask} onClose={handleCloseDetails} onSuccess={handleContentUpdate} />
+      {selectedItem?.task && (
+        <TaskDetailsWindow 
+          task={selectedItem.task} 
+          onClose={() => setSelectedItem(null)} 
+          onSuccess={fetchAllContent} 
+        />
       )}
     </div>
   );

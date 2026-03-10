@@ -98,7 +98,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 h-full flex flex-col">
+    <div className="bg-white rounded-lg p-4 h-full flex flex-col">
       {/* Заголовок с месяцем и статистикой справа */}
       <div className="flex justify-between items-center mb-4 shrink-0">
         <button 

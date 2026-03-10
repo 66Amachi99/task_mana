@@ -32,7 +32,6 @@ interface PostData {
   post_done_link_mini_gallery?: string | null;
   post_done_link_text?: string | null;
   
-  // Поля для фидбэка
   post_feedback_mini_video_smm?: string | null;
   post_feedback_video?: string | null;
   post_feedback_cover_photo?: string | null;
@@ -41,7 +40,6 @@ interface PostData {
   post_feedback_mini_gallery?: string | null;
   post_feedback_text?: string | null;
   
-  // Поля для комментариев
   comments?: Array<{
     id: number;
     text: string;
@@ -68,7 +66,6 @@ interface PostData {
     color: string;
   }>;
   
-  // Добавляем сигнатуру индекса
   [key: string]: unknown;
 }
 
