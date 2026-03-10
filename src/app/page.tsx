@@ -142,10 +142,6 @@ export default function HomePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode);
-  };
-
   if (loading && allPosts.length === 0 && allTasks.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -154,12 +150,7 @@ export default function HomePage() {
             <div className="text-center py-10">Загрузка...</div>
           </div>
         </div>
-        <Header
-          selectedTaskFilter={selectedRoleFilter}
-          onTaskFilterChange={setSelectedRoleFilter}
-          viewMode={viewMode}
-          onViewModeChange={handleViewModeChange}
-        />
+        <Header />
       </div>
     );
   }
@@ -210,12 +201,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <Header
-        selectedTaskFilter={selectedRoleFilter}
-        onTaskFilterChange={setSelectedRoleFilter}
-        viewMode={viewMode}
-        onViewModeChange={handleViewModeChange}
-      />
+      <Header />
     </div>
   );
 }

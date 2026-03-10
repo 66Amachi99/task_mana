@@ -8,22 +8,13 @@ import { AuthWindow } from '@/components/shared/auth_window';
 import { LogoutWindow } from '@/components/shared/logout_window';
 import { PostAddWindow } from '@/components/shared/post_add_window';
 import { TaskAddWindow } from '@/components/shared/task_add_window';
-import { User, ChevronDown } from 'lucide-react';
-import { ROLE_FILTERS } from '@/hooks/use-roles';
+import { User } from 'lucide-react';
 
 interface HeaderProps {
-  selectedTaskFilter: string | null;
-  onTaskFilterChange: (filter: string | null) => void;
-  viewMode?: 'all' | 'posts' | 'tasks';
-  onViewModeChange?: (mode: 'all' | 'posts' | 'tasks') => void;
+  // Фильтры больше не нужны
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  selectedTaskFilter,
-  onTaskFilterChange,
-  viewMode = 'all',
-  onViewModeChange,
-}) => {
+export const Header: React.FC<HeaderProps> = () => {
   const { user, canCreateTask } = useUser();
   const pathname = usePathname();
 
@@ -31,24 +22,6 @@ export const Header: React.FC<HeaderProps> = ({
   const [showLogoutWindow, setShowLogoutWindow] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
-  const [isViewModeDropdownOpen, setIsViewModeDropdownOpen] = useState(false);
-
-  const roleDropdownRef = useRef<HTMLDivElement>(null);
-  const viewModeDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
-        setIsRoleDropdownOpen(false);
-      }
-      if (viewModeDropdownRef.current && !viewModeDropdownRef.current.contains(event.target as Node)) {
-        setIsViewModeDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleAuthClick = () => {
     if (user) {
@@ -63,6 +36,11 @@ export const Header: React.FC<HeaderProps> = ({
     await signOut({ redirect: false });
     window.location.reload();
     setShowLogoutWindow(false);
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthWindow(false);
+    window.dispatchEvent(new CustomEvent('contentUpdated'));
   };
 
   const handlePostAdded = async () => {
@@ -84,17 +62,12 @@ export const Header: React.FC<HeaderProps> = ({
     : '/icons/calendar_window_icon_no_clicked.svg';
 
   const canAddPost = user && (user.admin_role || user.SMM_role);
-  const showRoleFilter = viewMode !== 'tasks';
-
-  const selectedFilterLabel = selectedTaskFilter 
-    ? ROLE_FILTERS.find(f => f.id === selectedTaskFilter)?.label 
-    : null;
 
   return (
     <>
       <header className="fixed bottom-0 left-0 right-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          {/* Левая часть: пользователь (одиночная кнопка) */}
+          {/* Левая часть: пользователь */}
           <div className="bg-gray-400 rounded-full">
             <button
               onClick={handleAuthClick}
@@ -107,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Центр: навигация и добавление (группа кнопок) */}
+          {/* Центр: навигация и добавление */}
           <div className="bg-gray-400 rounded-full px-4 h-12 flex items-center gap-4">
             <Link href="/" className="h-full">
               <button className="h-full px-2 rounded-full hover:bg-gray-200 transition-colors flex items-center">
@@ -145,98 +118,14 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Правая часть: фильтры (группа кнопок) */}
-          <div className="bg-gray-400 rounded-full h-12 flex items-center gap-2">
-            {onViewModeChange && (
-              <div className="relative h-full">
-                <button
-                  onClick={() => setIsViewModeDropdownOpen(!isViewModeDropdownOpen)}
-                  className="h-full px-3 rounded-full hover:bg-gray-200 transition-colors text-base flex items-center gap-2"
-                >
-                  <span>
-                    {viewMode === 'all' && 'Все'}
-                    {viewMode === 'posts' && 'Только посты'}
-                    {viewMode === 'tasks' && 'Только задачи'}
-                  </span>
-                  <ChevronDown className={`w-5 h-5 transition-transform ${isViewModeDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {isViewModeDropdownOpen && (
-                  <div className="absolute bottom-full mb-2 left-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
-                    <button
-                      onClick={() => { onViewModeChange('all'); setIsViewModeDropdownOpen(false); }}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-100 text-base ${viewMode === 'all' ? 'bg-blue-50 text-blue-600 font-medium' : ''}`}
-                    >
-                      Все
-                    </button>
-                    <button
-                      onClick={() => { onViewModeChange('posts'); setIsViewModeDropdownOpen(false); }}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-100 text-base ${viewMode === 'posts' ? 'bg-blue-50 text-blue-600 font-medium' : ''}`}
-                    >
-                      Только посты
-                    </button>
-                    <button
-                      onClick={() => { onViewModeChange('tasks'); setIsViewModeDropdownOpen(false); }}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-100 text-base ${viewMode === 'tasks' ? 'bg-blue-50 text-blue-600 font-medium' : ''}`}
-                    >
-                      Только задачи
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {showRoleFilter && (
-              <div className="relative h-full">
-                <button
-                  onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                  className="h-full px-3 rounded-full hover:bg-gray-200 transition-colors text-base flex items-center gap-2"
-                >
-                  <span className="max-w-40 truncate">
-                    {selectedFilterLabel ? `Роль: ${selectedFilterLabel}` : 'Все посты'}
-                  </span>
-                  <ChevronDown className={`w-5 h-5 transition-transform ${isRoleDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {isRoleDropdownOpen && (
-                  <div className="absolute bottom-full mb-2 left-0 w-72 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
-                    <button
-                      onClick={() => { onTaskFilterChange(null); setIsRoleDropdownOpen(false); }}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-100 text-base ${!selectedTaskFilter ? 'bg-blue-50 text-blue-600 font-medium' : ''}`}
-                    >
-                      Все посты
-                    </button>
-                    <div className="h-px bg-gray-200 my-2"></div>
-                    {ROLE_FILTERS.map((role, index) => (
-                      <div key={role.id}>
-                        <button
-                          onClick={() => { onTaskFilterChange(role.id); setIsRoleDropdownOpen(false); }}
-                          className={`w-full text-left px-4 py-3 hover:bg-gray-100 ${selectedTaskFilter === role.id ? 'bg-blue-50 text-blue-600 font-medium' : ''}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-500 text-lg">
-                              {role.id === 'smm' && '📹'}
-                              {role.id === 'photographer' && '📷'}
-                              {role.id === 'designer' && '✏️'}
-                            </span>
-                            <span className="text-base font-medium">{role.label}</span>
-                          </div>
-                          <div className="text-sm text-gray-500 mt-1 ml-8">
-                            {role.tasks.map(t => t.label).join(' • ')}
-                          </div>
-                        </button>
-                        {index < ROLE_FILTERS.length - 1 && <div className="h-px bg-gray-100 my-1"></div>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Правая часть пустая (можно оставить для баланса) */}
+          <div className="w-32"></div>
         </div>
       </header>
 
       {/* Модальные окна */}
       {showAuthWindow && (
-        <AuthWindow onClose={() => setShowAuthWindow(false)} onSuccess={() => setShowAuthWindow(false)} />
+        <AuthWindow onClose={() => setShowAuthWindow(false)} onSuccess={handleAuthSuccess} />
       )}
       {showLogoutWindow && (
         <LogoutWindow onClose={() => setShowLogoutWindow(false)} onConfirm={handleLogoutConfirm} />

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { X, Calendar, User, Edit, Trash2, ExternalLink, CheckCircle, Save, Users } from 'lucide-react';
 import { useUser } from '@/hooks/use-roles';
 import { Task } from '../../../types/task';
+import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
 
 // --- ИНТЕРФЕЙСЫ ---
 interface TaskDetailsWindowProps {
@@ -78,6 +79,16 @@ const useOutsideClick = (callback: () => void) => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [callback]);
   return ref;
+};
+
+// Вспомогательная функция для проверки, является ли строка URL
+const isUrl = (str: string): boolean => {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 // --- КОМПОНЕНТЫ-ПОМОЩНИКИ ---
@@ -617,13 +628,12 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
             <div className="border-t pt-4">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Результат выполнения</h4>
               
-              {/* Поле для ввода ссылки */}
-              <input
-                type="text"
+              {/* Поле для ввода текста (textarea) */}
+              <AutoResizeTextarea
                 value={completedTaskInput}
                 onChange={(e) => setCompletedTaskInput(e.target.value)}
-                placeholder="Вставьте ссылку на готовую задачу..."
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                placeholder="Введите результат выполнения..."
+                disabled={isSavingCompleted}
               />
               
               {/* Отображение сохраненного результата */}
@@ -633,16 +643,19 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
                       <span className="text-sm text-green-700 truncate" title={savedCompletedTask}>
-                        Сохраненная ссылка: {savedCompletedTask}
+                        Сохраненный результат: {savedCompletedTask}
                       </span>
                     </div>
-                    <button
-                      onClick={e => handleLinkClick(savedCompletedTask, e)}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-white text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium shrink-0 ml-2"
-                      title="Открыть ссылку"
-                    >
-                      <ExternalLink className="w-4 h-4" /> Открыть
-                    </button>
+                    {/* Если сохранённый результат является ссылкой, показываем кнопку открытия */}
+                    {isUrl(savedCompletedTask) && (
+                      <button
+                        onClick={e => handleLinkClick(savedCompletedTask, e)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-white text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium shrink-0 ml-2"
+                        title="Открыть ссылку"
+                      >
+                        <ExternalLink className="w-4 h-4" /> Открыть
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

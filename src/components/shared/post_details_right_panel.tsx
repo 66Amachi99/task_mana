@@ -12,7 +12,6 @@ interface PostData {
 interface PostDetailsRightPanelProps {
   tasks: TaskWithComments[];
   post: PostData;
-  // ИЗМЕНЕНО: принимаем canEditPostTask
   canEditPostTask: (role: string) => boolean;
   onLinkChange: (id: number, value: string) => void;
   onNewCommentChange: (id: number, value: string) => void;
@@ -22,7 +21,7 @@ interface PostDetailsRightPanelProps {
   isActionLoading: boolean;
 }
 
-// Вспомогательные компоненты (без изменений)
+// Маленький textarea для комментариев (как был)
 const AutoResizeTextarea = ({ value, onChange, placeholder, disabled }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -45,6 +44,33 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, disabled }: {
       disabled={disabled}
       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
       rows={1}
+    />
+  );
+};
+
+// Большой textarea для текстовой задачи
+const TaskTextarea = ({ value, onChange, placeholder, disabled }: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [value]);
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      disabled={disabled}
+      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden min-h-[80px]"
+      rows={2}
     />
   );
 };
@@ -129,7 +155,7 @@ const normalizeUrl = (url: string): string => {
 export const PostDetailsRightPanel = ({
   tasks,
   post,
-  canEditPostTask,   // ИСПОЛЬЗУЕМ
+  canEditPostTask,
   onLinkChange,
   onNewCommentChange,
   onAddComment,
@@ -164,13 +190,13 @@ export const PostDetailsRightPanel = ({
           tasks.map(task => {
             const originalLink = (post[task.linkKey] as string) || '';
             const hasLink = originalLink.trim() !== '';
-            // ИСПОЛЬЗУЕМ canEditPostTask для проверки прав на редактирование ссылки
             const userCanEdit = canEditPostTask(task.role);
             const userCanAddComment = canAddComment ? canAddComment(task.role) : userCanEdit;
 
             return (
               <div key={task.id} className="border rounded-lg p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                {/* Родительский flex-контейнер для строки задачи с динамическим выравниванием */}
+                <div className={`flex flex-col sm:flex-row gap-3 mb-3 ${task.role === 'text' ? 'sm:items-start' : 'sm:items-center'}`}>
                   <div className="sm:w-1/4">
                     <h4 className="font-medium text-gray-800 text-base flex items-center gap-1">
                       {task.label}
@@ -179,14 +205,24 @@ export const PostDetailsRightPanel = ({
                   </div>
                   <div className="sm:w-3/4">
                     {userCanEdit ? (
-                      <input
-                        type="text"
-                        value={task.link}
-                        onChange={e => onLinkChange(task.id, e.target.value)}
-                        placeholder="Вставьте ссылку..."
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        disabled={isSaving || isActionLoading}
-                      />
+                      // Если задача с ролью 'text' – используем большой TaskTextarea, иначе – обычный input
+                      task.role === 'text' ? (
+                        <TaskTextarea
+                          value={task.link}
+                          onChange={e => onLinkChange(task.id, e.target.value)}
+                          placeholder="Введите текст задачи..."
+                          disabled={isSaving || isActionLoading}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={task.link}
+                          onChange={e => onLinkChange(task.id, e.target.value)}
+                          placeholder="Вставьте ссылку..."
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          disabled={isSaving || isActionLoading}
+                        />
+                      )
                     ) : (
                       <div className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-base text-gray-500 truncate">
                         {task.link || 'Нет доступа к редактированию'}
@@ -194,7 +230,8 @@ export const PostDetailsRightPanel = ({
                     )}
                   </div>
                 </div>
-                {hasLink && (
+                {/* Блок со ссылкой показываем только для задач, не являющихся текстовыми */}
+                {hasLink && task.role !== 'text' && (
                   <div className="mt-2 pt-2 border-t">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -228,6 +265,7 @@ export const PostDetailsRightPanel = ({
                     <div className="flex items-start gap-2">
                       <MessageSquare className="w-4 h-4 text-gray-400 mt-2 shrink-0" />
                       <div className="flex-1">
+                        {/* Для комментариев оставляем маленький AutoResizeTextarea */}
                         <AutoResizeTextarea
                           value={task.newCommentText}
                           onChange={e => onNewCommentChange(task.id, e.target.value)}

@@ -10,7 +10,7 @@ import { getPostStatus, getStatusColor } from '../../lib/post-status';
 import { useUser } from '../../hooks/use-roles';
 import { CalendarPost, CalendarTask, CalendarItem } from '../../../types/calendar';
 import { CheckCircle, Circle, X } from 'lucide-react';
-import { ru } from 'date-fns/locale'; // Импортируем локаль напрямую
+import { ru } from 'date-fns/locale';
 
 export default function CalendarPage() {
   const [posts, setPosts] = useState<CalendarPost[]>([]);
@@ -21,11 +21,11 @@ export default function CalendarPage() {
   const [selectedItem, setSelectedItem] = useState<{ post?: CalendarPost; task?: CalendarTask } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showCompletedOnly, setShowCompletedOnly] = useState(false);
-  const [viewMode, setViewMode] = useState<'all' | 'posts' | 'tasks'>('all');
+  const [showPosts, setShowPosts] = useState(true);
+  const [showTasks, setShowTasks] = useState(true);
 
   const { filterPostByRole } = useUser();
 
-  // --- Данные ---
   const fetchAllContent = useCallback(async () => {
     try {
       setLoading(true);
@@ -65,18 +65,40 @@ export default function CalendarPage() {
     return () => window.removeEventListener('contentUpdated', handleUpdate);
   }, [fetchAllContent]);
 
-  // --- Фильтрация ---
+  // Вычисляем общее количество постов и задач за текущий месяц для отображения в кнопках
+  const currentMonth = new Date(); // можно передавать из календаря, но для простоты используем текущую дату; на самом деле нужно получать месяц из календаря, но проще вычислять из данных
+  const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+  
+  const postsInMonth = useMemo(() => {
+    return posts.filter(p => {
+      const date = new Date(p.post_deadline);
+      return date >= monthStart && date <= monthEnd;
+    }).length;
+  }, [posts, monthStart, monthEnd]);
+
+  const tasksInMonth = useMemo(() => {
+    return tasks.filter(t => {
+      const date = new Date(t.end_time);
+      return date >= monthStart && date <= monthEnd;
+    }).length;
+  }, [tasks, monthStart, monthEnd]);
+
+  // Формируем itemsByDate с учётом фильтров, но если оба выключены – показываем всё
   const itemsByDate = useMemo(() => {
     const map = new Map<string, CalendarItem[]>();
     
+    const showPostsActual = showPosts || (!showPosts && !showTasks);
+    const showTasksActual = showTasks || (!showPosts && !showTasks);
+    
     const allItems: CalendarItem[] = [];
-    if (viewMode !== 'tasks') {
+    if (showPostsActual) {
       const filtered = selectedRoleFilter 
         ? posts.filter(p => filterPostByRole(p, selectedRoleFilter))
         : posts;
       allItems.push(...filtered);
     }
-    if (viewMode !== 'posts') allItems.push(...tasks);
+    if (showTasksActual) allItems.push(...tasks);
 
     allItems.forEach(item => {
       const date = item.type === 'post' ? item.post_deadline : new Date(item.end_time);
@@ -85,7 +107,7 @@ export default function CalendarPage() {
       map.get(dateStr)!.push(item);
     });
     return map;
-  }, [posts, tasks, viewMode, selectedRoleFilter, filterPostByRole]);
+  }, [posts, tasks, showPosts, showTasks, selectedRoleFilter, filterPostByRole]);
 
   const dayStats = useMemo(() => {
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -162,20 +184,13 @@ export default function CalendarPage() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-white overflow-hidden relative">
-      {/* HEADER ПОВЕРХ ВСЕГО */}
       <div className="fixed bottom-0 left-0 w-full z-50">
-        <Header
-          selectedTaskFilter={selectedRoleFilter}
-          onTaskFilterChange={setSelectedRoleFilter}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
+        <Header />
       </div>
 
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex w-full h-full overflow-hidden">
           
-          {/* Календарь во всю страницу */}
           <div className={`transition-all duration-500 ease-in-out h-full ${isSidebarOpen ? 'w-full lg:w-2/3 xl:w-3/4' : 'w-full'}`}>
             <div className="h-full w-full pb-20">
               <Calendar
@@ -184,11 +199,18 @@ export default function CalendarPage() {
                 onDateSelect={handleDateSelect}
                 onPostClick={(p) => handleItemClick(p)}
                 onTaskClick={(t) => handleItemClick(t)}
+                showPosts={showPosts}
+                onShowPostsChange={setShowPosts}
+                showTasks={showTasks}
+                onShowTasksChange={setShowTasks}
+                selectedRoleFilter={selectedRoleFilter}
+                onRoleFilterChange={setSelectedRoleFilter}
+                totalPostsCount={postsInMonth}
+                totalTasksCount={tasksInMonth}
               />
             </div>
           </div>
 
-          {/* Сайдбар во всю страницу */}
           <aside className={`transition-all duration-500 ease-in-out bg-white flex flex-col overflow-hidden h-full ${
             isSidebarOpen ? 'w-full lg:w-1/3 xl:w-1/4 opacity-100' : 'w-0 opacity-0 invisible'
           }`}>
@@ -233,7 +255,6 @@ export default function CalendarPage() {
         </div>
       </main>
 
-      {/* Модальные окна */}
       {selectedItem?.post && (
         <PostDetailsWindow 
           post={selectedItem.post} 

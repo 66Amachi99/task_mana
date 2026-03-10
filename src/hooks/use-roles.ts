@@ -108,7 +108,8 @@ export function useUser() {
     return isCreator || isAssignee;
   }, [user, isAdmin, isSmm]);
 
-  const canCreateTask = useMemo(() => true, []);
+  // Только авторизованные могут создавать задачи
+  const canCreateTask = useMemo(() => !!user, [user]);
 
   // Для задач внутри ПОСТА – проверка по роли задачи
   const canEditPostTask = useCallback((taskRole: string): boolean => {
