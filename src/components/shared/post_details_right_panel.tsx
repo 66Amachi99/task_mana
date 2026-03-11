@@ -121,8 +121,8 @@ const CommentItem = ({ comment, onStatusChange, userCanEdit }: {
     <div className={`mt-2 p-3 rounded-lg border ${getStatusColor(comment.status)}`}>
       <div className="flex items-start gap-2">
         <div className="shrink-0 mt-1">{getStatusIcon(comment.status)}</div>
-        <div className="flex-1">
-          <p className="text-sm text-gray-800 whitespace-pre-wrap">{comment.text}</p>
+        <div className="flex-1 min-w-0"> {/* min-w-0 позволяет блоку сжиматься */}
+          <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">{comment.text}</p>
           <p className="text-xs text-gray-500 mt-1">{formatCommentDate(comment.created_at)}</p>
         </div>
         {canChangeStatus() && (
