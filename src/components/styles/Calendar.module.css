@@ -71,9 +71,8 @@
 .roleDropdownButton {
   display: flex;
   align-items: center;
-  padding: 0.2rem 0.75rem;
+  padding: 0.2rem 0.2rem;
   border-radius: 999px;
-  font-size: 0.875rem;
   border: 1px solid #ffffff10;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -189,17 +188,24 @@
 }
 
 .dayCellSelected {
-  border-color: #3b82f6;
+  border: 1px solid #ffffff60;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+;
 }
 
 .dayCellToday {
-  box-shadow: 0 0 0 2px #fbbf24;
-  z-index: 10;
+  border: 1px solid #00ff2660;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%);
 }
 
 .dayCellOtherMonth {
   background-color: transparent;
   opacity: 0.5;
+}
+
+/* Стиль для выходных дней */
+.dayCellWeekend {
+  background: linear-gradient(179.15deg, rgba(255, 255, 255, 0.05) 0.73%, rgba(255, 255, 255, 0.1) 99.27%);
 }
 
 .dayHeader {
@@ -313,4 +319,12 @@
 
 .itemIcon {
   margin-right: 0.125rem;
+}
+
+.filterIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: block;
+  object-fit: contain;
+  border-radius: 50%;
 }

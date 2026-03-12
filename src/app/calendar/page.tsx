@@ -120,14 +120,10 @@ export default function CalendarPage() {
   const dayStats = useMemo(() => {
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const items = itemsByDate.get(dateStr) || [];
-    const completed = items.filter(i => 
-      i.type === 'post' ? i.post_status === 'Завершен' : i.task_status === 'Выполнена'
-    ).length;
 
     return { 
       items,
       total: items.length, 
-      completed, 
       postsCount: items.filter(i => i.type === 'post').length, 
       tasksCount: items.filter(i => i.type === 'task').length 
     };
@@ -258,12 +254,11 @@ export default function CalendarPage() {
               <div className={styles.sidebarHeader}>
                 <div>
                   <h2 className={styles.dateTitle}>
-                    {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
+                    {format(selectedDate, 'dd MMMM', { locale: ru })}
                   </h2>
                   <div className={styles.statsRow}>
-                    <span>📄 {dayStats.postsCount} постов</span>
-                    <span>✅ {dayStats.tasksCount} задач</span>
-                    <span className={styles.statsCompleted}>✓ {dayStats.completed} выполнено</span>
+                    <span>{dayStats.postsCount} постов</span>
+                    <span>{dayStats.tasksCount} задач</span>
                   </div>
                 </div>
                 <button onClick={() => setIsSidebarOpen(false)} className={styles.closeButton}>
@@ -277,18 +272,13 @@ export default function CalendarPage() {
                   showCompletedOnly ? styles.filterButtonActive : styles.filterButtonInactive
                 }`}
               >
-                {showCompletedOnly ? (
-                  <CheckCircle className={styles.filterIcon} />
-                ) : (
-                  <Circle className={styles.filterIcon} />
-                )}
-                {showCompletedOnly ? 'Только выполненные' : 'Все статусы'}
+                {showCompletedOnly ? 'Все' : 'Не готовые'}
               </button>
 
               <div className={`${styles.itemsList} no-scrollbar`}>
                 {filteredDayItems.length === 0 ? (
                   <div className={styles.emptyState}>
-                    <p>{showCompletedOnly ? 'Нет выполненных' : 'Событий нет'}</p>
+                    <p>{showCompletedOnly ? 'Нет готовых' : 'Событий нет'}</p>
                   </div>
                 ) : (
                   filteredDayItems.map(renderCard)

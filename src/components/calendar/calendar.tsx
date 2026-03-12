@@ -141,9 +141,12 @@ export const Calendar: React.FC<CalendarProps> = ({
               className={styles.roleDropdownButton}
             >
               <span className={styles.roleDropdownText}>
-                {selectedFilterLabel ? `Роль: ${selectedFilterLabel}` : 'Все посты'}
+                <img 
+                  src={isRoleDropdownOpen ? '/icons/filter_on.svg' : '/icons/filter.svg'} 
+                  alt="filter" 
+                  className={styles.filterIcon} 
+                />
               </span>
-              <ChevronDown className={`${styles.chevron} ${isRoleDropdownOpen ? styles.chevronRotated : ''}`} />
             </button>
             {isRoleDropdownOpen && (
               <div className={styles.roleDropdownMenu}>
@@ -195,13 +198,15 @@ export const Calendar: React.FC<CalendarProps> = ({
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const itemsForDay = getItemsForDay(day);
           const dayStats = getDayStats(itemsForDay);
-          const dayNumber = format(day, 'dd'); // ← изменено: было 'd', стало 'dd'
+          const dayNumber = format(day, 'dd');
           const dayOfWeek = getDayOfWeekShort(day);
+          const isWeekend = day.getDay() === 0 || day.getDay() === 6;
 
           let dayCellClass = styles.dayCell;
           if (isSelected) dayCellClass += ` ${styles.dayCellSelected}`;
           if (isCurrentDay) dayCellClass += ` ${styles.dayCellToday}`;
           if (!isCurrentMonth) dayCellClass += ` ${styles.dayCellOtherMonth}`;
+          if (isWeekend && isCurrentMonth) dayCellClass += ` ${styles.dayCellWeekend}`;
 
           return (
             <div
@@ -229,7 +234,6 @@ export const Calendar: React.FC<CalendarProps> = ({
               <div className={`${styles.itemsContainer} ${styles.scrollable}`}>
                 {itemsForDay.map((item, idx) => {
                   const isPost = item.type === 'post';
-                  // Берём цвет первого тега (если есть)
                   const bgColor = item.tags && item.tags.length > 0 ? item.tags[0].color : undefined;
                   return (
                     <div
