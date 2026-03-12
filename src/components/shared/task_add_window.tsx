@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { X, Users } from 'lucide-react';
+import styles from '../styles/TaskAddWindow.module.css';
 
 interface User {
   user_id: number;
@@ -58,7 +59,6 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   const handleSelect = (user: User) => {
     onChange([...selectedUsers, user]);
     setSearch('');
-    // Не закрываем дропдаун, чтобы можно было выбрать нескольких
   };
 
   const handleRemove = (userId: number) => {
@@ -66,14 +66,18 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   };
 
   return (
-    <div className="relative" ref={ref}>
-      {/* Выбранные пользователи */}
+    <div className={styles.relative} ref={ref}>
       {selectedUsers.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
+        <div className={styles.selectedAssignees}>
           {selectedUsers.map(user => (
-            <span key={user.user_id} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+            <span key={user.user_id} className={styles.assigneeChip}>
               {user.user_login}
-              <button type="button" onClick={() => handleRemove(user.user_id)} disabled={disabled} className="hover:opacity-70">
+              <button
+                type="button"
+                onClick={() => handleRemove(user.user_id)}
+                disabled={disabled}
+                className={styles.assigneeChipRemove}
+              >
                 <X className="w-3 h-3" />
               </button>
             </span>
@@ -81,7 +85,6 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
         </div>
       )}
       
-      {/* Поле поиска */}
       <input
         type="text"
         value={search}
@@ -89,20 +92,19 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
         onFocus={() => setIsOpen(true)}
         placeholder="Поиск исполнителей..."
         disabled={disabled}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+        className={styles.assigneeInput}
       />
       
-      {/* Выпадающий список */}
       {isOpen && filtered.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className={styles.dropdown}>
           {filtered.map(user => (
             <div
               key={user.user_id}
               onClick={() => handleSelect(user)}
-              className="px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+              className={styles.dropdownItem}
             >
-              <div className="font-medium">{user.user_login}</div>
-              <div className="text-xs text-gray-500">
+              <div className={styles.dropdownItemName}>{user.user_login}</div>
+              <div className={styles.dropdownItemRoles}>
                 {[
                   user.admin_role && 'Админ',
                   user.coordinator_role && 'Координатор',
@@ -116,9 +118,8 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
         </div>
       )}
       
-      {/* Пустой результат */}
       {isOpen && filtered.length === 0 && search.trim() && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-gray-500">
+        <div className={styles.emptyResult}>
           Пользователи не найдены
         </div>
       )}
@@ -156,12 +157,12 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
   };
 
   return (
-    <div className="relative" ref={ref}>
-      <div className="flex flex-wrap gap-2 mb-2 min-h-[40px] p-2 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500">
+    <div className={styles.relative} ref={ref}>
+      <div className={styles.tagSelectorContainer}>
         {selectedTags.map(tag => (
           <span
             key={tag.tag_id}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium text-white shadow-sm"
+            className={styles.tag}
             style={{ backgroundColor: tag.color }}
           >
             {tag.name}
@@ -169,7 +170,7 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
               type="button"
               onClick={() => onChange(selectedTags.filter(t => t.tag_id !== tag.tag_id))}
               disabled={disabled}
-              className="hover:opacity-80 ml-1"
+              className={styles.tagRemove}
             >
               <X className="w-3 h-3" />
             </button>
@@ -182,32 +183,32 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
           onFocus={() => setIsOpen(true)}
           placeholder="Поиск или создание тега..."
           disabled={disabled}
-          className="flex-1 min-w-[140px] outline-none text-sm bg-transparent py-1"
+          className={styles.tagInput}
         />
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className={styles.dropdown}>
           {filtered.length > 0 ? (
             filtered.map(tag => (
               <div
                 key={tag.tag_id}
                 onClick={() => handleSelect(tag)}
-                className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2"
+                className={styles.tagOption}
               >
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
+                <span className={styles.tagColorDot} style={{ backgroundColor: tag.color }} />
                 {tag.name}
               </div>
             ))
           ) : search.trim() ? (
             <div
               onClick={handleCreate}
-              className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-blue-600"
+              className={styles.createTagOption}
             >
               + Создать "{search}"
             </div>
           ) : (
-            <div className="px-4 py-2 text-gray-500">Введите текст для поиска</div>
+            <div className={styles.noTagsMessage}>Введите текст для поиска</div>
           )}
         </div>
       )}
@@ -222,7 +223,6 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [tags, setTags] = useState<Tag[]>([]);
   
-  // Состояния формы
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   
@@ -235,7 +235,6 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     priority: '0',
   });
 
-  // Загрузка тегов
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -249,7 +248,6 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     fetchTags();
   }, []);
 
-  // Загрузка пользователей
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -265,7 +263,6 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     fetchUsers();
   }, []);
 
-  // Форматирование даты для input
   const formatDateForInput = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -275,7 +272,6 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // Установка начальных дат
   const getDefaultDateTime = (): string => {
     if (initialDate) {
       const date = new Date(initialDate);
@@ -298,7 +294,6 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     }));
   }, [initialDate]);
 
-  // Блокировка скролла
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = 'hidden';
@@ -367,7 +362,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
           end_time: new Date(formData.end_time).toISOString(),
           all_day: formData.all_day,
           priority: parseInt(formData.priority),
-          assignee_ids: selectedAssignees.map(a => a.user_id), // Массив ID
+          assignee_ids: selectedAssignees.map(a => a.user_id),
           tag_ids: selectedTags.map(t => t.tag_id),
         }),
       });
@@ -388,22 +383,16 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div 
-        className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b">
-            <h2 className="text-2xl font-bold text-gray-800">Создание новой задачи</h2>
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+        <form onSubmit={handleSubmit} className={styles.modalForm}>
+          <div className={styles.header}>
+            <h2 className={styles.headerTitle}>Создание новой задачи</h2>
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
+              className={styles.closeButton}
               aria-label="Закрыть"
             >
               <X size={24} />
@@ -411,15 +400,18 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700">{error}</p>
+            <div className={styles.errorBox}>
+              <svg className={styles.errorIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {error}
             </div>
           )}
 
           <div className="space-y-6">
             {/* Название задачи */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>
                 Название задачи *
               </label>
               <input
@@ -429,14 +421,14 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
                 onChange={handleChange}
                 required
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                className={styles.input}
                 placeholder="Введите название задачи"
               />
             </div>
 
             {/* Описание */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>
                 Описание
               </label>
               <textarea
@@ -445,15 +437,15 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
                 onChange={handleChange}
                 disabled={isSubmitting}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:bg-gray-100"
+                className={styles.textarea}
                 placeholder="Опишите детали задачи..."
               />
             </div>
 
             {/* Даты */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={styles.datesGrid}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={styles.label}>
                   Дата и время начала *
                 </label>
                 <input
@@ -463,11 +455,11 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  className={styles.input}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={styles.label}>
                   Дата и время окончания *
                 </label>
                 <input
@@ -477,13 +469,13 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  className={styles.input}
                 />
               </div>
             </div>
 
             {/* Весь день */}
-            <div className="flex items-center gap-2">
+            <div className={styles.checkboxGroup}>
               <input
                 type="checkbox"
                 name="all_day"
@@ -491,16 +483,16 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
                 checked={formData.all_day}
                 onChange={handleChange}
                 disabled={isSubmitting}
-                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                className={styles.checkbox}
               />
-              <label htmlFor="all_day" className="text-sm text-gray-700">
+              <label htmlFor="all_day" className={styles.checkboxLabel}>
                 Весь день
               </label>
             </div>
 
             {/* Приоритет */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>
                 Приоритет
               </label>
               <select
@@ -508,7 +500,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
                 value={formData.priority}
                 onChange={handleChange}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                className={styles.select}
               >
                 <option value="0">Обычный</option>
                 <option value="1">Низкий</option>
@@ -517,9 +509,9 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
               </select>
             </div>
 
-            {/* Исполнители - ОБНОВЛЕНО: множественный выбор */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+            {/* Исполнители */}
+            <div className={styles.fieldGroup}>
+              <label className={`${styles.label} ${styles.labelWithIcon}`}>
                 <Users className="w-4 h-4" />
                 Исполнители
               </label>
@@ -532,8 +524,8 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
             </div>
 
             {/* Теги */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>
                 Теги
               </label>
               <TagSelector
@@ -547,19 +539,19 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
           </div>
 
           {/* Кнопки */}
-          <div className="flex justify-end gap-4 mt-8 pt-6 border-t">
+          <div className={styles.actions}>
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 cursor-pointer"
+              className={`${styles.button} ${styles.buttonCancel}`}
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 cursor-pointer flex items-center justify-center min-w-32"
+              className={`${styles.button} ${styles.buttonSubmit}`}
             >
               {isSubmitting ? 'Создание...' : 'Создать задачу'}
             </button>

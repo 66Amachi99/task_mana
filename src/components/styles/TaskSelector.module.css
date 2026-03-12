@@ -1,0 +1,44 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.button {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms; /* transition-all */
+}
+
+.buttonSelected {
+  background-color: #3b82f6; /* bg-blue-500 */
+  color: white; /* text-white */
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
+}
+
+.buttonSelected:hover {
+  background-color: #2563eb; /* hover:bg-blue-600 */
+}
+
+.buttonUnselected {
+  background-color: #f3f4f6; /* bg-gray-100 */
+  color: #374151; /* text-gray-700 */
+  border: 1px solid #d1d5db; /* border border-gray-300 */
+}
+
+.buttonUnselected:hover {
+  background-color: #e5e7eb; /* hover:bg-gray-200 */
+}
+
+.disabled {
+  opacity: 0.5; /* opacity-50 */
+  cursor: not-allowed; /* cursor-not-allowed */
+}
+
+.enabled {
+  cursor: pointer; /* cursor-pointer */
+}

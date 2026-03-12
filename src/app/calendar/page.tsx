@@ -11,6 +11,7 @@ import { useUser } from '../../hooks/use-roles';
 import { CalendarPost, CalendarTask, CalendarItem } from '../../../types/calendar';
 import { CheckCircle, Circle, X } from 'lucide-react';
 import { ru } from 'date-fns/locale';
+import styles from '../../components/styles/CalendarPage.module.css';
 
 export default function CalendarPage() {
   const [posts, setPosts] = useState<CalendarPost[]>([]);
@@ -65,8 +66,7 @@ export default function CalendarPage() {
     return () => window.removeEventListener('contentUpdated', handleUpdate);
   }, [fetchAllContent]);
 
-  // Вычисляем общее количество постов и задач за текущий месяц для отображения в кнопках
-  const currentMonth = new Date(); // можно передавать из календаря, но для простоты используем текущую дату; на самом деле нужно получать месяц из календаря, но проще вычислять из данных
+  const currentMonth = new Date();
   const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
   const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
   
@@ -84,7 +84,6 @@ export default function CalendarPage() {
     }).length;
   }, [tasks, monthStart, monthEnd]);
 
-  // Формируем itemsByDate с учётом фильтров, но если оба выключены – показываем всё
   const itemsByDate = useMemo(() => {
     const map = new Map<string, CalendarItem[]>();
     
@@ -146,25 +145,31 @@ export default function CalendarPage() {
   const renderCard = (item: CalendarItem) => {
     const isPost = item.type === 'post';
     const isCompleted = isPost ? item.post_status === 'Завершен' : item.task_status === 'Выполнена';
-    const accentClass = isPost 
-      ? (isCompleted ? 'border-green-400 bg-green-50' : 'border-blue-400')
-      : (isCompleted ? 'border-green-400 bg-green-50' : 'border-purple-400');
+    
+    let cardClass = '';
+    if (isPost) {
+      cardClass = isCompleted ? styles.itemCardPostCompleted : styles.itemCardPostNotCompleted;
+    } else {
+      cardClass = isCompleted ? styles.itemCardTaskCompleted : styles.itemCardTaskNotCompleted;
+    }
 
     return (
       <div
         key={`${item.type}-${isPost ? item.post_id : item.task_id}`}
         onClick={() => handleItemClick(item)}
-        className={`p-4 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border-l-4 bg-gray-50 ${accentClass}`}
+        className={cardClass}
       >
-        <h3 className="font-semibold text-gray-800 truncate">
+        <h3 className={styles.itemTitle}>
           {isPost ? item.post_title : item.title}
         </h3>
-        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+        <p className={styles.itemDescription}>
           {isPost ? item.post_description : (item.description || 'Нет описания')}
         </p>
-        <div className="mt-3">
-          <span className={`text-xs px-2 py-1 rounded-full ${
-            isPost ? getStatusColor(getPostStatus(item)) : (isCompleted ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800')
+        <div className={styles.itemFooter}>
+          <span className={`${styles.itemStatus} ${
+            isPost 
+              ? getStatusColor(getPostStatus(item)) // глобальные классы, оставляем как есть
+              : (isCompleted ? styles.itemStatusTaskCompleted : styles.itemStatusTaskNotCompleted)
           }`}>
             {isPost ? getPostStatus(item) : item.task_status}
           </span>
@@ -175,24 +180,26 @@ export default function CalendarPage() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center flex-col gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
-        <span className="text-gray-500">Загрузка...</span>
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner} />
+        <span className={styles.loadingText}>Загрузка...</span>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-white overflow-hidden relative">
-      <div className="fixed bottom-0 left-0 w-full z-50">
+    <div className={styles.page}>
+      <div className={styles.headerPlaceholder}>
         <Header />
       </div>
 
-      <main className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex w-full h-full overflow-hidden">
+      <main className={styles.main}>
+        <div className={styles.contentWrapper}>
           
-          <div className={`transition-all duration-500 ease-in-out h-full ${isSidebarOpen ? 'w-full lg:w-2/3 xl:w-3/4' : 'w-full'}`}>
-            <div className="h-full w-full pb-20">
+          <div className={`${styles.calendarWrapper} ${
+            isSidebarOpen ? styles.calendarWrapperWithSidebar : styles.calendarWrapperFull
+          }`}>
+            <div className={styles.calendarContainer}>
               <Calendar
                 itemsByDate={itemsByDate}
                 selectedDate={selectedDate}
@@ -211,39 +218,43 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          <aside className={`transition-all duration-500 ease-in-out bg-white flex flex-col overflow-hidden h-full ${
-            isSidebarOpen ? 'w-full lg:w-1/3 xl:w-1/4 opacity-100' : 'w-0 opacity-0 invisible'
+          <aside className={`${styles.sidebar} ${
+            isSidebarOpen ? styles.sidebarOpen : styles.sidebarClosed
           }`}>
-            <div className="p-4 pl-0 flex flex-col h-full min-w-[320px]">
-              <div className="flex justify-between items-start mb-6">
+            <div className={styles.sidebarContent}>
+              <div className={styles.sidebarHeader}>
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">
+                  <h2 className={styles.dateTitle}>
                     {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
                   </h2>
-                  <div className="flex gap-3 mt-1 text-xs font-medium text-gray-500">
+                  <div className={styles.statsRow}>
                     <span>📄 {dayStats.postsCount} постов</span>
                     <span>✅ {dayStats.tasksCount} задач</span>
-                    <span className="text-green-600">✓ {dayStats.completed} выполнено</span>
+                    <span className={styles.statsCompleted}>✓ {dayStats.completed} выполнено</span>
                   </div>
                 </div>
-                <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                  <X className="w-5 h-5 text-gray-400" />
+                <button onClick={() => setIsSidebarOpen(false)} className={styles.closeButton}>
+                  <X className={styles.closeIcon} />
                 </button>
               </div>
 
               <button
                 onClick={() => setShowCompletedOnly(!showCompletedOnly)}
-                className={`mb-4 flex items-center justify-center gap-2 w-full py-2 rounded-lg border transition-all text-sm font-medium ${
-                  showCompletedOnly ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                className={`${styles.filterButton} ${
+                  showCompletedOnly ? styles.filterButtonActive : styles.filterButtonInactive
                 }`}
               >
-                {showCompletedOnly ? <CheckCircle className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                {showCompletedOnly ? (
+                  <CheckCircle className={styles.filterIcon} />
+                ) : (
+                  <Circle className={styles.filterIcon} />
+                )}
                 {showCompletedOnly ? 'Только выполненные' : 'Все статусы'}
               </button>
 
-              <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+              <div className={`${styles.itemsList} custom-scrollbar`}>
                 {filteredDayItems.length === 0 ? (
-                  <div className="h-40 flex flex-col items-center justify-center text-gray-400 text-sm bg-gray-50 rounded-lg border-2 border-dashed">
+                  <div className={styles.emptyState}>
                     <p>{showCompletedOnly ? 'Нет выполненных' : 'Событий нет'}</p>
                   </div>
                 ) : (

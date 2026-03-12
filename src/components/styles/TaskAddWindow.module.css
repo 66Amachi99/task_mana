@@ -1,0 +1,450 @@
+/* Основные стили для модального окна */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+}
+
+.modalContainer {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 64rem; /* max-w-4xl */
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalForm {
+  padding: 1.5rem;
+}
+
+/* Заголовок */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.headerTitle {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 700; /* font-bold */
+  color: #1f2937; /* text-gray-800 */
+}
+
+.closeButton {
+  padding: 0.5rem;
+  color: #9ca3af; /* text-gray-400 */
+  border-radius: 9999px;
+  transition: color 0.2s, background-color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  color: #4b5563; /* hover:text-gray-600 */
+  background-color: #f3f4f6; /* hover:bg-gray-100 */
+}
+
+.closeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Ошибка */
+.errorBox {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #fee2e2; /* bg-red-50 */
+  border: 1px solid #fecaca; /* border-red-200 */
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  color: #b91c1c; /* text-red-700 */
+}
+
+.errorIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+/* Поля формы */
+.fieldGroup {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #374151; /* text-gray-700 */
+  margin-bottom: 0.5rem;
+}
+
+.labelWithIcon {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 0.75rem 1rem; /* px-4 py-3 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+}
+
+.input:disabled,
+.textarea:disabled,
+.select:disabled {
+  background-color: #f3f4f6; /* disabled:bg-gray-100 */
+  cursor: not-allowed;
+}
+
+.textarea {
+  resize: none; /* resize-none */
+  min-height: 6rem; /* rows=4 */
+}
+
+/* Сетка для дат */
+.datesGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .datesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Чекбокс "Весь день" */
+.checkboxGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.checkbox {
+  width: 1.25rem; /* w-5 */
+  height: 1.25rem; /* h-5 */
+  color: #2563eb; /* text-blue-600 */
+  border-radius: 0.25rem;
+  accent-color: #2563eb;
+}
+
+.checkbox:focus {
+  ring: 2px solid #3b82f6;
+}
+
+.checkboxLabel {
+  font-size: 0.875rem; /* text-sm */
+  color: #374151; /* text-gray-700 */
+}
+
+/* Приоритет (select уже стилизован выше) */
+
+/* Кнопки формы */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.button {
+  padding: 0.75rem 1.5rem; /* px-6 py-3 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-weight: 500; /* font-medium */
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+  min-width: 8rem; /* min-w-32 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttonCancel {
+  background-color: #f3f4f6; /* bg-gray-100 */
+  color: #374151; /* text-gray-700 */
+}
+
+.buttonCancel:hover:not(:disabled) {
+  background-color: #e5e7eb; /* hover:bg-gray-200 */
+}
+
+.buttonSubmit {
+  background-color: #3b82f6; /* bg-blue-500 */
+  color: #ffffff; /* text-white */
+}
+
+.buttonSubmit:hover:not(:disabled) {
+  background-color: #2563eb; /* hover:bg-blue-600 */
+}
+
+/* Стили для селекторов (AssigneesSelector и TagSelector) */
+.relative {
+  position: relative;
+}
+
+/* AssigneesSelector */
+.selectedAssignees {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.assigneeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem; /* px-3 py-1 */
+  background-color: #dbeafe; /* bg-blue-100 */
+  color: #1e40af; /* text-blue-800 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+}
+
+.assigneeChipRemove {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assigneeChipRemove:hover {
+  opacity: 1;
+}
+
+.assigneeChipRemove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.assigneeInput {
+  width: 100%;
+  padding: 0.75rem 1rem; /* px-4 py-3 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.assigneeInput:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+}
+
+.assigneeInput:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.dropdown {
+  position: absolute;
+  z-index: 10;
+  width: 100%;
+  margin-top: 0.25rem; /* mt-1 */
+  background-color: #ffffff;
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+  max-height: 15rem; /* max-h-60 */
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdownItem:hover {
+  background-color: #eff6ff; /* hover:bg-blue-50 */
+}
+
+.dropdownItemName {
+  font-weight: 500;
+  color: #111827; /* text-gray-900 */
+}
+
+.dropdownItemRoles {
+  font-size: 0.75rem; /* text-xs */
+  color: #6b7280; /* text-gray-500 */
+}
+
+.emptyResult {
+  padding: 1rem;
+  color: #6b7280; /* text-gray-500 */
+  text-align: center;
+}
+
+/* TagSelector */
+.tagSelectorContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  min-height: 2.5rem; /* min-h-[40px] */
+  padding: 0.5rem; /* p-2 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  background-color: #ffffff;
+}
+
+.tagSelectorContainer:focus-within {
+  box-shadow: 0 0 0 2px #3b82f6; /* focus-within:ring-2 focus-within:ring-blue-500 */
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #ffffff; /* text-white */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* shadow-sm */
+  background-color: var(--tag-color); /* будет передан инлайн */
+}
+
+.tagRemove {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  opacity: 0.8;
+  margin-left: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tagRemove:hover {
+  opacity: 1;
+}
+
+.tagRemove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tagInput {
+  flex: 1;
+  min-width: 8.75rem; /* min-w-[140px] */
+  outline: none;
+  font-size: 0.875rem; /* text-sm */
+  background: transparent;
+  border: none;
+  padding: 0.25rem 0; /* py-1 */
+}
+
+.tagInput:disabled {
+  background-color: transparent;
+  cursor: not-allowed;
+}
+
+.tagOption {
+  composes: dropdownItem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tagColorDot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+}
+
+.createTagOption {
+  composes: dropdownItem;
+  color: #2563eb; /* text-blue-600 */
+}
+
+.noTagsMessage {
+  composes: emptyResult;
+}
+
+/* Дополнительные утилиты */
+.flexRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.flexRowCenter {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.wFull {
+  width: 100%;
+}
+
+.mb2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb4 {
+  margin-bottom: 1rem;
+}
+
+.mt8 {
+  margin-top: 2rem;
+}
+
+.pt6 {
+  padding-top: 1.5rem;
+}
+
+.borderT {
+  border-top: 1px solid #e5e7eb;
+}
+
+.roundedFull {
+  border-radius: 9999px;
+}

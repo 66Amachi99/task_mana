@@ -7,6 +7,7 @@ import { Pagination } from '../components/ui/pagination';
 import { useUser } from '../hooks/use-roles';
 import { Task } from '../../types/task';
 import { Header } from '../components/layout/Header/Header';
+import styles from '../components/styles/HomePage.module.css';
 
 interface PostWithRelations {
   post_id: number;
@@ -144,22 +145,24 @@ export default function HomePage() {
 
   if (loading && allPosts.length === 0 && allTasks.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="pb-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center py-10">Загрузка...</div>
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingContent}>
+          <div className={styles.loadingInner}>
+            <p>Загрузка...</p>
           </div>
         </div>
-        <Header />
+        <div className={styles.headerFixed}>
+          <Header />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="space-y-4 md:space-y-6">
+    <div className={styles.page}>
+      <div className={styles.contentWrapper}>
+        <div className={styles.container}>
+          <div className={styles.list}>
             {currentItems.map((item) => {
               if (item.type === 'post') {
                 return (
@@ -180,8 +183,8 @@ export default function HomePage() {
               }
             })}
             {currentItems.length === 0 && (
-              <div className="text-center py-10">
-                <p className="text-gray-500">
+              <div className={styles.emptyMessage}>
+                <p>
                   {viewMode === 'posts' && 'Нет постов для отображения'}
                   {viewMode === 'tasks' && 'Нет задач для отображения'}
                   {viewMode === 'all' && 'Нет элементов для отображения'}
@@ -190,7 +193,7 @@ export default function HomePage() {
             )}
           </div>
           {filteredContent.length > itemsPerPage && (
-            <div className="mt-8">
+            <div className={styles.pagination}>
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -201,7 +204,9 @@ export default function HomePage() {
         </div>
       </div>
 
-      <Header />
+      <div className={styles.headerFixed}>
+        <Header />
+      </div>
     </div>
   );
 }

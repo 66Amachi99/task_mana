@@ -5,8 +5,9 @@ import { X } from 'lucide-react';
 import { useUser } from '../../hooks/use-roles';
 import { PostDetailsLeftPanel } from './post_details_left_panel';
 import { PostDetailsRightPanel } from './post_details_right_panel';
+import styles from '../styles/PostDetailsWindow.module.css';
 
-// Конфигурация задач
+// Конфигурация задач (без изменений)
 export const TASK_CONFIG = [
   { id: 1, name: 'mini_video_smm', label: 'Мини-видео для SMM', needsKey: 'post_needs_mini_video_smm', linkKey: 'post_done_link_mini_video_smm', role: 'smm' },
   { id: 2, name: 'video', label: 'Видео', needsKey: 'post_needs_video', linkKey: 'post_done_link_video', role: 'photographer' },
@@ -105,7 +106,6 @@ export const getCommentsForTask = (post: PostData | null, taskTypeId: number): C
 };
 
 export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindowProps) => {
-  // ВАЖНО: используем canEditPostTask для задач поста
   const { user, canEditPostTask, canApprove, canPublish } = useUser();
 
   const [tasks, setTasks] = useState<TaskWithComments[]>([]);
@@ -313,7 +313,6 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
     })));
   }, []);
 
-  // ИСПРАВЛЕННАЯ функция добавления комментария с вызовом API
   const handleAddComment = useCallback(async (taskId: number) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task || !task.newCommentText.trim()) return;
@@ -336,7 +335,6 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
 
       const newComment = await response.json();
 
-      // Локально добавляем комментарий и очищаем поле
       setTasks(prev => prev.map(t => {
         if (t.id !== taskId) return t;
         return {
@@ -346,7 +344,6 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
         };
       }));
 
-      // Не вызываем refreshPostData и onSuccess, чтобы не перезагружать страницу
     } catch (error) {
       console.error('Ошибка при добавлении комментария:', error);
       alert('Не удалось добавить комментарий');
@@ -429,16 +426,16 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
   return (
     <>
       {!showEditModal && !isClosingDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-          <div className="bg-white rounded-lg w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-start px-6 py-4 border-b shrink-0">
-              <div className="flex-1 min-w-0" />
-              <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors p-1 cursor-pointer shrink-0">
+        <div className={styles.overlay} onClick={onClose}>
+          <div className={styles.container} onClick={e => e.stopPropagation()}>
+            <div className={styles.header}>
+              <div className={styles.headerSpacer} />
+              <button onClick={onClose} className={styles.closeButton}>
                 <X size={24} />
               </button>
             </div>
-            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-              <div className="lg:w-2/5 overflow-y-auto px-6 py-4 border-r">
+            <div className={styles.content}>
+              <div className={styles.leftPanel}>
                 <PostDetailsLeftPanel
                   post={post}
                   socialLinks={socialLinks}
@@ -485,11 +482,10 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                   hasChanges={hasChanges}
                 />
               </div>
-              <div className="lg:w-3/5 overflow-y-auto px-6 py-4">
+              <div className={styles.rightPanel}>
                 <PostDetailsRightPanel
                   tasks={tasks}
                   post={post}
-                  // ПЕРЕДАЁМ ПРАВИЛЬНУЮ ФУНКЦИЮ
                   canEditPostTask={canEditPostTask}
                   onLinkChange={handleLinkChange}
                   onNewCommentChange={handleNewCommentChange}

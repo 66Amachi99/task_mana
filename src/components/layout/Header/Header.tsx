@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/hooks/use-roles';
@@ -9,12 +9,9 @@ import { LogoutWindow } from '@/components/shared/logout_window';
 import { PostAddWindow } from '@/components/shared/post_add_window';
 import { TaskAddWindow } from '@/components/shared/task_add_window';
 import { User } from 'lucide-react';
+import styles from '../../styles/Header.module.css';
 
-interface HeaderProps {
-  // Фильтры больше не нужны
-}
-
-export const Header: React.FC<HeaderProps> = () => {
+export const Header: React.FC = () => {
   const { user, canCreateTask } = useUser();
   const pathname = usePathname();
 
@@ -65,61 +62,64 @@ export const Header: React.FC<HeaderProps> = () => {
 
   return (
     <>
-      <header className="fixed bottom-0 left-0 right-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="header">
+        <div className={styles.container}>
+          
           {/* Левая часть: пользователь */}
-          <div className="bg-gray-400 rounded-full">
-            <button
-              onClick={handleAuthClick}
-              className="flex items-center gap-3 px-4 py-2 rounded-full hover:bg-gray-200 transition-colors w-full"
-            >
-              <User className="w-8 h-8 text-gray-700" />
-              <span className="text-base font-medium">
+          <div className={styles.userSection}>
+            <button onClick={handleAuthClick} className={styles.userButton}>
+              <User className={styles.userIcon} />
+              <span className={styles.userName}>
                 {user ? user.login : 'Авторизоваться'}
               </span>
             </button>
           </div>
 
-          {/* Центр: навигация и добавление */}
-          <div className="bg-gray-400 rounded-full px-4 h-12 flex items-center gap-4">
-            <Link href="/" className="h-full">
-              <button className="h-full px-2 rounded-full hover:bg-gray-200 transition-colors flex items-center">
-                <img src={postIcon} alt="Посты" className="w-8 h-8" />
-              </button>
-            </Link>
-            <Link href="/calendar" className="h-full">
-              <button className="h-full px-2 rounded-full hover:bg-gray-200 transition-colors flex items-center">
-                <img src={calendarIcon} alt="Календарь" className="w-8 h-8" />
-              </button>
-            </Link>
+          <div className={styles.middleGroup}>
+            {/* Навигация */}
+            <div className={styles.navBlock}>
+              <Link href="/" className={styles.navLink}>
+                <button className={styles.navButton}>
+                  <img src={postIcon} alt="Посты" className={styles.navIcon} />
+                </button>
+              </Link>
+              <Link href="/calendar" className={styles.navLink}>
+                <button className={styles.navButton}>
+                  <img src={calendarIcon} alt="Календарь" className={styles.navIcon} />
+                </button>
+              </Link>
+            </div>
 
-            {canAddPost && (
-              <button
-                onClick={() => setShowPostModal(true)}
-                className="h-full px-2 rounded-full hover:bg-gray-200 transition-colors flex items-center"
-                title="Добавить пост"
-              >
-                <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-            )}
+            {/* Кнопки добавления */}
+            <div className={styles.addButtons}>
+              {canAddPost && (
+                <button
+                  onClick={() => setShowPostModal(true)}
+                  className={styles.addButton}
+                  title="Добавить пост"
+                >
+                  <svg className={styles.addIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </button>
+              )}
 
-            {canCreateTask && (
-              <button
-                onClick={() => setShowTaskModal(true)}
-                className="h-full px-2 rounded-full hover:bg-gray-200 transition-colors flex items-center"
-                title="Добавить задачу"
-              >
-                <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </button>
-            )}
+              {canCreateTask && (
+                <button
+                  onClick={() => setShowTaskModal(true)}
+                  className={styles.addButton}
+                  title="Добавить задачу"
+                >
+                  <svg className={styles.addIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Правая часть пустая (можно оставить для баланса) */}
-          <div className="w-32"></div>
+          {/* Правый пустой блок для баланса */}
+          <div className={styles.rightSpacer}></div>
         </div>
       </header>
 

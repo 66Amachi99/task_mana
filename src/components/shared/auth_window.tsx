@@ -1,7 +1,8 @@
 'use client';
-
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import styles from '../styles/AuthWindow.module.css';
+import clsx from 'clsx';
 
 interface AuthWindowProps {
   onClose: () => void;
@@ -39,52 +40,40 @@ export const AuthWindow = ({ onClose, onSuccess }: AuthWindowProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md p-6">
-        <h2 className="text-2xl font-bold mb-6">Вход в систему</h2>
-        
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <h2 className={styles.title}>Вход в систему</h2>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Логин</label>
+        {error && <div className={styles.error}>{error}</div>}
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.field}>
+            <label className={styles.label}>Логин</label>
             <input
               type="text"
               value={login}
               onChange={(e) => setLogin(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={styles.input}
               required
             />
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Пароль</label>
+          <div className={styles.passwordField}>
+            <label className={styles.label}>Пароль</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={styles.input}
               required
             />
           </div>
 
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
+          <div className={styles.buttons}>
+            <button type="button" onClick={onClose} className={styles.buttonCancel}>
               Отмена
             </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-            >
+            <button type="submit" disabled={isLoading} className={styles.buttonSubmit}>
               {isLoading ? 'Вход...' : 'Войти'}
             </button>
           </div>

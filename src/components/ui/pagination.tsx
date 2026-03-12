@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import styles from '../styles/Pagination.module.css';
 
 interface PaginationProps {
   currentPage: number;
@@ -39,67 +40,70 @@ export const Pagination = ({ currentPage, totalPages, onPageChange }: Pagination
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div className={styles.container}>
       {/* Кнопка на первую страницу */}
       <button
         onClick={() => onPageChange(1)}
         disabled={currentPage === 1}
-        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className={styles.navButton}
         aria-label="Первая страница"
       >
-        <ChevronsLeft className="w-5 h-5" />
+        <ChevronsLeft className={styles.icon} />
       </button>
 
       {/* Кнопка на предыдущую страницу */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className={styles.navButton}
         aria-label="Предыдущая страница"
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className={styles.icon} />
       </button>
 
       {/* Номера страниц */}
-      <div className="flex items-center gap-1">
-        {getPageNumbers().map((page, index) => (
-          <button
-            key={index}
-            onClick={() => typeof page === 'number' ? onPageChange(page) : undefined}
-            disabled={page === '...'}
-            className={`
-              min-w-10 h-10 px-2 rounded-lg font-medium transition-colors
-              ${page === currentPage 
-                ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                : page === '...'
-                  ? 'cursor-default hover:bg-transparent'
-                  : 'hover:bg-gray-100 text-gray-700'
-              }
-            `}
-          >
-            {page}
-          </button>
-        ))}
+      <div className={styles.pageList}>
+        {getPageNumbers().map((page, index) => {
+          if (page === '...') {
+            return (
+              <span key={index} className={styles.pageButtonDots}>
+                ...
+              </span>
+            );
+          }
+          const isCurrent = page === currentPage;
+          return (
+            <button
+              key={index}
+              onClick={() => onPageChange(page as number)}
+              className={`${styles.pageButton} ${
+                isCurrent ? styles.pageButtonActive : styles.pageButtonInactive
+              }`}
+            >
+              {page}
+            </button>
+          );
+        })}
       </div>
 
       {/* Кнопка на следующую страницу */}
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className={styles.navButton}
         aria-label="Следующая страница"
       >
-        <ChevronRight className="w-5 h-5" />
+        <ChevronRight className={styles.icon} />
       </button>
 
       {/* Кнопка на последнюю страницу */}
       <button
         onClick={() => onPageChange(totalPages)}
         disabled={currentPage === totalPages}
-        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className={styles.navButton}
         aria-label="Последняя страница"
       >
-        <ChevronsRight className="w-5 h-5" />
+        <ChevronsRight className={styles.icon} />
       </button>
     </div>
   );

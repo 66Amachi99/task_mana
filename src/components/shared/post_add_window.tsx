@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/use-roles';
 import { Search, X } from 'lucide-react';
+import styles from '../styles/PostAddWindow.module.css';
 
 interface User {
   user_id: number;
@@ -27,19 +28,12 @@ interface PostAddWindowProps {
   initialDate?: Date;
 }
 
-// Доступные статусы для поста
-const POST_STATUSES = [
-  { value: 'В работе', label: 'В работе', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'Завершен', label: 'Завершен', color: 'bg-green-100 text-green-800' },
-];
-
 export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWindowProps) => {
   const router = useRouter();
   const { user: currentUser } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  // Устанавливаем false по умолчанию, чтобы избежать мгновенного появления текста загрузки
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
@@ -57,7 +51,7 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     post_description: '',
     tz_link: '',
     post_deadline: '',
-    post_status: 'В работе', // Статус по умолчанию
+    post_status: 'В работе',
     responsible_person_id: '',
     post_needs_mini_video_smm: false,
     post_needs_video: false,
@@ -67,7 +61,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     post_needs_mini_gallery: false,
   });
 
-  // Загрузка тегов
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -96,7 +89,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
       date.setHours(12, 0, 0, 0);
       return formatDateForInput(date);
     }
-    
     const now = new Date();
     const defaultDate = new Date(now);
     defaultDate.setDate(now.getDate() + 7);
@@ -155,7 +147,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = 'hidden';
-    
     return () => {
       document.body.style.overflow = originalStyle;
     };
@@ -163,44 +154,28 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({
-        ...prev,
-        [name]: checked
-      }));
+      setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
   const handleCheckboxChange = (name: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: checked
-    }));
+    setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
   const handleUserSelect = (user: User) => {
     setSelectedUser(user);
-    setFormData(prev => ({
-      ...prev,
-      responsible_person_id: user.user_id.toString()
-    }));
+    setFormData(prev => ({ ...prev, responsible_person_id: user.user_id.toString() }));
     setSearchQuery(user.user_login);
     setIsDropdownOpen(false);
   };
 
   const clearSelectedUser = () => {
     setSelectedUser(null);
-    setFormData(prev => ({
-      ...prev,
-      responsible_person_id: ''
-    }));
+    setFormData(prev => ({ ...prev, responsible_person_id: '' }));
     setSearchQuery('');
     setIsDropdownOpen(false);
   };
@@ -209,13 +184,9 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     const value = e.target.value;
     setSearchQuery(value);
     setIsDropdownOpen(true);
-    
     if (!value.trim()) {
       setSelectedUser(null);
-      setFormData(prev => ({
-        ...prev,
-        responsible_person_id: ''
-      }));
+      setFormData(prev => ({ ...prev, responsible_person_id: '' }));
     }
   };
 
@@ -233,14 +204,12 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
 
   const handleCreateTag = async () => {
     if (!tagSearchQuery.trim()) return;
-    
     try {
       const response = await fetch('/api/tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: tagSearchQuery }),
       });
-      
       if (response.ok) {
         const newTag = await response.json();
         setTags([...tags, newTag]);
@@ -264,7 +233,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.post_title.trim() || !formData.post_deadline) {
       setError('Пожалуйста, заполните все обязательные поля');
       return;
@@ -275,12 +243,9 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
 
     try {
       const deadlineDate = new Date(formData.post_deadline);
-      
       const response = await fetch('/api/posts/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           post_deadline: deadlineDate.toISOString(),
@@ -297,7 +262,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
       }
 
       await onPostAdded();
-
     } catch (error) {
       console.error('Ошибка при создании поста:', error);
       setError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
@@ -306,40 +270,34 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div 
-        className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b">
-            <h2 className="text-2xl font-bold text-gray-800">Добавление нового поста</h2>
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.container} onClick={(e) => e.stopPropagation()}>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.header}>
+            <h2 className={styles.headerTitle}>Добавление нового поста</h2>
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
+              className={styles.closeButton}
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center text-red-700">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className={styles.errorBox}>
+              <svg className={styles.errorIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Название поста *</label>
+          <div className={styles.grid2}>
+            <div className={styles.leftColumn}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Название поста *</label>
                 <input
                   type="text"
                   name="post_title"
@@ -347,45 +305,55 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                  className={styles.input}
                   placeholder="Введите название поста"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Описание</label>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Описание</label>
                 <textarea
                   name="post_description"
                   value={formData.post_description}
                   onChange={handleChange}
                   disabled={isSubmitting}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none disabled:bg-gray-100"
+                  className={styles.textarea}
                   placeholder="Опишите детали поста"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ссылка на ТЗ</label>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Ссылка на ТЗ</label>
                 <input
                   type="text"
                   name="tz_link"
                   value={formData.tz_link}
                   onChange={handleChange}
                   disabled={isSubmitting}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                  className={styles.input}
                   placeholder="https://example.com/document"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Теги</label>
-                <div className="relative" ref={tagDropdownRef}>
-                  <div className="flex flex-wrap gap-2 mb-2 min-h-[46px] p-2 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500">
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Теги</label>
+                <div className={styles.tagSelector} ref={tagDropdownRef}>
+                  <div className={styles.tagSelectorContainer}>
                     {selectedTags.map(tag => (
-                      <span key={tag.tag_id} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium text-white shadow-sm" style={{ backgroundColor: tag.color }}>
+                      <span
+                        key={tag.tag_id}
+                        className={styles.tagChip}
+                        style={{ backgroundColor: tag.color }}
+                      >
                         {tag.name}
-                        <button type="button" onClick={() => handleTagRemove(tag.tag_id)} className="hover:opacity-80 ml-1"><X className="w-3 h-3" /></button>
+                        <button
+                          type="button"
+                          onClick={() => handleTagRemove(tag.tag_id)}
+                          className={styles.tagRemove}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </span>
                     ))}
                     <input
@@ -394,19 +362,23 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                       onChange={(e) => { setTagSearchQuery(e.target.value); setIsTagDropdownOpen(true); }}
                       onFocus={() => setIsTagDropdownOpen(true)}
                       placeholder="Поиск или создание..."
-                      className="flex-1 min-w-[120px] outline-none text-sm py-1"
+                      className={styles.tagInput}
                     />
                   </div>
                   {isTagDropdownOpen && (
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                    <div className={styles.tagDropdown}>
                       {filteredTags.map(tag => (
-                        <div key={tag.tag_id} onClick={() => handleTagSelect(tag)} className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2">
-                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
+                        <div
+                          key={tag.tag_id}
+                          onClick={() => handleTagSelect(tag)}
+                          className={styles.tagOption}
+                        >
+                          <span className={styles.tagColorDot} style={{ backgroundColor: tag.color }} />
                           {tag.name}
                         </div>
                       ))}
                       {tagSearchQuery && filteredTags.length === 0 && (
-                        <div onClick={handleCreateTag} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-blue-600 font-medium">
+                        <div onClick={handleCreateTag} className={styles.createTagOption}>
                           + Создать "{tagSearchQuery}"
                         </div>
                       )}
@@ -415,10 +387,10 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                 </div>
               </div>
               
-              <div className="relative min-h-[80px]">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ответственный</label>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Ответственный</label>
                 <div ref={dropdownRef}>
-                  <div className="relative">
+                  <div className={styles.searchInputWrapper}>
                     <input
                       type="text"
                       value={searchQuery}
@@ -426,31 +398,39 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                       onFocus={() => setIsDropdownOpen(true)}
                       placeholder="Поиск ответственного..."
                       disabled={isSubmitting}
-                      className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                      className={styles.searchInput}
                     />
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Search className={styles.searchIcon} />
                     {selectedUser && (
-                      <button type="button" onClick={clearSelectedUser} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      <button
+                        type="button"
+                        onClick={clearSelectedUser}
+                        className={styles.clearButton}
+                      >
                         <X className="w-4 h-4" />
                       </button>
                     )}
                   </div>
-                  {/* Надпись загрузки теперь не сдвигает контент, а накладывается или заменяет текст поиска только при активном процессе */}
                   {loadingUsers && users.length === 0 && (
-                    <span className="absolute right-10 top-[42px] text-xs text-blue-500 animate-pulse">Загрузка...</span>
+                    <span className={styles.loader}>Загрузка...</span>
                   )}
-
                   {isDropdownOpen && filteredUsers.length > 0 && (
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                    <div className={styles.dropdown}>
                       {filteredUsers.map(user => (
                         <div
                           key={user.user_id}
                           onClick={() => handleUserSelect(user)}
-                          className={`px-4 py-2 cursor-pointer hover:bg-blue-50 ${selectedUser?.user_id === user.user_id ? 'bg-blue-50' : ''}`}
+                          className={selectedUser?.user_id === user.user_id ? styles.dropdownItemSelected : styles.dropdownItem}
                         >
-                          <div className="font-medium text-gray-900">{user.user_login}</div>
-                          <div className="text-xs text-gray-500">
-                            {[user.admin_role && 'Админ', user.coordinator_role && 'Координатор', user.designer_role && 'Дизайнер', user.SMM_role && 'SMM', user.photographer_role && 'Фотограф'].filter(Boolean).join(' • ')}
+                          <div className={styles.userName}>{user.user_login}</div>
+                          <div className={styles.userRoles}>
+                            {[
+                              user.admin_role && 'Админ',
+                              user.coordinator_role && 'Координатор',
+                              user.designer_role && 'Дизайнер',
+                              user.SMM_role && 'SMM',
+                              user.photographer_role && 'Фотограф'
+                            ].filter(Boolean).join(' • ')}
                           </div>
                         </div>
                       ))}
@@ -460,9 +440,9 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Дедлайн (дата и время) *</label>
+            <div className={styles.rightColumn}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Дедлайн (дата и время) *</label>
                 <input
                   type="datetime-local"
                   name="post_deadline"
@@ -470,13 +450,13 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                  className={styles.input}
                   min={new Date().toISOString().slice(0, 16)}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-4">Необходимые задачи</label>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Необходимые задачи</label>
                 <div className="grid grid-cols-1 gap-3">
                   {[
                     { id: 'post_needs_mini_video_smm', label: 'Мини-видео для SMM' },
@@ -486,16 +466,19 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
                     { id: 'post_needs_photogallery', label: 'Фотогалерея' },
                     { id: 'post_needs_mini_gallery', label: 'Мини-фотогалерея' },
                   ].map((task) => (
-                    <label key={task.id} className={`flex items-center space-x-3 p-3 border border-gray-200 rounded-lg transition-colors cursor-pointer ${isSubmitting ? 'opacity-50' : 'hover:bg-gray-50'}`}>
+                    <label
+                      key={task.id}
+                      className={isSubmitting ? styles.taskCheckboxDisabled : styles.taskCheckbox}
+                    >
                       <input
                         type="checkbox"
                         name={task.id}
                         checked={(formData as any)[task.id]}
                         onChange={(e) => handleCheckboxChange(e.target.name, e.target.checked)}
                         disabled={isSubmitting}
-                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                        className={styles.taskCheckboxInput}
                       />
-                      <span className="text-gray-700 text-sm font-medium">{task.label}</span>
+                      <span className={styles.taskCheckboxLabel}>{task.label}</span>
                     </label>
                   ))}
                 </div>
@@ -503,19 +486,19 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 mt-8 pt-6 border-t">
+          <div className={styles.actions}>
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium disabled:opacity-50"
+              className={`${styles.button} ${styles.buttonCancel}`}
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium disabled:opacity-50 flex items-center justify-center min-w-[140px]"
+              className={`${styles.button} ${styles.buttonSubmit}`}
             >
               {isSubmitting ? 'Создание...' : 'Создать пост'}
             </button>

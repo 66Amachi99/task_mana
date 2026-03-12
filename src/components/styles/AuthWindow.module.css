@@ -1,0 +1,97 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5); /* bg-black/50 */
+  padding: 1rem; /* p-4 */
+}
+
+.modal {
+  background-color: white; /* bg-white */
+  border-radius: 0.5rem; /* rounded-lg */
+  width: 100%;
+  max-width: 28rem; /* max-w-md */
+  padding: 1.5rem; /* p-6 */
+}
+
+.title {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 700; /* font-bold */
+  margin-bottom: 1.5rem; /* mb-6 */
+}
+
+.error {
+  margin-bottom: 1rem; /* mb-4 */
+  padding: 0.75rem; /* p-3 */
+  background-color: #fee2e2; /* bg-red-50 */
+  color: #b91c1c; /* text-red-700 */
+  border-radius: 0.5rem; /* rounded-lg */
+}
+
+.form {
+  /* нет дополнительных стилей */
+}
+
+.field {
+  margin-bottom: 1rem; /* mb-4 */
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  margin-bottom: 0.5rem; /* mb-2 */
+}
+
+.input {
+  width: 100%; /* w-full */
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  border: 1px solid #d1d5db; /* border */
+  border-radius: 0.5rem; /* rounded-lg */
+  outline: none;
+}
+
+.input:focus {
+  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+  border-color: transparent; /* focus:border-transparent */
+}
+
+.passwordField {
+  margin-bottom: 1.5rem; /* mb-6 */
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end; /* justify-end */
+  gap: 0.75rem; /* gap-3 */
+}
+
+.buttonCancel {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  color: #4b5563; /* text-gray-600 */
+  border-radius: 0.5rem; /* rounded-lg */
+  transition: background-color 0.2s;
+}
+
+.buttonCancel:hover {
+  background-color: #f3f4f6; /* hover:bg-gray-100 */
+}
+
+.buttonSubmit {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  background-color: #3b82f6; /* bg-blue-500 */
+  color: white; /* text-white */
+  border-radius: 0.5rem; /* rounded-lg */
+  transition: background-color 0.2s;
+}
+
+.buttonSubmit:hover:not(:disabled) {
+  background-color: #2563eb; /* hover:bg-blue-600 */
+}
+
+.buttonSubmit:disabled {
+  opacity: 0.5; /* disabled:opacity-50 */
+}

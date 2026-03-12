@@ -1,0 +1,128 @@
+.header {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+}
+
+.container {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Левая часть (пользователь) */
+.userSection {
+  background-color: #9ca3af; /* gray-400 */
+  border-radius: 9999px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.userButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  height: 100%;
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+}
+
+.userButton:hover {
+  background-color: #e5e7eb; /* gray-200 */
+}
+
+.userIcon {
+  width: 2rem;
+  height: 2rem;
+  color: #374151; /* gray-700 */
+}
+
+.userName {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Центральная группа */
+.middleGroup {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Блок навигации (две иконки) */
+.navBlock {
+  background-color: #9ca3af;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  border-radius: 9999px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navLink {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.navButton {
+  height: 60px;
+  width: 60px;
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navButton:hover {
+  background-color: #e5e7eb;
+}
+
+.navIcon {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Кнопки добавления (пост/задача) */
+.addButtons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.addButton {
+  width: 60px;
+  height: 60px;
+  background-color: #9ca3af;
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addButton:hover {
+  background-color: #e5e7eb;
+}
+
+.addIcon {
+  width: 2rem;
+  height: 2rem;
+  color: #374151;
+}
+
+/* Пустой правый блок для симметрии */
+.rightSpacer {
+  width: 8rem;
+}

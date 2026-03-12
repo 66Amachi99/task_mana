@@ -1,0 +1,425 @@
+/* Основной контейнер панели */
+.panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Заголовок */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.headerTitle {
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #374151; /* text-gray-700 */
+}
+
+@media (min-width: 768px) {
+  .headerTitle {
+    font-size: 1.125rem; /* md:text-lg */
+  }
+}
+
+.headerCount {
+  font-size: 0.75rem; /* text-xs */
+  color: #6b7280; /* text-gray-500 */
+}
+
+@media (min-width: 768px) {
+  .headerCount {
+    font-size: 0.875rem; /* md:text-sm */
+  }
+}
+
+/* Список задач */
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* space-y-4 */
+  max-height: 40vh; /* max-h-[40vh] */
+  overflow-y: auto;
+  padding-right: 0.25rem; /* pr-1 */
+}
+
+@media (min-width: 768px) {
+  .taskList {
+    max-height: none; /* md:max-h-none */
+  }
+}
+
+/* Карточка задачи */
+.taskCard {
+  border: 1px solid #e5e7eb; /* border-gray-200 */
+  border-radius: 0.5rem; /* rounded-lg */
+  padding: 1rem; /* p-4 */
+}
+
+/* Строка задачи (заголовок + поле ввода) */
+.taskRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* gap-3 */
+  margin-bottom: 0.75rem; /* mb-3 */
+}
+
+@media (min-width: 640px) {
+  .taskRow {
+    flex-direction: row; /* sm:flex-row */
+  }
+}
+
+/* Выравнивание по центру (для ссылок) */
+.taskRowCenter {
+  composes: taskRow;
+}
+
+@media (min-width: 640px) {
+  .taskRowCenter {
+    align-items: center; /* sm:items-center */
+  }
+}
+
+/* Выравнивание по верху (для текстовых задач) */
+.taskRowTop {
+  composes: taskRow;
+}
+
+@media (min-width: 640px) {
+  .taskRowTop {
+    align-items: flex-start; /* sm:items-start */
+  }
+}
+
+/* Левая колонка (заголовок задачи) */
+.taskLabelCol {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .taskLabelCol {
+    width: 25%; /* sm:w-1/4 */
+  }
+}
+
+.taskLabel {
+  font-weight: 500; /* font-medium */
+  color: #1f2937; /* text-gray-800 */
+  font-size: 1rem; /* text-base */
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lockIcon {
+  width: 1rem;
+  height: 1rem;
+  color: #9ca3af; /* text-gray-400 */
+}
+
+/* Правая колонка (поле ввода) */
+.taskInputCol {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .taskInputCol {
+    width: 75%; /* sm:w-3/4 */
+  }
+}
+
+/* Общий стиль для инпута (ссылки) */
+.inputLink {
+  width: 100%;
+  padding: 0.625rem 1rem; /* px-4 py-2.5 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 1rem; /* text-base */
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inputLink:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+}
+
+.inputLink:disabled {
+  background-color: #f3f4f6; /* disabled:bg-gray-100 */
+  cursor: not-allowed;
+}
+
+/* Текстовая область для задачи (большая) */
+.taskTextarea {
+  width: 100%;
+  padding: 0.75rem 1rem; /* px-4 py-3 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 1rem; /* text-base */
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  min-height: 5rem; /* min-h-20 */
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.taskTextarea:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.taskTextarea:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+/* Заблокированное поле просмотра */
+.viewOnlyField {
+  width: 100%;
+  padding: 0.625rem 1rem; /* px-4 py-2.5 */
+  background-color: #f3f4f6; /* bg-gray-100 */
+  border: 1px solid #e5e7eb; /* border-gray-200 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 1rem; /* text-base */
+  color: #6b7280; /* text-gray-500 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Блок со ссылкой (для не-текстовых задач) */
+.linkBlock {
+  margin-top: 0.5rem; /* mt-2 */
+  padding-top: 0.5rem; /* pt-2 */
+  border-top: 1px solid #e5e7eb; /* border-t */
+}
+
+.linkContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.linkInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+  flex: 1;
+  min-width: 0; /* для усечения текста */
+}
+
+.linkLabel {
+  font-size: 0.75rem; /* text-xs */
+  color: #6b7280; /* text-gray-500 */
+  flex-shrink: 0;
+}
+
+.linkUrl {
+  font-size: 0.875rem; /* text-sm */
+  color: #2563eb; /* text-blue-600 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.linkButton {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* gap-1 */
+  padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
+  background-color: #eff6ff; /* bg-blue-50 */
+  color: #1e40af; /* text-blue-700 */
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+  margin-left: 0.5rem; /* ml-2 */
+}
+
+.linkButton:hover {
+  background-color: #dbeafe; /* hover:bg-blue-100 */
+}
+
+/* Блок комментариев */
+.commentsSection {
+  margin-top: 0.75rem; /* mt-3 */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* space-y-2 */
+}
+
+/* Комментарий */
+.commentItem {
+  margin-top: 0.5rem; /* mt-2 */
+  padding: 0.75rem; /* p-3 */
+  border-radius: 0.5rem; /* rounded-lg */
+  border: 1px solid;
+}
+
+.commentRed {
+  composes: commentItem;
+  background-color: #fee2e2; /* bg-red-50 */
+  border-color: #fecaca; /* border-red-200 */
+}
+
+.commentYellow {
+  composes: commentItem;
+  background-color: #fef9c3; /* bg-yellow-50 */
+  border-color: #fde68a; /* border-yellow-200 */
+}
+
+.commentGreen {
+  composes: commentItem;
+  background-color: #f0fdf4; /* bg-green-50 */
+  border-color: #bbf7d0; /* border-green-200 */
+}
+
+.commentGray {
+  composes: commentItem;
+  background-color: #f9fafb; /* bg-gray-50 */
+  border-color: #e5e7eb; /* border-gray-200 */
+}
+
+.commentContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.commentIcon {
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.commentTextWrapper {
+  flex: 1;
+  min-width: 0; /* для переноса текста */
+}
+
+.commentText {
+  font-size: 0.875rem; /* text-sm */
+  color: #1f2937; /* text-gray-800 */
+  white-space: pre-wrap; /* whitespace-pre-wrap */
+  word-break: break-word; /* break-words */
+}
+
+.commentDate {
+  font-size: 0.75rem; /* text-xs */
+  color: #6b7280; /* text-gray-500 */
+  margin-top: 0.25rem; /* mt-1 */
+}
+
+.commentStatusButton {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem; /* px-2 py-1 */
+  font-size: 0.75rem; /* text-xs */
+  background-color: #ffffff; /* bg-white */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.commentStatusButton:hover:not(:disabled) {
+  background-color: #f9fafb; /* hover:bg-gray-50 */
+}
+
+.commentStatusButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Блок добавления комментария */
+.addCommentSection {
+  margin-top: 0.75rem; /* mt-3 */
+  padding-top: 0.75rem; /* pt-3 */
+  border-top: 1px dashed #d1d5db; /* border-t border-dashed */
+}
+
+.addCommentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.commentIconGray {
+  width: 1rem;
+  height: 1rem;
+  color: #9ca3af; /* text-gray-400 */
+  margin-top: 0.5rem; /* mt-2 */
+  flex-shrink: 0;
+}
+
+.addCommentField {
+  flex: 1;
+}
+
+/* Маленькая текстовая область для комментария */
+.commentTextarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem; /* px-3 py-2 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 0.875rem; /* text-sm */
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.commentTextarea:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+}
+
+.commentTextarea:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+/* Кнопка добавления комментария */
+.addCommentButtonWrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem; /* mt-2 */
+}
+
+.addCommentButton {
+  padding: 0.25rem 0.75rem; /* px-3 py-1 */
+  background-color: #3b82f6; /* bg-blue-500 */
+  color: #ffffff; /* text-white */
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500; /* font-medium */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.addCommentButton:hover:not(:disabled) {
+  background-color: #2563eb; /* hover:bg-blue-600 */
+}
+
+.addCommentButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Пустое состояние (нет задач) */
+.emptyState {
+  text-align: center;
+  padding: 2rem 0; /* py-8 */
+  border: 1px solid #e5e7eb; /* border */
+  border-radius: 0.5rem; /* rounded-lg */
+  background-color: #f9fafb; /* bg-gray-50 */
+}
+
+.emptyStateText {
+  color: #6b7280; /* text-gray-500 */
+}

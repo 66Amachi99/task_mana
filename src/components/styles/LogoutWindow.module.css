@@ -1,0 +1,107 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+}
+
+.modal {
+  background-color: white;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 28rem; /* max-w-md */
+}
+
+.content {
+  padding: 1.5rem; /* p-6 */
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb; /* border-b */
+}
+
+.spacer {
+  flex: 1; /* flex-1 */
+}
+
+.title {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 700; /* font-bold */
+  color: #1f2937; /* text-gray-800 */
+  text-align: center;
+}
+
+.closeButton {
+  padding: 0.5rem; /* p-2 */
+  color: #9ca3af; /* text-gray-400 */
+  border-radius: 9999px; /* rounded-full */
+  transition: background-color 0.2s, color 0.2s;
+  cursor: pointer;
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.closeButton:hover {
+  background-color: #f3f4f6; /* hover:bg-gray-100 */
+  color: #4b5563; /* hover:text-gray-600 */
+}
+
+.closeIcon {
+  width: 1.5rem; /* w-6 */
+  height: 1.5rem; /* h-6 */
+}
+
+.message {
+  color: #374151; /* text-gray-700 */
+  margin-bottom: 2rem; /* mb-8 */
+  text-align: center;
+  font-size: 1.125rem; /* text-lg */
+}
+
+.footer {
+  display: flex;
+  justify-content: center; /* justify-center */
+  gap: 1rem; /* gap-4 */
+  padding-top: 1rem; /* pt-4 */
+  border-top: 1px solid #e5e7eb; /* border-t */
+}
+
+.buttonCancel {
+  padding: 0.75rem 1.5rem; /* px-6 py-3 */
+  background-color: #f3f4f6; /* bg-gray-100 */
+  color: #374151; /* text-gray-700 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-weight: 500; /* font-medium */
+  transition: background-color 0.2s;
+  min-width: 7.5rem; /* min-w-30 (7.5rem = 120px) */
+  cursor: pointer;
+}
+
+.buttonCancel:hover {
+  background-color: #e5e7eb; /* hover:bg-gray-200 */
+}
+
+.buttonConfirm {
+  padding: 0.75rem 1.5rem; /* px-6 py-3 */
+  background-color: #ef4444; /* bg-red-500 */
+  color: white; /* text-white */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-weight: 500; /* font-medium */
+  transition: background-color 0.2s;
+  min-width: 7.5rem;
+  cursor: pointer;
+}
+
+.buttonConfirm:hover {
+  background-color: #dc2626; /* hover:bg-red-600 */
+}

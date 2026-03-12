@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ExternalLink, CheckCircle, Globe, Link, Edit2, X, Save, Trash2 } from 'lucide-react';
 import { SOCIAL_CONFIG, TASK_CONFIG, SocialLinks } from './post_details_window';
+import styles from '../styles/PostDetailsLeftPanel.module.css';
 
 interface Tag {
   tag_id: number;
@@ -118,12 +119,12 @@ const DatePicker = ({ value, onChange }: { value: Date; onChange: (date: Date) =
   };
 
   return (
-    <div className="absolute z-50 mt-2 p-4 bg-white border rounded-lg shadow-xl">
+    <div className={styles.datePicker}>
       <input
         type="datetime-local"
         value={formatDateForInput(value)}
         onChange={e => onChange(new Date(e.target.value))}
-        className="w-full px-3 py-2 border rounded-lg"
+        className={styles.datePickerInput}
       />
     </div>
   );
@@ -155,20 +156,21 @@ const TagSelector = ({
   disabled: boolean;
 }) => {
   return (
-    <div className="relative" ref={dropdownRef}>
-      <div className="flex flex-wrap gap-2 mb-2 min-h-10 p-2 border rounded-lg bg-white">
+    <div className={styles.tagSelector} ref={dropdownRef}>
+      <div className={styles.tagSelectorInputContainer}>
         {selectedTags.map(tag => (
           <span
             key={tag.tag_id}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium"
-            style={{
-              backgroundColor: tag.color,
-              color: 'white',
-              textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-            }}
+            className={styles.tagChipEditable}
+            style={{ backgroundColor: tag.color }}
           >
             {tag.name}
-            <button type="button" onClick={() => onTagRemove(tag.tag_id)} className="hover:opacity-80 ml-1" disabled={disabled}>
+            <button
+              type="button"
+              onClick={() => onTagRemove(tag.tag_id)}
+              className={styles.tagRemoveButton}
+              disabled={disabled}
+            >
               <X className="w-3 h-3" />
             </button>
           </span>
@@ -187,29 +189,29 @@ const TagSelector = ({
           }}
           placeholder="Поиск тегов..."
           disabled={disabled}
-          className="flex-1 min-w-30 outline-none text-sm"
+          className={styles.tagSearchInput}
         />
       </div>
 
       {showDropdown && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className={styles.tagDropdown}>
           {filteredTags.length > 0 ? (
             filteredTags.map(tag => (
               <div
                 key={tag.tag_id}
                 onClick={() => onTagSelect(tag)}
-                className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2"
+                className={styles.tagOption}
               >
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
+                <span className={styles.tagColorDot} style={{ backgroundColor: tag.color }} />
                 {tag.name}
               </div>
             ))
           ) : searchQuery.trim() ? (
-            <div onClick={onCreateTag} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-blue-600">
+            <div onClick={onCreateTag} className={styles.createTagOption}>
               + Создать "{searchQuery}"
             </div>
           ) : (
-            <div className="px-4 py-2 text-gray-500">Введите текст для поиска</div>
+            <div className={styles.noTagsMessage}>Введите текст для поиска</div>
           )}
         </div>
       )}
@@ -270,19 +272,21 @@ export const PostDetailsLeftPanel = ({
     isSelected: selectedTasks[cfg.id - 1] || false,
   }));
 
+  const deadlineButtonClass = isEditing ? styles.deadlineButtonEditing : styles.deadlineButtonDefault;
+  const deadlineLabelClass = isEditing ? styles.deadlineLabelEditing : styles.deadlineLabelDefault;
+  const deadlineValueClass = isEditing ? styles.deadlineValueEditing : styles.deadlineValueDefault;
+
   return (
-    <div className="flex flex-col space-y-6">
+    <div className={styles.panel}>
       {/* Дедлайн */}
-      <div className="relative" ref={datePickerRef}>
+      <div className={styles.deadlineContainer} ref={datePickerRef}>
         <button
           type="button"
           onClick={() => setShowDatePicker(!showDatePicker)}
-          className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
-            isEditing ? 'bg-blue-50 border-blue-200 hover:border-blue-400' : 'bg-red-50 border-red-200 hover:border-red-300'
-          }`}
+          className={deadlineButtonClass}
         >
-          <span className={`text-sm block ${isEditing ? 'text-blue-600' : 'text-red-600'}`}>Дедлайн</span>
-          <span className={`text-lg font-semibold ${isEditing ? 'text-blue-800' : 'text-red-800'}`}>
+          <span className={deadlineLabelClass}>Дедлайн</span>
+          <span className={deadlineValueClass}>
             {formatDeadline(deadlineValue)}
           </span>
         </button>
@@ -304,29 +308,29 @@ export const PostDetailsLeftPanel = ({
             type="text"
             value={editedTitle}
             onChange={e => onTitleChange(e.target.value)}
-            className="w-full px-4 py-3 text-xl font-semibold border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={styles.titleInput}
             placeholder="Название поста"
           />
         ) : (
-          <h2 className="text-2xl font-semibold text-gray-800">{post.post_title}</h2>
+          <h2 className={styles.titleDisplay}>{post.post_title}</h2>
         )}
       </div>
 
       {/* Статус и теги */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-gray-500">Статус:</span>
-          <span className="text-sm font-medium text-gray-800">{post.post_status}</span>
+        <div className={styles.statusRow}>
+          <span className={styles.statusLabel}>Статус:</span>
+          <span className={styles.statusValue}>{post.post_status}</span>
 
           {post.approved_by && (
-            <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium">
+            <div className={styles.approvedBadge}>
               <CheckCircle className="w-4 h-4" />
               <span>Согласовано</span>
             </div>
           )}
 
           {post.is_published && (
-            <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded-full text-xs font-medium">
+            <div className={styles.publishedBadge}>
               <Globe className="w-4 h-4" />
               <span>Опубликовано</span>
             </div>
@@ -349,20 +353,15 @@ export const PostDetailsLeftPanel = ({
             disabled={isSaving || isActionLoading}
           />
         ) : (
-          post.tags &&
-          post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
+          post.tags && post.tags.length > 0 && (
+            <div className={styles.tagsView}>
               {post.tags.map(tag => (
                 <span
                   key={tag.tag_id}
-                  className="px-2 py-1 rounded-full text-xs font-medium"
-                  style={{
-                    backgroundColor: tag.color,
-                    color: 'white',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                  }}
+                  className={styles.tagChip}
+                  style={{ backgroundColor: tag.color }}
                 >
-                  {tag.name}
+                  #{tag.name}
                 </span>
               ))}
             </div>
@@ -372,19 +371,21 @@ export const PostDetailsLeftPanel = ({
 
       {/* Описание */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-2">Описание</h3>
+        <h3 className={styles.descriptionTitle}>Описание</h3>
         {isEditing ? (
           <textarea
             value={editedDescription}
             onChange={e => onDescriptionChange(e.target.value)}
             rows={4}
-            className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className={styles.descriptionTextarea}
             placeholder="Описание поста..."
           />
         ) : (
-          <div className="border rounded-lg overflow-hidden">
-            <div className="max-h-48 overflow-y-auto p-4">
-              <p className="text-sm text-gray-600 whitespace-pre-line">{post.post_description || 'Нет описания'}</p>
+          <div className={styles.descriptionBox}>
+            <div className={styles.descriptionPreview}>
+              <p className={styles.descriptionPreviewText}>
+                {post.post_description || 'Нет описания'}
+              </p>
             </div>
           </div>
         )}
@@ -392,13 +393,13 @@ export const PostDetailsLeftPanel = ({
 
       {/* Ссылка на ТЗ */}
       <div>
-        <h4 className="text-xs font-medium text-gray-700 mb-2">Ссылка на ТЗ</h4>
+        <h4 className={styles.tzTitle}>Ссылка на ТЗ</h4>
         {isEditing ? (
           <input
             type="text"
             value={editedTzLink}
             onChange={e => onTzLinkChange(e.target.value)}
-            className="w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={styles.tzInput}
             placeholder="https://example.com/document"
           />
         ) : (
@@ -407,7 +408,7 @@ export const PostDetailsLeftPanel = ({
               href={post.tz_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+              className={styles.tzLink}
             >
               <ExternalLink className="w-4 h-4" />
               Открыть ТЗ
@@ -418,28 +419,25 @@ export const PostDetailsLeftPanel = ({
 
       {/* Задачи в виде кнопок */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Необходимые задачи</h4>
+        <h4 className={styles.tasksTitle}>Необходимые задачи</h4>
         {isEditing ? (
-          <div className="flex flex-wrap gap-2">
+          <div className={styles.taskButtons}>
             {taskButtons.map(button => (
               <button
                 key={button.id}
                 onClick={() => onTaskToggle(button.id)}
-                className={`
-                  px-4 py-2 rounded-lg text-sm font-medium transition-all
-                  ${button.isSelected ? 'bg-blue-500 text-white shadow-md hover:bg-blue-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'}
-                `}
+                className={button.isSelected ? styles.taskButtonSelected : styles.taskButtonDefault}
               >
                 {button.label}
               </button>
             ))}
           </div>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <div className={styles.taskButtons}>
             {TASK_CONFIG.map(cfg => {
               if (post[cfg.needsKey]) {
                 return (
-                  <span key={cfg.id} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
+                  <span key={cfg.id} className={styles.taskBadge}>
                     {cfg.label}
                   </span>
                 );
@@ -452,16 +450,16 @@ export const PostDetailsLeftPanel = ({
 
       {/* Соцсети (редактирование ссылок публикации) */}
       {post.is_published && canManageSocial && (
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+        <div className={styles.socialSection}>
+          <h3 className={styles.socialTitle}>
             <Link className="w-4 h-4" />
             Ссылки на посты в соцсетях
           </h3>
-          <div className="space-y-3">
+          <div className={styles.socialList}>
             {SOCIAL_CONFIG.map(social => (
-              <div key={social.key} className="flex items-center gap-3">
-                <div className="w-24 text-sm text-gray-600 flex items-center gap-2">
-                  <img src={social.icon} alt={social.label} className="w-5 h-5" />
+              <div key={social.key} className={styles.socialItem}>
+                <div className={styles.socialLabel}>
+                  <img src={social.icon} alt={social.label} className={styles.socialIcon} />
                   <span>{social.label}</span>
                 </div>
                 <div className="flex-1">
@@ -470,7 +468,7 @@ export const PostDetailsLeftPanel = ({
                     value={socialLinks[social.key]}
                     onChange={e => onSocialLinkChange(social.key, e.target.value)}
                     placeholder={social.placeholder}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={styles.socialInput}
                     disabled={isSaving || isActionLoading}
                   />
                 </div>
@@ -482,9 +480,9 @@ export const PostDetailsLeftPanel = ({
 
       {/* Соцсети — только просмотр */}
       {post.is_published && hasSavedSocialLinks && !canManageSocial && (
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Опубликовано в:</h3>
-          <div className="flex items-center gap-4">
+        <div className={styles.socialViewSection}>
+          <h3 className={styles.socialViewTitle}>Опубликовано в:</h3>
+          <div className={styles.socialLinksRow}>
             {SOCIAL_CONFIG.map(social => {
               const url = post[social.publishedKey] as string | undefined;
               if (!url) return null;
@@ -494,9 +492,9 @@ export const PostDetailsLeftPanel = ({
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-500 transition-colors"
+                  className={styles.socialLink}
                 >
-                  <img src={social.icon} alt={social.label} className="w-5 h-5" />
+                  <img src={social.icon} alt={social.label} className={styles.socialIcon} />
                   <span>{social.label}</span>
                 </a>
               );
@@ -508,18 +506,18 @@ export const PostDetailsLeftPanel = ({
       {/* Ответственный */}
       {post.user && (
         <div>
-          <h4 className="text-xs font-medium text-gray-700 mb-1">Ответственный</h4>
-          <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg">
-            <p className="text-sm font-medium text-blue-700 truncate">{post.user.user_login}</p>
+          <h4 className={styles.responsibleTitle}>Ответственный</h4>
+          <div className={styles.responsibleBox}>
+            <p className={styles.responsibleName}>{post.user.user_login}</p>
           </div>
         </div>
       )}
 
       {post.approved_by && (
         <div>
-          <h4 className="text-xs font-medium text-gray-700 mb-1">Согласовано</h4>
-          <div className="p-2 bg-green-50 border border-green-100 rounded-lg">
-            <p className="text-sm font-medium text-green-700 truncate flex items-center gap-1">
+          <h4 className={styles.responsibleTitle}>Согласовано</h4>
+          <div className={styles.approvedBox}>
+            <p className={styles.approvedName}>
               <CheckCircle className="w-4 h-4" />
               {post.approved_by.user_login}
             </p>
@@ -528,13 +526,13 @@ export const PostDetailsLeftPanel = ({
       )}
 
       {/* Кнопки действий */}
-      <div className="flex flex-wrap items-center gap-2 pt-4 border-t">
+      <div className={styles.actions}>
         {/* ЕДИНАЯ кнопка сохранения - только когда НЕ в режиме редактирования */}
         {!isEditing && (
           <button
             onClick={onSaveChanges}
             disabled={isSaving || isActionLoading || !hasChanges}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+            className={`${styles.button} ${styles.buttonBlue}`}
           >
             <Save className="w-4 h-4" />
             Сохранить изменения
@@ -544,7 +542,7 @@ export const PostDetailsLeftPanel = ({
         {canEditPost && !isEditing && (
           <button
             onClick={onEditStart}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm font-medium flex items-center gap-2"
+            className={`${styles.button} ${styles.buttonGray}`}
           >
             <Edit2 className="w-4 h-4" />
             Редактировать
@@ -556,14 +554,14 @@ export const PostDetailsLeftPanel = ({
             <button
               onClick={onSave}
               disabled={isSaving}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+              className={`${styles.button} ${styles.buttonGreen}`}
             >
               <Save className="w-4 h-4" />
               Сохранить
             </button>
             <button
               onClick={onEditCancel}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm font-medium flex items-center gap-2"
+              className={`${styles.button} ${styles.buttonLightGray}`}
             >
               <X className="w-4 h-4" />
               Отмена
@@ -574,7 +572,7 @@ export const PostDetailsLeftPanel = ({
         {canApprove && !post.approved_by && !isEditing && (
           <button
             onClick={onApprove}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2"
+            className={`${styles.button} ${styles.buttonGreen}`}
           >
             <CheckCircle className="w-4 h-4" />
             Согласовать
@@ -584,8 +582,8 @@ export const PostDetailsLeftPanel = ({
         {canPublish && !isEditing && (
           <button
             onClick={onPublishToggle}
-            className={`px-4 py-2 text-white rounded-md text-sm font-medium flex items-center gap-2 ${
-              post.is_published ? 'bg-gray-500 hover:bg-gray-600' : 'bg-blue-600 hover:bg-blue-700'
+            className={`${styles.button} ${
+              post.is_published ? styles.publishButtonPublished : styles.publishButtonUnpublished
             }`}
           >
             <Globe className="w-4 h-4" />
@@ -596,7 +594,7 @@ export const PostDetailsLeftPanel = ({
         {canDelete && !isEditing && (
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm font-medium flex items-center gap-2"
+            className={`${styles.button} ${styles.buttonRed}`}
           >
             <Trash2 className="w-4 h-4" />
             Удалить

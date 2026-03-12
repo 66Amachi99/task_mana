@@ -1,0 +1,87 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.navButton {
+  padding: 0.5rem; /* p-2 */
+  border-radius: 0.5rem; /* rounded-lg */
+  transition: background-color 0.2s, opacity 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.navButton:hover:not(:disabled) {
+  background-color: #f3f4f6; /* hover:bg-gray-100 */
+}
+
+.navButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon {
+  width: 1.25rem; /* w-5 */
+  height: 1.25rem; /* h-5 */
+}
+
+.pageList {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* gap-1 */
+}
+
+.pageButton {
+  min-width: 2.5rem; /* min-w-10 */
+  height: 2.5rem; /* h-10 */
+  padding: 0 0.5rem; /* px-2 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-weight: 500; /* font-medium */
+  transition: background-color 0.2s, color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageButton:hover:not(:disabled) {
+  background-color: #f3f4f6; /* hover:bg-gray-100 */
+}
+
+.pageButton:disabled {
+  cursor: default;
+  background-color: transparent;
+}
+
+.pageButtonActive {
+  background-color: #3b82f6; /* bg-blue-500 */
+  color: #ffffff; /* text-white */
+}
+
+.pageButtonActive:hover:not(:disabled) {
+  background-color: #2563eb; /* hover:bg-blue-600 */
+}
+
+.pageButtonInactive {
+  color: #374151; /* text-gray-700 */
+}
+
+.pageButtonDots {
+  composes: pageButton;
+  cursor: default;
+  background-color: transparent;
+  color: inherit;
+}
+
+.pageButtonDots:hover {
+  background-color: transparent;
+}

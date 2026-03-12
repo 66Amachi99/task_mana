@@ -1,0 +1,625 @@
+/* Основная панель */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* space-y-6 */
+}
+
+/* Дедлайн */
+.deadlineContainer {
+  position: relative;
+}
+
+.deadlineButton {
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem; /* p-3 */
+  border-radius: 0.5rem; /* rounded-lg */
+  border-width: 2px;
+  transition: border-color 0.2s;
+}
+
+.deadlineButtonEditing {
+  composes: deadlineButton;
+  background-color: #eff6ff; /* bg-blue-50 */
+  border-color: #bfdbfe; /* border-blue-200 */
+}
+
+.deadlineButtonEditing:hover {
+  border-color: #60a5fa; /* hover:border-blue-400 */
+}
+
+.deadlineButtonDefault {
+  composes: deadlineButton;
+  background-color: #fee2e2; /* bg-red-50 */
+  border-color: #fecaca; /* border-red-200 */
+}
+
+.deadlineButtonDefault:hover {
+  border-color: #f87171; /* hover:border-red-300 */
+}
+
+.deadlineLabel {
+  font-size: 0.875rem; /* text-sm */
+  display: block;
+}
+
+.deadlineLabelEditing {
+  composes: deadlineLabel;
+  color: #2563eb; /* text-blue-600 */
+}
+
+.deadlineLabelDefault {
+  composes: deadlineLabel;
+  color: #dc2626; /* text-red-600 */
+}
+
+.deadlineValue {
+  font-size: 1.125rem; /* text-lg */
+  font-weight: 600; /* font-semibold */
+}
+
+.deadlineValueEditing {
+  composes: deadlineValue;
+  color: #1e40af; /* text-blue-800 */
+}
+
+.deadlineValueDefault {
+  composes: deadlineValue;
+  color: #991b1b; /* text-red-800 */
+}
+
+/* DatePicker */
+.datePicker {
+  position: absolute;
+  z-index: 50;
+  margin-top: 0.5rem; /* mt-2 */
+  padding: 1rem; /* p-4 */
+  background-color: #ffffff;
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+}
+
+.datePickerInput {
+  width: 100%;
+  padding: 0.5rem 0.75rem; /* px-3 py-2 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+}
+
+/* Заголовок */
+.title {
+  /* пусто */
+}
+
+.titleInput {
+  width: 100%;
+  padding: 0.75rem 1rem; /* px-4 py-3 */
+  font-size: 1.25rem; /* text-xl */
+  font-weight: 600; /* font-semibold */
+  border: 2px solid #93c5fd; /* border-blue-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  outline: none;
+}
+
+.titleInput:focus {
+  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+}
+
+.titleDisplay {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 600; /* font-semibold */
+  color: #1f2937; /* text-gray-800 */
+}
+
+/* Статус и теги */
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+  flex-wrap: wrap;
+}
+
+.statusLabel {
+  font-size: 0.875rem; /* text-sm */
+  color: #6b7280; /* text-gray-500 */
+}
+
+.statusValue {
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #1f2937; /* text-gray-800 */
+}
+
+.approvedBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* gap-1 */
+  color: #16a34a; /* text-green-600 */
+  background-color: #f0fdf4; /* bg-green-50 */
+  padding: 0.25rem 0.5rem; /* px-2 py-1 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500; /* font-medium */
+}
+
+.publishedBadge {
+  composes: approvedBadge;
+  color: #2563eb; /* text-blue-600 */
+  background-color: #eff6ff; /* bg-blue-50 */
+}
+
+/* Теги (просмотр) */
+.tagsView {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem; /* gap-1 */
+}
+
+.tagChip {
+  padding: 0.25rem 0.5rem; /* px-2 py-1 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500; /* font-medium */
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  background-color: var(--tag-color);
+}
+
+/* TagSelector (много стилей) */
+.tagSelector {
+  position: relative;
+}
+
+.tagSelectorInputContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem; /* gap-2 */
+  margin-bottom: 0.5rem; /* mb-2 */
+  min-height: 2.5rem; /* min-h-10 */
+  padding: 0.5rem; /* p-2 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  background-color: #ffffff;
+}
+
+.tagChipEditable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem; /* gap-1 */
+  padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  background-color: var(--tag-color);
+}
+
+.tagRemoveButton {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  opacity: 0.8;
+  margin-left: 0.25rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tagRemoveButton:hover {
+  opacity: 1;
+}
+
+.tagRemoveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tagSearchInput {
+  flex: 1;
+  min-width: 7.5rem; /* min-w-30 */
+  outline: none;
+  font-size: 0.875rem; /* text-sm */
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.tagSearchInput:disabled {
+  background-color: transparent;
+  cursor: not-allowed;
+}
+
+.tagDropdown {
+  position: absolute;
+  z-index: 10;
+  width: 100%;
+  margin-top: 0.25rem; /* mt-1 */
+  background-color: #ffffff;
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+  max-height: 15rem; /* max-h-60 */
+  overflow-y: auto;
+}
+
+.tagOption {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.tagOption:hover {
+  background-color: #f3f4f6; /* hover:bg-gray-100 */
+}
+
+.tagColorDot {
+  width: 0.75rem; /* w-3 h-3 */
+  height: 0.75rem;
+  border-radius: 9999px;
+}
+
+.createTagOption {
+  composes: tagOption;
+  color: #2563eb; /* text-blue-600 */
+}
+
+.noTagsMessage {
+  composes: tagOption;
+  color: #6b7280; /* text-gray-500 */
+}
+
+/* Описание */
+.descriptionTitle {
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #374151; /* text-gray-700 */
+  margin-bottom: 0.5rem; /* mb-2 */
+}
+
+.descriptionTextarea {
+  width: 100%;
+  padding: 0.75rem 1rem; /* px-4 py-3 */
+  border: 2px solid #93c5fd; /* border-blue-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  outline: none;
+  resize: none; /* resize-none */
+}
+
+.descriptionTextarea:focus {
+  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+}
+
+.descriptionBox {
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  overflow: hidden;
+}
+
+.descriptionPreview {
+  max-height: 12rem; /* max-h-48 */
+  overflow-y: auto;
+  padding: 1rem; /* p-4 */
+}
+
+.descriptionPreviewText {
+  font-size: 0.875rem; /* text-sm */
+  color: #4b5563; /* text-gray-600 */
+  white-space: pre-line; /* whitespace-pre-line */
+}
+
+/* Ссылка на ТЗ */
+.tzTitle {
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500; /* font-medium */
+  color: #374151; /* text-gray-700 */
+  margin-bottom: 0.5rem; /* mb-2 */
+}
+
+.tzInput {
+  width: 100%;
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  border: 2px solid #93c5fd; /* border-blue-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  outline: none;
+}
+
+.tzInput:focus {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.tzLink {
+  font-size: 0.875rem; /* text-sm */
+  color: #2563eb; /* text-blue-600 */
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* gap-1 */
+  text-decoration: none;
+}
+
+.tzLink:hover {
+  text-decoration: underline;
+}
+
+/* Задачи в виде кнопок */
+.tasksTitle {
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #374151; /* text-gray-700 */
+  margin-bottom: 0.75rem; /* mb-3 */
+}
+
+.taskButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.taskButton {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.taskButtonSelected {
+  background-color: #3b82f6; /* bg-blue-500 */
+  color: #ffffff; /* text-white */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+}
+
+.taskButtonSelected:hover {
+  background-color: #2563eb; /* hover:bg-blue-600 */
+}
+
+.taskButtonDefault {
+  background-color: #f3f4f6; /* bg-gray-100 */
+  color: #374151; /* text-gray-700 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+}
+
+.taskButtonDefault:hover {
+  background-color: #e5e7eb; /* hover:bg-gray-200 */
+}
+
+.taskBadge {
+  padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
+  background-color: #dbeafe; /* bg-blue-100 */
+  color: #1e40af; /* text-blue-800 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+}
+
+/* Соцсети */
+.socialSection {
+  padding: 1rem; /* p-4 */
+  background-color: #f9fafb; /* bg-gray-50 */
+  border-radius: 0.5rem; /* rounded-lg */
+  border: 1px solid #e5e7eb; /* border-gray-200 */
+}
+
+.socialTitle {
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #374151; /* text-gray-700 */
+  margin-bottom: 0.75rem; /* mb-3 */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.socialList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* space-y-3 */
+}
+
+.socialItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* gap-3 */
+}
+
+.socialLabel {
+  width: 6rem; /* w-24 */
+  font-size: 0.875rem; /* text-sm */
+  color: #4b5563; /* text-gray-600 */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.socialIcon {
+  width: 1.25rem; /* w-5 h-5 */
+  height: 1.25rem;
+}
+
+.socialInput {
+  width: 100%;
+  padding: 0.5rem 0.75rem; /* px-3 py-2 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 0.875rem; /* text-sm */
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.socialInput:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+}
+
+.socialInput:disabled {
+  background-color: #f3f4f6; /* disabled:bg-gray-100 */
+  cursor: not-allowed;
+}
+
+/* Соцсети просмотр */
+.socialViewSection {
+  composes: socialSection;
+}
+
+.socialViewTitle {
+  composes: socialTitle;
+}
+
+.socialLinksRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* gap-4 */
+}
+
+.socialLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+  font-size: 0.875rem; /* text-sm */
+  color: #374151; /* text-gray-700 */
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.socialLink:hover {
+  color: #3b82f6; /* hover:text-blue-500 */
+}
+
+/* Ответственный */
+.responsibleTitle {
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500; /* font-medium */
+  color: #374151; /* text-gray-700 */
+  margin-bottom: 0.25rem; /* mb-1 */
+}
+
+.responsibleBox {
+  padding: 0.5rem; /* p-2 */
+  background-color: #eff6ff; /* bg-blue-50 */
+  border: 1px solid #bfdbfe; /* border-blue-100 */
+  border-radius: 0.5rem; /* rounded-lg */
+}
+
+.responsibleName {
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #1e40af; /* text-blue-700 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.approvedBox {
+  composes: responsibleBox;
+  background-color: #f0fdf4; /* bg-green-50 */
+  border-color: #bbf7d0; /* border-green-100 */
+}
+
+.approvedName {
+  composes: responsibleName;
+  color: #166534; /* text-green-700 */
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* gap-1 */
+}
+
+/* Кнопки действий */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+  padding-top: 1rem; /* pt-4 */
+  border-top: 1px solid #e5e7eb; /* border-t */
+}
+
+.button {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: transparent;
+  color: inherit;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttonBlue {
+  background-color: #3b82f6; /* bg-blue-600 */
+  color: #ffffff; /* text-white */
+}
+
+.buttonBlue:hover:not(:disabled) {
+  background-color: #2563eb; /* hover:bg-blue-700 */
+}
+
+.buttonGray {
+  background-color: #6b7280; /* bg-gray-500 */
+  color: #ffffff; /* text-white */
+}
+
+.buttonGray:hover:not(:disabled) {
+  background-color: #4b5563; /* hover:bg-gray-600 */
+}
+
+.buttonGreen {
+  background-color: #16a34a; /* bg-green-600 */
+  color: #ffffff;
+}
+
+.buttonGreen:hover:not(:disabled) {
+  background-color: #15803d; /* hover:bg-green-700 */
+}
+
+.buttonLightGray {
+  background-color: #d1d5db; /* bg-gray-300 */
+  color: #1f2937; /* text-gray-700 */
+}
+
+.buttonLightGray:hover:not(:disabled) {
+  background-color: #9ca3af; /* hover:bg-gray-400 */
+}
+
+.buttonRed {
+  background-color: #ef4444; /* bg-red-500 */
+  color: #ffffff;
+}
+
+.buttonRed:hover:not(:disabled) {
+  background-color: #dc2626; /* hover:bg-red-600 */
+}
+
+.publishButtonPublished {
+  background-color: #6b7280; /* bg-gray-500 */
+  color: #ffffff;
+}
+
+.publishButtonPublished:hover:not(:disabled) {
+  background-color: #4b5563; /* hover:bg-gray-600 */
+}
+
+.publishButtonUnpublished {
+  background-color: #3b82f6; /* bg-blue-600 */
+  color: #ffffff;
+}
+
+.publishButtonUnpublished:hover:not(:disabled) {
+  background-color: #2563eb; /* hover:bg-blue-700 */
+}
