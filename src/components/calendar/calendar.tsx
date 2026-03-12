@@ -95,6 +95,9 @@ export const Calendar: React.FC<CalendarProps> = ({
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
+  const prevMonth = subMonths(currentMonth, 1);
+  const nextMonth = addMonths(currentMonth, 1);
+
   const getItemsForDay = (day: Date): CalendarItem[] => {
     const dateStr = format(day, 'yyyy-MM-dd');
     return itemsByDate.get(dateStr) || [];
@@ -113,7 +116,13 @@ export const Calendar: React.FC<CalendarProps> = ({
     <div className={styles.calendar}>
       {/* Заголовок с фильтрами */}
       <div className={styles.header}>
-        <button onClick={handlePrevMonth} className={styles.navButton}>←</button>
+        {/* Левая группа: кликабельная кнопка с предыдущим месяцем */}
+        <button onClick={handlePrevMonth} className={styles.prevGroupButton}>
+          <span className={styles.navButtonSymbol}>←</span>
+          <span className={styles.prevMonthName}>
+            {format(prevMonth, 'LLLL', { locale: ru })}
+          </span>
+        </button>
         
         <div className={styles.filterGroup}>
           <h2 className={styles.monthTitle}>
@@ -178,7 +187,13 @@ export const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
         
-        <button onClick={handleNextMonth} className={styles.navButton}>→</button>
+        {/* Правая группа: кликабельная кнопка со следующим месяцем */}
+        <button onClick={handleNextMonth} className={styles.nextGroupButton}>
+          <span className={styles.nextMonthName}>
+            {format(nextMonth, 'LLLL', { locale: ru })}
+          </span>
+          <span className={styles.navButtonSymbol}>→</span>
+        </button>
       </div>
 
       {/* Дни недели */}
