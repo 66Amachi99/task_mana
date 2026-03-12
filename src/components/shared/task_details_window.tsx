@@ -386,6 +386,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
       
       setSavedCompletedTask(completedTaskInput);
       await onSuccess();
+      onClose(); // закрываем модалку после сохранения
       
     } catch (error) {
       console.error('Ошибка сохранения результата:', error);
@@ -425,6 +426,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
       if (!response.ok) throw new Error((await response.json()).error || 'Ошибка обновления');
       
       await onSuccess();
+      onClose(); // закрываем модалку после сохранения
       setInitialData(formData);
       setIsEditing(false);
     } catch (error) {
@@ -542,21 +544,21 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               </div>
             )}
 
-            {/* Описание */}
+            {/* ОПИСАНИЕ – единый стиль с постами */}
             <div>
               <h3 className={styles.sectionTitle}>Описание</h3>
               {isEditing ? (
-                <textarea
+                <AutoResizeTextarea
                   value={formData.description}
                   onChange={e => handleChange('description', e.target.value)}
-                  rows={4}
-                  className={styles.descriptionTextarea}
                   placeholder="Описание задачи..."
+                  disabled={isLoading.action}
+                  className={styles.descriptionTextarea}
                 />
               ) : (
                 <div className={styles.descriptionBox}>
                   <div className={styles.descriptionPreview}>
-                    <p className="text-sm text-gray-600 whitespace-pre-line">
+                    <p className={styles.descriptionPreviewText}>
                       {formData.description || 'Нет описания'}
                     </p>
                   </div>

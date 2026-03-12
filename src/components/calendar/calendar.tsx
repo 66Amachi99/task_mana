@@ -113,9 +113,7 @@ export const Calendar: React.FC<CalendarProps> = ({
     <div className={styles.calendar}>
       {/* Заголовок с фильтрами */}
       <div className={styles.header}>
-        <button onClick={handlePrevMonth} className={styles.navButton}>
-          ←
-        </button>
+        <button onClick={handlePrevMonth} className={styles.navButton}>←</button>
         
         <div className={styles.filterGroup}>
           <h2 className={styles.monthTitle}>
@@ -177,9 +175,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
         
-        <button onClick={handleNextMonth} className={styles.navButton}>
-          →
-        </button>
+        <button onClick={handleNextMonth} className={styles.navButton}>→</button>
       </div>
 
       {/* Дни недели */}
@@ -199,7 +195,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const itemsForDay = getItemsForDay(day);
           const dayStats = getDayStats(itemsForDay);
-          const dayNumber = format(day, 'd');
+          const dayNumber = format(day, 'dd'); // ← изменено: было 'd', стало 'dd'
           const dayOfWeek = getDayOfWeekShort(day);
 
           let dayCellClass = styles.dayCell;
@@ -233,10 +229,13 @@ export const Calendar: React.FC<CalendarProps> = ({
               <div className={`${styles.itemsContainer} ${styles.scrollable}`}>
                 {itemsForDay.map((item, idx) => {
                   const isPost = item.type === 'post';
+                  // Берём цвет первого тега (если есть)
+                  const bgColor = item.tags && item.tags.length > 0 ? item.tags[0].color : undefined;
                   return (
                     <div
                       key={`${item.type}-${isPost ? item.post_id : item.task_id}-${idx}`}
-                      className={`${styles.item} ${isPost ? styles.itemPost : styles.itemTask}`}
+                      className={styles.item}
+                      style={{ backgroundColor: bgColor }}
                       title={isPost ? item.post_title : item.title}
                       onClick={(e) => {
                         e.stopPropagation();

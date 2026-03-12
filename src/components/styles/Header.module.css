@@ -18,11 +18,12 @@
 
 /* Левая часть (пользователь) */
 .userSection {
-  background-color: #9ca3af; /* gray-400 */
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   border-radius: 9999px;
   height: 60px;
   display: flex;
   align-items: center;
+  color: #ffffff80;
 }
 
 .userButton {
@@ -36,14 +37,9 @@
   transition: background-color 0.2s;
 }
 
-.userButton:hover {
-  background-color: #e5e7eb; /* gray-200 */
-}
-
 .userIcon {
   width: 2rem;
   height: 2rem;
-  color: #374151; /* gray-700 */
 }
 
 .userName {
@@ -59,7 +55,7 @@
 
 /* Блок навигации (две иконки) */
 .navBlock {
-  background-color: #9ca3af;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   padding-left: 0.5rem;
   padding-right: 0.5rem;
   border-radius: 9999px;
@@ -67,6 +63,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  border: 1px solid #ffffff10;
 }
 
 .navLink {
@@ -79,14 +76,14 @@
   height: 60px;
   width: 60px;
   border-radius: 9999px;
-  transition: background-color 0.2s;
+  transition: transform 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .navButton:hover {
-  background-color: #e5e7eb;
+  transform: translateY(-2px);
 }
 
 .navIcon {
@@ -104,22 +101,22 @@
 .addButton {
   width: 60px;
   height: 60px;
-  background-color: #9ca3af;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   border-radius: 9999px;
-  transition: background-color 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.addButton:hover {
-  background-color: #e5e7eb;
-}
-
 .addIcon {
   width: 2rem;
   height: 2rem;
-  color: #374151;
+  color: #ffffff;
+  transition: transform 0.2s;
+}
+
+.addIcon:hover {
+  transform: translateY(-2px);
 }
 
 /* Пустой правый блок для симметрии */

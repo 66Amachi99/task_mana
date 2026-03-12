@@ -257,6 +257,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       if (response.ok) {
         await refreshPostData();
         await onSuccess();
+        onClose(); // <-- Закрываем модалку после сохранения
         setIsEditing(false);
       } else {
         const err = await response.json().catch(() => null);
@@ -375,8 +376,9 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       }
       await refreshPostData();
       await onSuccess();
+      onClose(); // <-- Закрываем модалку после сохранения
     } catch (e) { console.error('Ошибка:', e); } finally { setIsSaving(false); }
-  }, [post, tasks, socialLinks, editedDeadline, refreshPostData, onSuccess]);
+  }, [post, tasks, socialLinks, editedDeadline, refreshPostData, onSuccess, onClose]);
 
   const handleAction = useCallback(async (action: string, confirmMsg?: string) => {
     if (!post) return;

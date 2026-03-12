@@ -13,6 +13,15 @@ import { CheckCircle, Circle, X } from 'lucide-react';
 import { ru } from 'date-fns/locale';
 import styles from '../../components/styles/CalendarPage.module.css';
 
+// Вспомогательная функция для получения цвета статусного кружка
+const getStatusDotColor = (item: CalendarItem): string => {
+  if (item.type === 'post') {
+    return item.post_status === 'Завершен' ? '#449627' : '#FFCC00';
+  } else {
+    return item.task_status === 'Выполнена' ? '#449627' : '#FFCC00';
+  }
+};
+
 export default function CalendarPage() {
   const [posts, setPosts] = useState<CalendarPost[]>([]);
   const [tasks, setTasks] = useState<CalendarTask[]>([]);
@@ -142,38 +151,62 @@ export default function CalendarPage() {
     else setSelectedItem({ task: item });
   };
 
+  // Новая функция рендера карточки
   const renderCard = (item: CalendarItem) => {
     const isPost = item.type === 'post';
-    const isCompleted = isPost ? item.post_status === 'Завершен' : item.task_status === 'Выполнена';
+    const firstTag = item.tags && item.tags.length > 0 ? item.tags[0] : null;
     
-    let cardClass = '';
-    if (isPost) {
-      cardClass = isCompleted ? styles.itemCardPostCompleted : styles.itemCardPostNotCompleted;
-    } else {
-      cardClass = isCompleted ? styles.itemCardTaskCompleted : styles.itemCardTaskNotCompleted;
-    }
+    // Время дедлайна (только часы:минуты)
+    const deadline = isPost
+      ? new Date(item.post_deadline)
+      : new Date(item.end_time);
+    const timeStr = deadline.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
 
+    // Цвет статусного кружка
+    const dotColor = getStatusDotColor(item);
+
+    // Фон карточки – градиент от цвета первого тега (если есть)
+    const bgGradient = firstTag
+      ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
+      : 'none';
+// radial-gradient(100% 100% at 50% 0%, rgba(72, 200, 132, 0.2) 0%, rgba(72, 200, 132, 0) 100%);
     return (
       <div
         key={`${item.type}-${isPost ? item.post_id : item.task_id}`}
         onClick={() => handleItemClick(item)}
-        className={cardClass}
+        className={styles.sidebarCard}
+        style={{ backgroundImage: bgGradient }}
       >
-        <h3 className={styles.itemTitle}>
+        <div className={styles.sidebarCardHeader}>
+          <span className={styles.sidebarCardTime}>{timeStr}</span>
+          <span
+            className={styles.sidebarCardStatus}
+            style={{ backgroundColor: dotColor }}
+          />
+        </div>
+        <h3 className={styles.sidebarCardTitle}>
           {isPost ? item.post_title : item.title}
         </h3>
-        <p className={styles.itemDescription}>
-          {isPost ? item.post_description : (item.description || 'Нет описания')}
-        </p>
-        <div className={styles.itemFooter}>
-          <span className={`${styles.itemStatus} ${
-            isPost 
-              ? getStatusColor(getPostStatus(item)) // глобальные классы, оставляем как есть
-              : (isCompleted ? styles.itemStatusTaskCompleted : styles.itemStatusTaskNotCompleted)
-          }`}>
-            {isPost ? getPostStatus(item) : item.task_status}
-          </span>
-        </div>
+        {!isPost && item.description && (
+          <p className={styles.sidebarCardDescription}>{item.description}</p>
+        )}
+        {item.tags && item.tags.length > 0 && (
+          <div className={styles.sidebarCardTags}>
+            {item.tags.map(tag => (
+              <span
+                key={tag.tag_id}
+                className={styles.sidebarCardTag}
+                style={{ backgroundColor: tag.color }}
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -252,7 +285,7 @@ export default function CalendarPage() {
                 {showCompletedOnly ? 'Только выполненные' : 'Все статусы'}
               </button>
 
-              <div className={`${styles.itemsList} custom-scrollbar`}>
+              <div className={`${styles.itemsList} no-scrollbar`}>
                 {filteredDayItems.length === 0 ? (
                   <div className={styles.emptyState}>
                     <p>{showCompletedOnly ? 'Нет выполненных' : 'Событий нет'}</p>

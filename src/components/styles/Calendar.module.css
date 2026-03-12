@@ -16,30 +16,30 @@
 }
 
 .navButton {
-  padding: 0.25rem 0.75rem;
-  background-color: #e5e7eb; /* bg-gray-200 */
+  padding: 0rem 0.75rem;
+  color: #ffffff40;
   border-radius: 0.25rem;
-  font-size: 1.125rem; /* text-lg */
+  font-size: 2rem;
   cursor: pointer;
-  transition: background-color 0.2s;
   border: none;
 }
 
 .navButton:hover {
-  background-color: #d1d5db; /* hover:bg-gray-300 */
+  color: #ffffff80;
 }
 
 .monthTitle {
-  font-size: 1.25rem; /* text-xl */
-  font-weight: 600; /* font-semibold */
+  font-size: 1.25rem;
+  font-weight: 600;
   text-transform: capitalize;
-  color: #ffffff; /* text-white */
+  color: #ffffff;
 }
 
 .filterGroup {
   display: flex;
   align-items: center;
   gap: 1rem;
+  color: #ffffff;
 }
 
 .filterButtons {
@@ -48,30 +48,22 @@
 }
 
 .filterButton {
-  padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
-  border-radius: 9999px; /* rounded-full */
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
+  padding: 0.2rem 0.75rem;
+  font-size: 0.875rem;
   transition: background-color 0.2s, color 0.2s;
-  border: none;
+  border: 1px solid #ffffff10;
+  border-radius: 10px;
   cursor: pointer;
 }
 
 .filterButtonInactive {
-  background-color: #e5e7eb; /* bg-gray-200 */
-  color: #374151; /* text-gray-700 */
-}
-
-.filterButtonInactive:hover {
-  background-color: #d1d5db; /* hover:bg-gray-300 */
+  background-color: #ffffff02;
 }
 
 .filterButtonActive {
-  background-color: #2563eb; /* bg-blue-600 */
-  color: #ffffff; /* text-white */
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
 }
 
-/* роль */
 .roleDropdown {
   position: relative;
 }
@@ -79,19 +71,13 @@
 .roleDropdownButton {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  background-color: #f3f4f6; /* bg-gray-100 */
-  border-radius: 9999px;
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
   font-size: 0.875rem;
-  font-weight: 500;
-  border: none;
+  border: 1px solid #ffffff10;
   cursor: pointer;
   transition: background-color 0.2s;
-}
-
-.roleDropdownButton:hover {
-  background-color: #e5e7eb; /* hover:bg-gray-200 */
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
 }
 
 .roleDropdownText {
@@ -116,9 +102,9 @@
   top: 100%;
   margin-top: 0.25rem;
   right: 0;
-  width: 14rem; /* w-56 */
+  width: 14rem;
   background-color: #ffffff;
-  border: 1px solid #e5e7eb; /* border-gray-200 */
+  border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
   padding: 0.25rem 0;
@@ -137,24 +123,24 @@
 }
 
 .roleMenuItem:hover {
-  background-color: #f3f4f6; /* hover:bg-gray-100 */
+  background-color: #f3f4f6;
 }
 
 .roleMenuItemActive {
-  background-color: #eff6ff; /* bg-blue-50 */
-  color: #2563eb; /* text-blue-600 */
+  background-color: #eff6ff;
+  color: #2563eb;
   font-weight: 500;
 }
 
 .menuDivider {
   height: 1px;
-  background-color: #e5e7eb; /* bg-gray-200 */
+  background-color: #e5e7eb;
   margin: 0.25rem 0;
 }
 
 .roleIcon {
-  color: #6b7280; /* text-gray-500 */
-  font-size: 1rem; /* text-base */
+  color: #6b7280;
+  font-size: 1rem;
 }
 
 .weekDays {
@@ -163,7 +149,7 @@
   gap: 0.25rem;
   text-align: center;
   font-weight: 500;
-  color: #d1d5db; /* text-gray-300 */
+  color: #d1d5db;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   flex-shrink: 0;
@@ -180,34 +166,34 @@
 
 .emptyCell {
   background-color: transparent;
-  border: 1px solid rgba(229, 231, 235, 0.5); /* border-gray-200/50 */
-  border-radius: 0.25rem;
+  border: 1px solid #ffffff15;
+  border-radius: 20px;
 }
 
 .dayCell {
   padding: 0.25rem;
-  border: 1px solid rgba(229, 231, 235, 0.5);
-  border-radius: 0.25rem;
+  border: 1px solid #ffffff15;
+  border-radius: 20px;
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background-color: rgba(255, 255, 255, 0.02); /* bg-white/2 */
+  background-color: rgba(255, 255, 255, 0.02);
   min-height: 100px;
 }
 
 .dayCell:hover {
-  background-color: rgba(255, 255, 255, 0.05); /* hover:bg-white/5 */
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .dayCellSelected {
-  border-color: #3b82f6; /* border-blue-500 */
+  border-color: #3b82f6;
 }
 
 .dayCellToday {
-  box-shadow: 0 0 0 2px #fbbf24; /* ring-2 ring-yellow-400 */
+  box-shadow: 0 0 0 2px #fbbf24;
   z-index: 10;
 }
 
@@ -221,26 +207,26 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.25rem;
-  font-size: 0.75rem; /* text-[10px] */
-  background-color: inherit;
-  z-index: 10;
+  font-size: 0.75rem;
   flex-shrink: 0;
+  padding-inline: 4px;
+  padding-top: 4px;
 }
 
 @media (min-width: 640px) {
   .dayHeader {
-    font-size: 0.75rem; /* sm:text-xs */
+    font-size: 0.75rem;
   }
 }
 
 .dayNumber {
   font-weight: 700;
-  color: #ffffff; /* text-white */
+  color: #ffffff;
 }
 
 .dayWeekday {
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.6); /* text-white/60 */
+  color: rgba(255, 255, 255, 0.6);
   margin-left: 0.125rem;
 }
 
@@ -252,26 +238,25 @@
 }
 
 .dayStatsCompleted {
-  background-color: rgba(34, 197, 94, 0.2); /* bg-green-500/20 */
-  color: #86efac; /* text-green-300 */
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #86efac;
 }
 
 .dayStatsIncomplete {
-  background-color: rgba(255, 255, 255, 0.2); /* bg-white/20 */
-  color: #ffffff; /* text-white */
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .itemsContainer {
   flex: 1;
   overflow-y: auto;
-  padding-right: 0.125rem; /* pr-0.5 */
+  padding-right: 0.125rem;
 }
 
 .itemsContainer > * + * {
-  margin-top: 0.125rem; /* space-y-0.5 */
+  margin-top: 0.125rem;
 }
 
-/* скрытие скроллбара по умолчанию, показ при наведении */
 .customScrollbar::-webkit-scrollbar {
   width: 0px;
   background: transparent;
@@ -291,57 +276,39 @@
 }
 
 .item {
-  font-size: 0.625rem; /* text-[10px] */
+  font-size: 0.625rem;
   border-radius: 0.25rem;
   padding: 0.125rem 0.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.2s;
-  border-width: 1px;
-  border-style: solid;
+  transition: filter 0.2s;
+  border: none;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  background-color: transparent;
 }
 
 .item:hover {
-  transform: scale(1.02); /* hover:scale-[1.02] */
+  transform: scale(1.02);
 }
 
 .scrollable {
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: none;      /* Firefox */
-  -ms-overflow-style: none;   /* Internet Explorer/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .scrollable::-webkit-scrollbar {
-  display: none;               /* Chrome, Safari, Opera */
+  display: none;
 }
 
 @media (min-width: 640px) {
   .item {
-    font-size: 0.75rem; /* sm:text-xs */
+    font-size: 0.75rem;
   }
-}
-
-.itemPost {
-  background-color: #dbeafe; /* bg-blue-100 */
-  color: #1e40af; /* text-blue-800 */
-  border-color: #bfdbfe; /* border-blue-200 */
-}
-
-.itemPost:hover {
-  background-color: #bfdbfe; /* hover:bg-blue-200 */
-}
-
-.itemTask {
-  background-color: #f3e8ff; /* bg-purple-100 */
-  color: #6b21a8; /* text-purple-800 */
-  border-color: #e9d5ff; /* border-purple-200 */
-}
-
-.itemTask:hover {
-  background-color: #e9d5ff; /* hover:bg-purple-200 */
 }
 
 .itemIcon {
