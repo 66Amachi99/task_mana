@@ -1,6 +1,6 @@
 .page {
   min-height: 100vh;
-  background-image: url('/background.webp');
+  background-image: url('/images/background.webp');
   background-size: cover;
   background-position: center;
 }
@@ -60,7 +60,7 @@
 
 .loadingContainer {
   min-height: 100vh;
-  background-color: #f9fafb; /* bg-gray-50 */
+  background-color: #000000;
 }
 
 .loadingContent {

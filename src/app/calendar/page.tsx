@@ -252,28 +252,33 @@ export default function CalendarPage() {
           }`}>
             <div className={styles.sidebarContent}>
               <div className={styles.sidebarHeader}>
-                <div>
+                <div className={styles.sidebarHeaderTitle}>
                   <h2 className={styles.dateTitle}>
-                    {format(selectedDate, 'dd MMMM', { locale: ru })}
+                  {format(selectedDate, 'dd MMMM', { locale: ru })}
                   </h2>
-                  <div className={styles.statsRow}>
-                    <span>{dayStats.postsCount} постов</span>
-                    <span>{dayStats.tasksCount} задач</span>
-                  </div>
+                  <button onClick={() => setIsSidebarOpen(false)} className={styles.closeButton}>
+                    <X className={styles.closeIcon} />
+                  </button>
                 </div>
-                <button onClick={() => setIsSidebarOpen(false)} className={styles.closeButton}>
-                  <X className={styles.closeIcon} />
-                </button>
-              </div>
+                
+                <div className={styles.statsWrapper}>
+                  <div className={styles.statsRowPosts}>
+                    <span>Постов {dayStats.postsCount}</span>
+                  </div>
+                  <div className={styles.statsRowTasks}>
+                    <span>Задач {dayStats.tasksCount}</span>
+                  </div>
 
-              <button
-                onClick={() => setShowCompletedOnly(!showCompletedOnly)}
-                className={`${styles.filterButton} ${
-                  showCompletedOnly ? styles.filterButtonActive : styles.filterButtonInactive
-                }`}
-              >
-                {showCompletedOnly ? 'Все' : 'Не готовые'}
-              </button>
+                  <button
+                    onClick={() => setShowCompletedOnly(!showCompletedOnly)}
+                    className={`${styles.filterButton} ${
+                      showCompletedOnly ? styles.filterButtonActive : styles.filterButtonInactive
+                    }`}
+                  >
+                    Не готовые
+                  </button>
+                </div>
+              </div>
 
               <div className={`${styles.itemsList} no-scrollbar`}>
                 {filteredDayItems.length === 0 ? (
