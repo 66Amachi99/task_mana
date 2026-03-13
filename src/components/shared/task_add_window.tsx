@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { X, Users } from 'lucide-react';
+import { DatePicker } from '../ui/date_picker';
 import styles from '../styles/TaskAddWindow.module.css';
 
 interface User {
@@ -40,7 +41,7 @@ const useOutsideClick = (callback: () => void) => {
   return ref;
 };
 
-// Компонент выбора нескольких исполнителей
+// Компонент выбора нескольких исполнителей (без изменений)
 const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   selectedUsers: User[];
   users: User[];
@@ -127,7 +128,7 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   );
 };
 
-// Компонент выбора тегов
+// Компонент выбора тегов (без изменений)
 const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
   selectedTags: Tag[];
   availableTags: Tag[];
@@ -226,11 +227,13 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   
+  // Состояния для дат как объекты Date
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    start_time: '',
-    end_time: '',
     all_day: false,
     priority: '0',
   });
@@ -263,35 +266,19 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     fetchUsers();
   }, []);
 
-  const formatDateForInput = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
-  const getDefaultDateTime = (): string => {
-    if (initialDate) {
-      const date = new Date(initialDate);
-      date.setHours(12, 0, 0, 0);
-      return formatDateForInput(date);
-    }
-    
-    const now = new Date();
-    const defaultDate = new Date(now);
-    defaultDate.setDate(now.getDate() + 1);
-    defaultDate.setHours(12, 0, 0, 0);
-    return formatDateForInput(defaultDate);
-  };
-
+  // Инициализация дат
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      start_time: getDefaultDateTime(),
-      end_time: getDefaultDateTime()
-    }));
+    let defaultDate: Date;
+    if (initialDate) {
+      defaultDate = new Date(initialDate);
+      defaultDate.setHours(12, 0, 0, 0);
+    } else {
+      defaultDate = new Date();
+      defaultDate.setDate(defaultDate.getDate() + 1);
+      defaultDate.setHours(12, 0, 0, 0);
+    }
+    setStartDate(defaultDate);
+    setEndDate(defaultDate);
   }, [initialDate]);
 
   useEffect(() => {
@@ -304,18 +291,26 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({
-        ...prev,
-        [name]: checked
-      }));
+      setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleStartDateChange = (date: Date) => {
+    setStartDate(date);
+    if (endDate && date > endDate) {
+      setEndDate(date);
+    }
+  };
+
+  const handleEndDateChange = (date: Date) => {
+    if (startDate && date < startDate) {
+      setEndDate(startDate);
+    } else {
+      setEndDate(date);
     }
   };
 
@@ -326,7 +321,6 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
       });
-      
       if (response.ok) {
         const newTag = await response.json();
         setTags(prev => [...prev, newTag]);
@@ -341,8 +335,13 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim() || !formData.start_time || !formData.end_time) {
+    if (!formData.title.trim() || !startDate || !endDate) {
       setError('Пожалуйста, заполните все обязательные поля');
+      return;
+    }
+
+    if (endDate < startDate) {
+      setError('Дата окончания не может быть раньше даты начала');
       return;
     }
 
@@ -352,14 +351,12 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     try {
       const response = await fetch('/api/tasks/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description || null,
-          start_time: new Date(formData.start_time).toISOString(),
-          end_time: new Date(formData.end_time).toISOString(),
+          start_time: startDate.toISOString(),
+          end_time: endDate.toISOString(),
           all_day: formData.all_day,
           priority: parseInt(formData.priority),
           assignee_ids: selectedAssignees.map(a => a.user_id),
@@ -411,9 +408,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
           <div className="space-y-6">
             {/* Название задачи */}
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                Название задачи *
-              </label>
+              <label className={styles.label}>Название задачи *</label>
               <input
                 type="text"
                 name="title"
@@ -428,9 +423,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
 
             {/* Описание */}
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                Описание
-              </label>
+              <label className={styles.label}>Описание</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -442,34 +435,23 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
               />
             </div>
 
-            {/* Даты */}
+            {/* Даты с новым DatePicker */}
             <div className={styles.datesGrid}>
               <div>
-                <label className={styles.label}>
-                  Дата и время начала *
-                </label>
-                <input
-                  type="datetime-local"
-                  name="start_time"
-                  value={formData.start_time}
-                  onChange={handleChange}
-                  required
-                  disabled={isSubmitting}
-                  className={styles.input}
+                <label className={styles.label}>Дата и время начала *</label>
+                <DatePicker
+                  value={startDate}
+                  onChange={handleStartDateChange}
+                  showTimeSelect={!formData.all_day}
                 />
               </div>
               <div>
-                <label className={styles.label}>
-                  Дата и время окончания *
-                </label>
-                <input
-                  type="datetime-local"
-                  name="end_time"
-                  value={formData.end_time}
-                  onChange={handleChange}
-                  required
-                  disabled={isSubmitting}
-                  className={styles.input}
+                <label className={styles.label}>Дата и время окончания *</label>
+                <DatePicker
+                  value={endDate}
+                  onChange={handleEndDateChange}
+                  minDate={startDate || undefined}
+                  showTimeSelect={!formData.all_day}
                 />
               </div>
             </div>
@@ -492,9 +474,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
 
             {/* Приоритет */}
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                Приоритет
-              </label>
+              <label className={styles.label}>Приоритет</label>
               <select
                 name="priority"
                 value={formData.priority}
@@ -525,9 +505,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
 
             {/* Теги */}
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                Теги
-              </label>
+              <label className={styles.label}>Теги</label>
               <TagSelector
                 selectedTags={selectedTags}
                 availableTags={tags}

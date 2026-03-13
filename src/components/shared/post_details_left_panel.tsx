@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ExternalLink, CheckCircle, Globe, Link, Edit2, X, Save, Trash2 } from 'lucide-react';
 import { SOCIAL_CONFIG, TASK_CONFIG, SocialLinks } from './post_details_window';
+import { DatePicker } from '../ui/date_picker';
 import styles from '../styles/PostDetailsLeftPanel.module.css';
 
 interface Tag {
@@ -46,7 +47,6 @@ interface PostDetailsLeftPanelProps {
   isSaving: boolean;
   isActionLoading: boolean;
 
-  // edit post (контент)
   isEditing: boolean;
   onEditStart: () => void;
   onEditCancel: () => void;
@@ -60,7 +60,6 @@ interface PostDetailsLeftPanelProps {
   selectedTasks: boolean[];
   onTaskToggle: (taskId: number) => void;
 
-  // tags
   availableTags: Tag[];
   selectedTags: Tag[];
   onTagSelect: (tag: Tag) => void;
@@ -73,14 +72,12 @@ interface PostDetailsLeftPanelProps {
   setShowTagDropdown: (show: boolean) => void;
   tagDropdownRef: React.RefObject<HTMLDivElement | null>;
 
-  // deadline
   deadlineValue: Date;
   onDeadlineChange: (date: Date) => void;
   showDatePicker: boolean;
   setShowDatePicker: (show: boolean) => void;
   datePickerRef: React.RefObject<HTMLDivElement | null>;
 
-  // actions
   onApprove?: () => void;
   onPublishToggle?: () => void;
   onDelete?: () => void;
@@ -89,7 +86,6 @@ interface PostDetailsLeftPanelProps {
   canDelete: boolean;
   canEditPost: boolean;
 
-  // единая кнопка сохранения
   onSaveChanges: () => void;
   hasChanges?: boolean;
 }
@@ -106,28 +102,6 @@ const formatDeadline = (date: Date | null): string => {
   });
 
   return formatter.format(date);
-};
-
-const DatePicker = ({ value, onChange }: { value: Date; onChange: (date: Date) => void }) => {
-  const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
-  return (
-    <div className={styles.datePicker}>
-      <input
-        type="datetime-local"
-        value={formatDateForInput(value)}
-        onChange={e => onChange(new Date(e.target.value))}
-        className={styles.datePickerInput}
-      />
-    </div>
-  );
 };
 
 const TagSelector = ({
@@ -280,24 +254,15 @@ export const PostDetailsLeftPanel = ({
     <div className={styles.panel}>
       {/* Дедлайн */}
       <div className={styles.deadlineContainer} ref={datePickerRef}>
-        <button
-          type="button"
-          onClick={() => setShowDatePicker(!showDatePicker)}
-          className={deadlineButtonClass}
-        >
-          <span className={deadlineLabelClass}>Дедлайн</span>
-          <span className={deadlineValueClass}>
-            {formatDeadline(deadlineValue)}
-          </span>
-        </button>
-
-        {showDatePicker && (
-          <DatePicker
-            value={deadlineValue}
-            onChange={date => {
-              onDeadlineChange(date);
-            }}
-          />
+        {isEditing ? (
+          <DatePicker value={deadlineValue} onChange={onDeadlineChange} />
+        ) : (
+          <div className={deadlineButtonClass}>
+            <span className={deadlineLabelClass}>Дедлайн</span>
+            <span className={deadlineValueClass}>
+              {formatDeadline(deadlineValue)}
+            </span>
+          </div>
         )}
       </div>
 

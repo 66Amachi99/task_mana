@@ -5,6 +5,7 @@ import { X, Calendar, User, Edit, Trash2, ExternalLink, CheckCircle, Save, Users
 import { useUser } from '@/hooks/use-roles';
 import { Task } from '../../../types/task';
 import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
+import { DatePicker } from '../ui/date_picker';
 import styles from '../styles/TaskDetailsWindow.module.css';
 
 // --- ИНТЕРФЕЙСЫ ---
@@ -64,11 +65,6 @@ const formatDisplayDate = (dateStr: string, allDay = false) => {
   return new Date(dateStr).toLocaleString('ru-RU', options);
 };
 
-const formatDateForInput = (dateStr: string | Date) => {
-  const d = new Date(dateStr);
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-};
-
 // Хук для закрытия дропдаунов по клику вне
 const useOutsideClick = (callback: () => void) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -91,8 +87,7 @@ const isUrl = (str: string): boolean => {
   }
 };
 
-// --- КОМПОНЕНТЫ-ПОМОЩНИКИ ---
-
+// --- КОМПОНЕНТЫ-ПОМОЩНИКИ (TagSelector, AssigneesSelector без изменений) ---
 const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
   selectedTags: Tag[];
   availableTags: Tag[];
@@ -257,7 +252,6 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
 };
 
 // --- ГЛАВНЫЙ КОМПОНЕНТ ---
-
 export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindowProps) => {
   const { user } = useUser();
   
@@ -307,8 +301,8 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
     const state: FormData = {
       title: task.title || '',
       description: task.description || '',
-      start_time: formatDateForInput(task.start_time),
-      end_time: formatDateForInput(task.end_time),
+      start_time: task.start_time, // оставляем строку, как приходит
+      end_time: task.end_time,
       all_day: task.all_day || false,
       priority: task.priority || 0,
       task_status: task.task_status || 'Поставлена',
@@ -319,6 +313,25 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
     setFormData(state);
     setInitialData(state);
   }, [task, users, isLoading.data]);
+
+  // Обработчики для дат с использованием DatePicker
+  const handleStartDateChange = (date: Date) => {
+    if (!formData) return;
+    const newStart = date.toISOString(); // полная ISO строка
+    handleChange('start_time', newStart);
+    // Если окончание стало раньше нового начала, подтягиваем окончание
+    if (new Date(formData.end_time) < date) {
+      handleChange('end_time', newStart);
+    }
+  };
+
+  const handleEndDateChange = (date: Date) => {
+    if (!formData) return;
+    const newEnd = date.toISOString();
+    // minDate не даст выбрать раньше, но на всякий случай проверяем
+    if (date < new Date(formData.start_time)) return;
+    handleChange('end_time', newEnd);
+  };
 
   const handleChange = useCallback(<K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
@@ -386,7 +399,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
       
       setSavedCompletedTask(completedTaskInput);
       await onSuccess();
-      onClose(); // закрываем модалку после сохранения
+      onClose();
       
     } catch (error) {
       console.error('Ошибка сохранения результата:', error);
@@ -400,6 +413,10 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
     if (!task || !formData) return;
     if (!formData.title.trim() || !formData.start_time || !formData.end_time) {
       return alert('Пожалуйста, заполните все обязательные поля');
+    }
+
+    if (new Date(formData.end_time) < new Date(formData.start_time)) {
+      return alert('Дата окончания не может быть раньше даты начала');
     }
 
     setIsLoading(prev => ({ ...prev, action: true }));
@@ -426,7 +443,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
       if (!response.ok) throw new Error((await response.json()).error || 'Ошибка обновления');
       
       await onSuccess();
-      onClose(); // закрываем модалку после сохранения
+      onClose();
       setInitialData(formData);
       setIsEditing(false);
     } catch (error) {
@@ -455,7 +472,6 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
   if (!task || !formData) return null;
 
   const hasCompletedChanges = completedTaskInput !== savedCompletedTask;
-
   const statusClass = STATUS_CLASSES[formData.task_status] || styles.statusBadgeGray;
   const priorityClass = PRIORITIES[formData.priority]?.className || DEFAULT_PRIORITY.className;
 
@@ -487,7 +503,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
         <div className={styles.content}>
           <div className={styles.contentInner}>
             
-            {/* Статус и приоритет */}
+            {/* Статус и приоритет (без изменений) */}
             <div className={styles.statusPriority}>
               {isEditing ? (
                 <>
@@ -521,7 +537,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               )}
             </div>
 
-            {/* Теги */}
+            {/* Теги (без изменений) */}
             {isEditing ? (
               <TagSelector
                 selectedTags={formData.tags}
@@ -544,7 +560,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               </div>
             )}
 
-            {/* ОПИСАНИЕ – единый стиль с постами */}
+            {/* Описание (без изменений) */}
             <div>
               <h3 className={styles.sectionTitle}>Описание</h3>
               {isEditing ? (
@@ -566,33 +582,46 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               )}
             </div>
 
-            {/* Даты */}
+            {/* Даты с новым DatePicker */}
             <div className={styles.datesGrid}>
-              {(['start_time', 'end_time'] as const).map(field => (
-                <div key={field} className={styles.dateItem}>
-                  <h4 className={styles.dateLabel}>
-                    {field === 'start_time' ? 'Начало' : 'Окончание'}
-                  </h4>
-                  {isEditing ? (
-                    <input
-                      type={formData.all_day ? "date" : "datetime-local"}
-                      value={formData.all_day ? formData[field].split('T')[0] : formData[field]}
-                      onChange={e => handleChange(field, e.target.value)}
-                      className={styles.dateInput}
-                    />
-                  ) : (
-                    <div className={styles.dateDisplay}>
-                      <Calendar className={styles.dateIcon} />
-                      <span className={styles.dateText}>
-                        {formatDisplayDate(formData[field], formData.all_day)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
+              <div className={styles.dateItem}>
+                <h4 className={styles.dateLabel}>Начало</h4>
+                {isEditing ? (
+                  <DatePicker
+                    value={new Date(formData.start_time)}
+                    onChange={handleStartDateChange}
+                    showTimeSelect={!formData.all_day}
+                  />
+                ) : (
+                  <div className={styles.dateDisplay}>
+                    <Calendar className={styles.dateIcon} />
+                    <span className={styles.dateText}>
+                      {formatDisplayDate(formData.start_time, formData.all_day)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className={styles.dateItem}>
+                <h4 className={styles.dateLabel}>Окончание</h4>
+                {isEditing ? (
+                  <DatePicker
+                    value={new Date(formData.end_time)}
+                    onChange={handleEndDateChange}
+                    minDate={new Date(formData.start_time)}
+                    showTimeSelect={!formData.all_day}
+                  />
+                ) : (
+                  <div className={styles.dateDisplay}>
+                    <Calendar className={styles.dateIcon} />
+                    <span className={styles.dateText}>
+                      {formatDisplayDate(formData.end_time, formData.all_day)}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Весь день */}
+            {/* Весь день (только в редактировании) */}
             {isEditing && (
               <div className={styles.allDayCheckbox}>
                 <input
@@ -608,7 +637,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               </div>
             )}
 
-            {/* Исполнители */}
+            {/* Исполнители (без изменений) */}
             <div>
               <div className={styles.assigneesSectionHeader}>
                 <Users className="w-4 h-4" />
@@ -635,7 +664,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               )}
             </div>
 
-            {/* Результат выполнения */}
+            {/* Результат выполнения (без изменений) */}
             <div className={styles.resultSection}>
               <h4 className={styles.resultTitle}>Результат выполнения</h4>
               
@@ -685,7 +714,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
           </div>
         </div>
 
-        {/* ФУТЕР */}
+        {/* ФУТЕР (без изменений) */}
         <div className={styles.footer}>
           <div className={styles.actions}>
             {!isEditing ? (

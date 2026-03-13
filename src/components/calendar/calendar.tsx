@@ -118,7 +118,7 @@ export const Calendar: React.FC<CalendarProps> = ({
       <div className={styles.header}>
         {/* Левая группа: кликабельная кнопка с предыдущим месяцем */}
         <button onClick={handlePrevMonth} className={styles.prevGroupButton}>
-          <span className={styles.navButtonSymbol}>←</span>
+          <img className={styles.navButtonSymbol} src="/icons/Left Arrow.svg" alt="" />
           <span className={styles.prevMonthName}>
             {format(prevMonth, 'LLLL', { locale: ru })}
           </span>
@@ -126,7 +126,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         
         <div className={styles.filterGroup}>
           <h2 className={styles.monthTitle}>
-            {format(currentMonth, 'LLLL yyyy', { locale: ru })}
+            {format(currentMonth, 'LLLL', { locale: ru })}
           </h2>
           
           <div className={styles.filterButtons}>
@@ -192,14 +192,14 @@ export const Calendar: React.FC<CalendarProps> = ({
           <span className={styles.nextMonthName}>
             {format(nextMonth, 'LLLL', { locale: ru })}
           </span>
-          <span className={styles.navButtonSymbol}>→</span>
+          <img className={styles.navButtonSymbol} src="/icons/Right Arrow.svg" alt="" />
         </button>
       </div>
 
       {/* Дни недели */}
-      <div className={styles.weekDays}>
+      {/* <div className={styles.weekDays}>
         {weekDays.map(day => <div key={day}>{day}</div>)}
-      </div>
+      </div> */}
 
       {/* Сетка календаря */}
       <div className={styles.dayGrid}>

@@ -147,12 +147,11 @@ export default function CalendarPage() {
     else setSelectedItem({ task: item });
   };
 
-  // Новая функция рендера карточки
+  // Функция рендера карточки
   const renderCard = (item: CalendarItem) => {
     const isPost = item.type === 'post';
     const firstTag = item.tags && item.tags.length > 0 ? item.tags[0] : null;
     
-    // Время дедлайна (только часы:минуты)
     const deadline = isPost
       ? new Date(item.post_deadline)
       : new Date(item.end_time);
@@ -162,14 +161,11 @@ export default function CalendarPage() {
       hour12: false,
     });
 
-    // Цвет статусного кружка
     const dotColor = getStatusDotColor(item);
-
-    // Фон карточки – градиент от цвета первого тега (если есть)
     const bgGradient = firstTag
       ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
       : 'none';
-// radial-gradient(100% 100% at 50% 0%, rgba(72, 200, 132, 0.2) 0%, rgba(72, 200, 132, 0) 100%);
+
     return (
       <div
         key={`${item.type}-${isPost ? item.post_id : item.task_id}`}
@@ -254,7 +250,7 @@ export default function CalendarPage() {
               <div className={styles.sidebarHeader}>
                 <div className={styles.sidebarHeaderTitle}>
                   <h2 className={styles.dateTitle}>
-                  {format(selectedDate, 'dd MMMM', { locale: ru })}
+                    {format(selectedDate, 'dd', { locale: ru })} {format(selectedDate, 'EEEE', { locale: ru }).replace(/^./, c => c.toUpperCase())}
                   </h2>
                   <button onClick={() => setIsSidebarOpen(false)} className={styles.closeButton}>
                     <X className={styles.closeIcon} />
@@ -283,7 +279,7 @@ export default function CalendarPage() {
               <div className={`${styles.itemsList} no-scrollbar`}>
                 {filteredDayItems.length === 0 ? (
                   <div className={styles.emptyState}>
-                    <p>{showCompletedOnly ? 'Нет готовых' : 'Событий нет'}</p>
+                    <p>Событий нет</p>
                   </div>
                 ) : (
                   filteredDayItems.map(renderCard)

@@ -32,6 +32,21 @@
   animation: slideOut 0.3s ease-out forwards;
 }
 
+.datePickerInput {
+  background-color: #2d2d2d;
+  color: #ffffff;
+  border: 1px solid #555;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Стилизация иконки календаря в некоторых браузерах */
+.datePickerInput::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
 @layer utilities {
       .no-scrollbar::-webkit-scrollbar {
           display: none;
