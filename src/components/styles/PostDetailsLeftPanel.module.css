@@ -2,7 +2,7 @@
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* space-y-6 */
+  gap: 1.5rem;
 }
 
 /* Дедлайн */
@@ -13,161 +13,145 @@
 .deadlineButton {
   width: 100%;
   text-align: left;
-  padding: 0.75rem; /* p-3 */
-  border-radius: 0.5rem; /* rounded-lg */
-  border-width: 2px;
-  transition: border-color 0.2s;
-}
-
-.deadlineButtonEditing {
-  composes: deadlineButton;
-  background-color: #eff6ff; /* bg-blue-50 */
-  border-color: #bfdbfe; /* border-blue-200 */
 }
 
 .deadlineButtonEditing:hover {
-  border-color: #60a5fa; /* hover:border-blue-400 */
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .deadlineButtonDefault {
   composes: deadlineButton;
-  background-color: #fee2e2; /* bg-red-50 */
-  border-color: #fecaca; /* border-red-200 */
-}
-
-.deadlineButtonDefault:hover {
-  border-color: #f87171; /* hover:border-red-300 */
 }
 
 .deadlineLabel {
-  font-size: 0.875rem; /* text-sm */
+  font-size: 0.875rem;
   display: block;
 }
 
 .deadlineLabelEditing {
   composes: deadlineLabel;
-  color: #2563eb; /* text-blue-600 */
+  color: #ffffff; /* изменено с #2563eb */
 }
 
 .deadlineLabelDefault {
   composes: deadlineLabel;
-  color: #dc2626; /* text-red-600 */
+  color: #ffffff;
 }
 
 .deadlineValue {
-  font-size: 1.125rem; /* text-lg */
-  font-weight: 600; /* font-semibold */
+  font-size: 24px;
+  font-weight: 400;
 }
 
 .deadlineValueEditing {
   composes: deadlineValue;
-  color: #1e40af; /* text-blue-800 */
+  color: #ffffff; /* изменено с #1e40af */
 }
 
 .deadlineValueDefault {
   composes: deadlineValue;
-  color: #991b1b; /* text-red-800 */
+  color: #ffffff;
 }
 
 /* DatePicker */
 .datePicker {
   position: absolute;
   z-index: 50;
-  margin-top: 0.5rem; /* mt-2 */
-  padding: 1rem; /* p-4 */
+  margin-top: 0.5rem;
+  padding: 1rem;
   background-color: #ffffff;
-  border: 1px solid #d1d5db; /* border-gray-300 */
-  border-radius: 0.5rem; /* rounded-lg */
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .datePickerInput {
   width: 100%;
-  padding: 0.5rem 0.75rem; /* px-3 py-2 */
-  border: 1px solid #d1d5db; /* border-gray-300 */
-  border-radius: 0.5rem; /* rounded-lg */
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
 }
 
 /* Заголовок */
-.title {
-  /* пусто */
-}
-
 .titleInput {
   width: 100%;
-  padding: 0.75rem 1rem; /* px-4 py-3 */
-  font-size: 1.25rem; /* text-xl */
-  font-weight: 600; /* font-semibold */
-  border: 2px solid #93c5fd; /* border-blue-300 */
-  border-radius: 0.5rem; /* rounded-lg */
+  padding: 0.75rem 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* заменено с border-blue-300 */
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05); /* добавлен тёмный фон */
+  color: #ffffff; /* белый текст */
   outline: none;
 }
 
 .titleInput:focus {
-  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3); /* заменено с синего */
 }
 
 .titleDisplay {
-  font-size: 1.5rem; /* text-2xl */
-  font-weight: 600; /* font-semibold */
-  color: #1f2937; /* text-gray-800 */
+  font-size: 36px;
+  font-weight: 400;
+  color: #ffffff;
+  border-top: 1px solid #ffffff10;
+  line-height: 36px;
+  word-spacing: -4%;
 }
 
 /* Статус и теги */
 .statusRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
 .statusLabel {
-  font-size: 0.875rem; /* text-sm */
-  color: #6b7280; /* text-gray-500 */
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
 .statusValue {
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
-  color: #1f2937; /* text-gray-800 */
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
 }
 
 .approvedBadge {
   display: flex;
   align-items: center;
-  gap: 0.25rem; /* gap-1 */
-  color: #16a34a; /* text-green-600 */
-  background-color: #f0fdf4; /* bg-green-50 */
-  padding: 0.25rem 0.5rem; /* px-2 py-1 */
-  border-radius: 9999px; /* rounded-full */
-  font-size: 0.75rem; /* text-xs */
-  font-weight: 500; /* font-medium */
+  gap: 0.25rem;
+  color: #16a34a;
+  background-color: #f0fdf4;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .publishedBadge {
   composes: approvedBadge;
-  color: #2563eb; /* text-blue-600 */
-  background-color: #eff6ff; /* bg-blue-50 */
+  color: #2563eb;
+  background-color: #eff6ff;
 }
 
 /* Теги (просмотр) */
 .tagsView {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem; /* gap-1 */
+  gap: 0.25rem;
 }
 
 .tagChip {
-  padding: 0.25rem 0.5rem; /* px-2 py-1 */
-  border-radius: 9999px; /* rounded-full */
-  font-size: 0.75rem; /* text-xs */
-  font-weight: 500; /* font-medium */
+  padding: 5px 10px 8px 5px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 400;
   color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   background-color: var(--tag-color);
 }
 
-/* TagSelector (много стилей) */
+/* TagSelector (редактирование) */
 .tagSelector {
   position: relative;
 }
@@ -175,23 +159,24 @@
 .tagSelectorInputContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem; /* gap-2 */
-  margin-bottom: 0.5rem; /* mb-2 */
-  min-height: 2.5rem; /* min-h-10 */
-  padding: 0.5rem; /* p-2 */
-  border: 1px solid #d1d5db; /* border-gray-300 */
-  border-radius: 0.5rem; /* rounded-lg */
-  background-color: #ffffff;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* заменено с #d1d5db */
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05); /* тёмный фон */
+  color: #ffffff;
 }
 
 .tagChipEditable {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem; /* gap-1 */
-  padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
-  border-radius: 9999px; /* rounded-full */
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
   color: white;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   background-color: var(--tag-color);
@@ -221,12 +206,17 @@
 
 .tagSearchInput {
   flex: 1;
-  min-width: 7.5rem; /* min-w-30 */
+  min-width: 7.5rem;
   outline: none;
-  font-size: 0.875rem; /* text-sm */
+  font-size: 0.875rem;
   background: transparent;
   border: none;
   padding: 0;
+  color: #ffffff; /* белый текст */
+}
+
+.tagSearchInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .tagSearchInput:disabled {
@@ -238,229 +228,219 @@
   position: absolute;
   z-index: 10;
   width: 100%;
-  margin-top: 0.25rem; /* mt-1 */
+  margin-top: 0.25rem;
   background-color: #ffffff;
-  border: 1px solid #d1d5db; /* border-gray-300 */
-  border-radius: 0.5rem; /* rounded-lg */
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
-  max-height: 15rem; /* max-h-60 */
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  max-height: 15rem;
   overflow-y: auto;
 }
 
 .tagOption {
-  padding: 0.5rem 1rem; /* px-4 py-2 */
+  padding: 0.5rem 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.5rem;
 }
 
 .tagOption:hover {
-  background-color: #f3f4f6; /* hover:bg-gray-100 */
+  background-color: #f3f4f6;
 }
 
 .tagColorDot {
-  width: 0.75rem; /* w-3 h-3 */
+  width: 0.75rem;
   height: 0.75rem;
   border-radius: 9999px;
 }
 
 .createTagOption {
   composes: tagOption;
-  color: #2563eb; /* text-blue-600 */
+  color: #2563eb;
 }
 
 .noTagsMessage {
   composes: tagOption;
-  color: #6b7280; /* text-gray-500 */
+  color: #6b7280;
 }
 
 /* Описание */
-.descriptionTitle {
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
-  color: #374151; /* text-gray-700 */
-  margin-bottom: 0.5rem; /* mb-2 */
-}
-
 .descriptionTextarea {
+  display: block;
   width: 100%;
-  padding: 0.75rem 1rem; /* px-4 py-3 */
-  border: 2px solid #93c5fd; /* border-blue-300 */
-  border-radius: 0.5rem; /* rounded-lg */
-  outline: none;
-  resize: none; /* resize-none */
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
+  box-sizing: border-box;
+  min-height: 100px;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
 }
 
 .descriptionTextarea:focus {
-  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
-}
-
-.descriptionBox {
-  border: 1px solid #d1d5db; /* border-gray-300 */
-  border-radius: 0.5rem; /* rounded-lg */
-  overflow: hidden;
-}
-
-.descriptionPreview {
-  max-height: 12rem; /* max-h-48 */
-  overflow-y: auto;
-  padding: 1rem; /* p-4 */
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 .descriptionPreviewText {
-  font-size: 0.875rem; /* text-sm */
-  color: #4b5563; /* text-gray-600 */
-  white-space: pre-line; /* whitespace-pre-line */
+  font-size: 16px;
+  font-weight: 400;
+  color: #ffffff60;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word; 
 }
 
 /* Ссылка на ТЗ */
-.tzTitle {
-  font-size: 0.75rem; /* text-xs */
-  font-weight: 500; /* font-medium */
-  color: #374151; /* text-gray-700 */
-  margin-bottom: 0.5rem; /* mb-2 */
-}
-
 .tzInput {
   width: 100%;
-  padding: 0.5rem 1rem; /* px-4 py-2 */
-  border: 2px solid #93c5fd; /* border-blue-300 */
-  border-radius: 0.5rem; /* rounded-lg */
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
   outline: none;
 }
 
 .tzInput:focus {
-  box-shadow: 0 0 0 2px #3b82f6;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 .tzLink {
-  font-size: 0.875rem; /* text-sm */
-  color: #2563eb; /* text-blue-600 */
+  font-size: 16px;
+  color: #ffffff;
+  font-weight: 400;
+  padding: 8px 10px 8px 10px;
+  max-width: 110px;
+  max-height: 27px;
   display: flex;
   align-items: center;
-  gap: 0.25rem; /* gap-1 */
+  gap: 10px;
   text-decoration: none;
+  border: 1px solid #ffffff10;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.25) 100%);
 }
 
 .tzLink:hover {
-  text-decoration: underline;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
 }
 
-/* Задачи в виде кнопок */
+/* Задачи в виде кнопок (только в режиме редактирования) */
 .tasksTitle {
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
-  color: #374151; /* text-gray-700 */
-  margin-bottom: 0.75rem; /* mb-3 */
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff; /* белый, как в обычном режиме */
+  margin-bottom: 0.75rem;
 }
 
 .taskButtons {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.5rem;
 }
 
-.taskButton {
-  padding: 0.5rem 1rem; /* px-4 py-2 */
-  border-radius: 0.5rem; /* rounded-lg */
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
-  transition: all 0.2s;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-
+/* Кнопки задач – теперь в стиле обычных кнопок панели */
 .taskButtonSelected {
-  background-color: #3b82f6; /* bg-blue-500 */
-  color: #ffffff; /* text-white */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #ffffff10;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.25) 100%);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
 .taskButtonSelected:hover {
-  background-color: #2563eb; /* hover:bg-blue-600 */
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.3) 100%);
 }
 
 .taskButtonDefault {
-  background-color: #f3f4f6; /* bg-gray-100 */
-  color: #374151; /* text-gray-700 */
-  border: 1px solid #d1d5db; /* border-gray-300 */
+  composes: taskButtonSelected;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .taskButtonDefault:hover {
-  background-color: #e5e7eb; /* hover:bg-gray-200 */
+  background: rgba(255, 255, 255, 0.15);
 }
 
+/* Бейджи задач в режиме просмотра (уже есть) */
 .taskBadge {
-  padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
-  background-color: #dbeafe; /* bg-blue-100 */
-  color: #1e40af; /* text-blue-800 */
-  border-radius: 0.5rem; /* rounded-lg */
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
+  padding: 0.375rem 0.75rem;
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 /* Соцсети */
 .socialSection {
-  padding: 1rem; /* p-4 */
-  background-color: #f9fafb; /* bg-gray-50 */
-  border-radius: 0.5rem; /* rounded-lg */
-  border: 1px solid #e5e7eb; /* border-gray-200 */
+  padding: 1rem;
+  background: #FFFFFF05;
+  border-radius: 0.5rem;
+  border: 1px solid #ffffff10;
 }
 
 .socialTitle {
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
-  color: #374151; /* text-gray-700 */
-  margin-bottom: 0.75rem; /* mb-3 */
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.5rem;
 }
 
 .socialList {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem; /* space-y-3 */
+  gap: 0.75rem;
 }
 
 .socialItem {
   display: flex;
   align-items: center;
-  gap: 0.75rem; /* gap-3 */
+  gap: 0.75rem;
 }
 
 .socialLabel {
-  width: 6rem; /* w-24 */
-  font-size: 0.875rem; /* text-sm */
-  color: #4b5563; /* text-gray-600 */
+  width: 6rem;
+  font-size: 0.875rem;
+  color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.5rem;
 }
 
 .socialIcon {
-  width: 1.25rem; /* w-5 h-5 */
+  width: 1.25rem;
   height: 1.25rem;
 }
 
 .socialInput {
   width: 100%;
-  padding: 0.5rem 0.75rem; /* px-3 py-2 */
-  border: 1px solid #d1d5db; /* border-gray-300 */
-  border-radius: 0.5rem; /* rounded-lg */
-  font-size: 0.875rem; /* text-sm */
+  color: #ffffff;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ffffff10;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .socialInput:focus {
   border-color: transparent;
-  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 .socialInput:disabled {
-  background-color: #f3f4f6; /* disabled:bg-gray-100 */
+  background-color: #f3f4f6;
   cursor: not-allowed;
 }
 
@@ -476,59 +456,37 @@
 .socialLinksRow {
   display: flex;
   align-items: center;
-  gap: 1rem; /* gap-4 */
+  gap: 1rem;
 }
 
 .socialLink {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* gap-2 */
-  font-size: 0.875rem; /* text-sm */
-  color: #374151; /* text-gray-700 */
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #ffffff;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .socialLink:hover {
-  color: #3b82f6; /* hover:text-blue-500 */
-}
-
-/* Ответственный */
-.responsibleTitle {
-  font-size: 0.75rem; /* text-xs */
-  font-weight: 500; /* font-medium */
-  color: #374151; /* text-gray-700 */
-  margin-bottom: 0.25rem; /* mb-1 */
-}
-
-.responsibleBox {
-  padding: 0.5rem; /* p-2 */
-  background-color: #eff6ff; /* bg-blue-50 */
-  border: 1px solid #bfdbfe; /* border-blue-100 */
-  border-radius: 0.5rem; /* rounded-lg */
-}
-
-.responsibleName {
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
-  color: #1e40af; /* text-blue-700 */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: #3b82f6;
 }
 
 .approvedBox {
-  composes: responsibleBox;
-  background-color: #f0fdf4; /* bg-green-50 */
-  border-color: #bbf7d0; /* border-green-100 */
+  display: inline-block;
+  padding: 5px 10px 8px 5px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.25) 100%);
+  color: #ffffff;
 }
 
 .approvedName {
   composes: responsibleName;
-  color: #166534; /* text-green-700 */
+  color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 0.25rem; /* gap-1 */
+  gap: 0.25rem;
 }
 
 /* Кнопки действий */
@@ -536,19 +494,18 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem; /* gap-2 */
-  padding-top: 1rem; /* pt-4 */
-  border-top: 1px solid #e5e7eb; /* border-t */
+  gap: 0.5rem;
+  padding-top: 1rem;
 }
 
 .button {
-  padding: 0.5rem 1rem; /* px-4 py-2 */
-  border-radius: 0.375rem; /* rounded-md */
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.5rem;
   border: none;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -561,65 +518,26 @@
   cursor: not-allowed;
 }
 
-.buttonBlue {
-  background-color: #3b82f6; /* bg-blue-600 */
-  color: #ffffff; /* text-white */
-}
-
-.buttonBlue:hover:not(:disabled) {
-  background-color: #2563eb; /* hover:bg-blue-700 */
-}
-
-.buttonGray {
-  background-color: #6b7280; /* bg-gray-500 */
-  color: #ffffff; /* text-white */
-}
-
-.buttonGray:hover:not(:disabled) {
-  background-color: #4b5563; /* hover:bg-gray-600 */
-}
-
-.buttonGreen {
-  background-color: #16a34a; /* bg-green-600 */
-  color: #ffffff;
-}
-
-.buttonGreen:hover:not(:disabled) {
-  background-color: #15803d; /* hover:bg-green-700 */
-}
-
-.buttonLightGray {
-  background-color: #d1d5db; /* bg-gray-300 */
-  color: #1f2937; /* text-gray-700 */
-}
-
-.buttonLightGray:hover:not(:disabled) {
-  background-color: #9ca3af; /* hover:bg-gray-400 */
-}
-
-.buttonRed {
-  background-color: #ef4444; /* bg-red-500 */
-  color: #ffffff;
-}
-
-.buttonRed:hover:not(:disabled) {
-  background-color: #dc2626; /* hover:bg-red-600 */
-}
-
-.publishButtonPublished {
-  background-color: #6b7280; /* bg-gray-500 */
-  color: #ffffff;
-}
-
-.publishButtonPublished:hover:not(:disabled) {
-  background-color: #4b5563; /* hover:bg-gray-600 */
-}
-
+/* Все кнопки теперь используют одинаковый градиентный стиль */
+.buttonBlue,
+.buttonGray,
+.buttonGreen,
+.buttonLightGray,
+.buttonRed,
+.publishButtonPublished,
 .publishButtonUnpublished {
-  background-color: #3b82f6; /* bg-blue-600 */
+  border: 1px solid #ffffff10;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.25) 100%);
   color: #ffffff;
 }
 
-.publishButtonUnpublished:hover:not(:disabled) {
-  background-color: #2563eb; /* hover:bg-blue-700 */
+.buttonBlue:hover,
+.buttonGray:hover,
+.buttonGreen:hover,
+.buttonLightGray:hover,
+.buttonRed:hover,
+.publishButtonPublished:hover,
+.publishButtonUnpublished:hover {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.3) 100%);
 }

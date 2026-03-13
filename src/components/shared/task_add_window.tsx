@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/hooks/use-roles';
-import { X, Users } from 'lucide-react';
+import { X, Users, Calendar as CalendarIcon, AlignLeft } from 'lucide-react';
 import { DatePicker } from '../ui/date_picker';
 import styles from '../styles/TaskAddWindow.module.css';
 
@@ -41,7 +41,7 @@ const useOutsideClick = (callback: () => void) => {
   return ref;
 };
 
-// Компонент выбора нескольких исполнителей (без изменений)
+// Компонент выбора нескольких исполнителей
 const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   selectedUsers: User[];
   users: User[];
@@ -52,8 +52,8 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   const [search, setSearch] = useState('');
   const ref = useOutsideClick(() => setIsOpen(false));
 
-  const filtered = users.filter(u => 
-    u.user_login.toLowerCase().includes(search.toLowerCase()) && 
+  const filtered = users.filter(u =>
+    u.user_login.toLowerCase().includes(search.toLowerCase()) &&
     !selectedUsers.some(selected => selected.user_id === u.user_id)
   );
 
@@ -68,36 +68,33 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
 
   return (
     <div className={styles.relative} ref={ref}>
-      {selectedUsers.length > 0 && (
-        <div className={styles.selectedAssignees}>
-          {selectedUsers.map(user => (
-            <span key={user.user_id} className={styles.assigneeChip}>
-              {user.user_login}
-              <button
-                type="button"
-                onClick={() => handleRemove(user.user_id)}
-                disabled={disabled}
-                className={styles.assigneeChipRemove}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      
-      <input
-        type="text"
-        value={search}
-        onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
-        onFocus={() => setIsOpen(true)}
-        placeholder="Поиск исполнителей..."
-        disabled={disabled}
-        className={styles.assigneeInput}
-      />
+      <div className={styles.tagSelectorContainer}>
+        {selectedUsers.map(user => (
+          <span key={user.user_id} className={styles.assigneeChip}>
+            {user.user_login}
+            <button
+              type="button"
+              onClick={() => handleRemove(user.user_id)}
+              disabled={disabled}
+              className={styles.assigneeChipRemove}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={search}
+          onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
+          onFocus={() => setIsOpen(true)}
+          placeholder="Поиск исполнителей..."
+          disabled={disabled}
+          className={styles.tagInput}
+        />
+      </div>
       
       {isOpen && filtered.length > 0 && (
-        <div className={styles.dropdown}>
+        <div className={`${styles.dropdown} no-scrollbar`}>
           {filtered.map(user => (
             <div
               key={user.user_id}
@@ -118,17 +115,11 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
           ))}
         </div>
       )}
-      
-      {isOpen && filtered.length === 0 && search.trim() && (
-        <div className={styles.emptyResult}>
-          Пользователи не найдены
-        </div>
-      )}
     </div>
   );
 };
 
-// Компонент выбора тегов (без изменений)
+// Компонент выбора тегов
 const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
   selectedTags: Tag[];
   availableTags: Tag[];
@@ -189,7 +180,7 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
       </div>
 
       {isOpen && (
-        <div className={styles.dropdown}>
+        <div className={`${styles.dropdown} no-scrollbar`}>
           {filtered.length > 0 ? (
             filtered.map(tag => (
               <div
@@ -202,10 +193,7 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
               </div>
             ))
           ) : search.trim() ? (
-            <div
-              onClick={handleCreate}
-              className={styles.createTagOption}
-            >
+            <div onClick={handleCreate} className={styles.createTagOption}>
               + Создать "{search}"
             </div>
           ) : (
@@ -226,8 +214,6 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
   
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  
-  // Состояния для дат как объекты Date
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
@@ -235,8 +221,16 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     title: '',
     description: '',
     all_day: false,
-    priority: '0',
+    priority: '0', // Обычный по умолчанию
   });
+
+  // Массив настроек приоритета для рендера кнопок
+  const priorityOptions = [
+    { id: '0', label: 'Обычный', color: 'rgba(255, 255, 255, 0.4)' },
+    { id: '1', label: 'Низкий', color: '#4ade80' },
+    { id: '2', label: 'Средний', color: '#fbbf24' },
+    { id: '3', label: 'Высокий', color: '#f87171' }
+  ];
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -244,74 +238,45 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
         const response = await fetch('/api/tags');
         const data = await response.json();
         setTags(data);
-      } catch (error) {
-        console.error('Ошибка загрузки тегов:', error);
-      }
+      } catch (error) { console.error('Ошибка загрузки тегов:', error); }
     };
-    fetchTags();
-  }, []);
-
-  useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await fetch('/api/users');
         const data = await response.json();
         setUsers(data);
-      } catch (error) {
-        console.error('Ошибка загрузки пользователей:', error);
-      } finally {
-        setLoadingUsers(false);
-      }
+      } catch (error) { console.error('Ошибка загрузки пользователей:', error); }
+      finally { setLoadingUsers(false); }
     };
+    fetchTags();
     fetchUsers();
   }, []);
 
-  // Инициализация дат
   useEffect(() => {
-    let defaultDate: Date;
-    if (initialDate) {
-      defaultDate = new Date(initialDate);
-      defaultDate.setHours(12, 0, 0, 0);
-    } else {
-      defaultDate = new Date();
-      defaultDate.setDate(defaultDate.getDate() + 1);
-      defaultDate.setHours(12, 0, 0, 0);
-    }
+    let defaultDate = initialDate ? new Date(initialDate) : new Date();
+    if (!initialDate) defaultDate.setDate(defaultDate.getDate() + 1);
+    defaultDate.setHours(12, 0, 0, 0);
     setStartDate(defaultDate);
     setEndDate(defaultDate);
-  }, [initialDate]);
 
-  useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
-  }, []);
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [initialDate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({ ...prev, [name]: checked }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    setFormData(prev => ({ ...prev, [name]: val }));
   };
 
   const handleStartDateChange = (date: Date) => {
     setStartDate(date);
-    if (endDate && date > endDate) {
-      setEndDate(date);
-    }
+    if (endDate && date > endDate) setEndDate(date);
   };
 
   const handleEndDateChange = (date: Date) => {
-    if (startDate && date < startDate) {
-      setEndDate(startDate);
-    } else {
-      setEndDate(date);
-    }
+    if (startDate && date < startDate) setEndDate(startDate);
+    else setEndDate(date);
   };
 
   const handleCreateTag = async (name: string) => {
@@ -326,25 +291,16 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
         setTags(prev => [...prev, newTag]);
         return newTag;
       }
-    } catch (error) {
-      console.error('Ошибка создания тега:', error);
-    }
+    } catch (error) { console.error('Ошибка создания тега:', error); }
     return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.title.trim() || !startDate || !endDate) {
-      setError('Пожалуйста, заполните все обязательные поля');
+      setError('Заполните обязательные поля');
       return;
     }
-
-    if (endDate < startDate) {
-      setError('Дата окончания не может быть раньше даты начала');
-      return;
-    }
-
     setIsSubmitting(true);
     setError(null);
 
@@ -364,49 +320,29 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка при создании задачи');
-      }
-
+      if (!response.ok) throw new Error('Ошибка при создании задачи');
       await onTaskAdded();
       onClose();
-
-    } catch (error) {
-      console.error('Ошибка при создании задачи:', error);
-      setError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
+    } catch (error: any) {
+      setError(error.message);
       setIsSubmitting(false);
     }
   };
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+      <div className={`${styles.modalContainer} no-scrollbar`} onClick={(e) => e.stopPropagation()}>
         <form onSubmit={handleSubmit} className={styles.modalForm}>
           <div className={styles.header}>
-            <h2 className={styles.headerTitle}>Создание новой задачи</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className={styles.closeButton}
-              aria-label="Закрыть"
-            >
+            <h2 className={styles.headerTitle}>Новая задача</h2>
+            <button type="button" onClick={onClose} className={styles.closeButton}>
               <X size={24} />
             </button>
           </div>
 
-          {error && (
-            <div className={styles.errorBox}>
-              <svg className={styles.errorIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {error}
-            </div>
-          )}
+          {error && <div className={styles.errorBox}>{error}</div>}
 
           <div className="space-y-6">
-            {/* Название задачи */}
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Название задачи *</label>
               <input
@@ -414,123 +350,75 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                required
-                disabled={isSubmitting}
                 className={styles.input}
-                placeholder="Введите название задачи"
+                placeholder="Что нужно сделать?"
+                required
               />
             </div>
 
-            {/* Описание */}
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Описание</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                disabled={isSubmitting}
-                rows={4}
+                rows={3}
                 className={styles.textarea}
-                placeholder="Опишите детали задачи..."
+                placeholder="Детали задачи..."
               />
             </div>
 
-            {/* Даты с новым DatePicker */}
             <div className={styles.datesGrid}>
               <div>
-                <label className={styles.label}>Дата и время начала *</label>
-                <DatePicker
-                  value={startDate}
-                  onChange={handleStartDateChange}
-                  showTimeSelect={!formData.all_day}
-                />
+                <label className={styles.label}>Начало</label>
+                <DatePicker value={startDate} onChange={handleStartDateChange} showTimeSelect={!formData.all_day} />
               </div>
               <div>
-                <label className={styles.label}>Дата и время окончания *</label>
-                <DatePicker
-                  value={endDate}
-                  onChange={handleEndDateChange}
-                  minDate={startDate || undefined}
-                  showTimeSelect={!formData.all_day}
-                />
+                <label className={styles.label}>Окончание</label>
+                <DatePicker value={endDate} onChange={handleEndDateChange} minDate={startDate || undefined} showTimeSelect={!formData.all_day} />
               </div>
             </div>
 
-            {/* Весь день */}
             <div className={styles.checkboxGroup}>
-              <input
-                type="checkbox"
-                name="all_day"
-                id="all_day"
-                checked={formData.all_day}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className={styles.checkbox}
-              />
-              <label htmlFor="all_day" className={styles.checkboxLabel}>
-                Весь день
-              </label>
+              <input type="checkbox" name="all_day" id="all_day" checked={formData.all_day} onChange={handleChange} className={styles.checkbox} />
+              <label htmlFor="all_day" className={styles.checkboxLabel}>Весь день</label>
             </div>
 
-            {/* Приоритет */}
+            {/* ПРИОРИТЕТ В ВИДЕ КНОПОК */}
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Приоритет</label>
-              <select
-                name="priority"
-                value={formData.priority}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className={styles.select}
-              >
-                <option value="0">Обычный</option>
-                <option value="1">Низкий</option>
-                <option value="2">Средний</option>
-                <option value="3">Высокий</option>
-              </select>
+              <div className={styles.priorityContainer}>
+                {priorityOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, priority: opt.id }))}
+                    className={`${styles.priorityButton} ${formData.priority === opt.id ? styles.priorityActive : ''}`}
+                    style={{ '--accent-color': opt.color } as React.CSSProperties}
+                  >
+                    <span className={styles.priorityDot} style={{ backgroundColor: opt.color }} />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Исполнители */}
             <div className={styles.fieldGroup}>
               <label className={`${styles.label} ${styles.labelWithIcon}`}>
-                <Users className="w-4 h-4" />
-                Исполнители
+                <Users className="w-4 h-4" /> Исполнители
               </label>
-              <AssigneesSelector
-                selectedUsers={selectedAssignees}
-                users={users}
-                onChange={setSelectedAssignees}
-                disabled={isSubmitting || loadingUsers}
-              />
+              <AssigneesSelector selectedUsers={selectedAssignees} users={users} onChange={setSelectedAssignees} disabled={isSubmitting || loadingUsers} />
             </div>
 
-            {/* Теги */}
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Теги</label>
-              <TagSelector
-                selectedTags={selectedTags}
-                availableTags={tags}
-                onChange={setSelectedTags}
-                onCreate={handleCreateTag}
-                disabled={isSubmitting}
-              />
+              <TagSelector selectedTags={selectedTags} availableTags={tags} onChange={setSelectedTags} onCreate={handleCreateTag} disabled={isSubmitting} />
             </div>
           </div>
 
-          {/* Кнопки */}
           <div className={styles.actions}>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className={`${styles.button} ${styles.buttonCancel}`}
-            >
-              Отмена
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`${styles.button} ${styles.buttonSubmit}`}
-            >
+            <button type="button" onClick={onClose} className={`${styles.button} ${styles.buttonCancel}`}>Отмена</button>
+            <button type="submit" disabled={isSubmitting} className={`${styles.button} ${styles.buttonSubmit}`}>
               {isSubmitting ? 'Создание...' : 'Создать задачу'}
             </button>
           </div>

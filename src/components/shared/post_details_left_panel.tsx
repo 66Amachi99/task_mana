@@ -5,6 +5,7 @@ import { ExternalLink, CheckCircle, Globe, Link, Edit2, X, Save, Trash2 } from '
 import { SOCIAL_CONFIG, TASK_CONFIG, SocialLinks } from './post_details_window';
 import { DatePicker } from '../ui/date_picker';
 import styles from '../styles/PostDetailsLeftPanel.module.css';
+import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
 
 interface Tag {
   tag_id: number;
@@ -90,18 +91,28 @@ interface PostDetailsLeftPanelProps {
   hasChanges?: boolean;
 }
 
+// Функция форматирования даты в нужный формат: "05 Февраля Четверг 12:00"
 const formatDeadline = (date: Date | null): string => {
   if (!date) return 'Не указана';
 
-  const formatter = new Intl.DateTimeFormat('ru-RU', {
-    day: '2-digit',
-    month: 'long',
-    weekday: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const day = String(date.getDate()).padStart(2, '0');
+  const monthNames = [
+    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+  ];
+  const month = monthNames[date.getMonth()];
+  const monthCapitalized = month.charAt(0).toUpperCase() + month.slice(1);
 
-  return formatter.format(date);
+  const weekdayNames = [
+    'воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'
+  ];
+  const weekday = weekdayNames[date.getDay()];
+  const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${day} ${monthCapitalized} ${weekdayCapitalized} ${hours}:${minutes}`;
 };
 
 const TagSelector = ({
@@ -258,7 +269,6 @@ export const PostDetailsLeftPanel = ({
           <DatePicker value={deadlineValue} onChange={onDeadlineChange} />
         ) : (
           <div className={deadlineButtonClass}>
-            <span className={deadlineLabelClass}>Дедлайн</span>
             <span className={deadlineValueClass}>
               {formatDeadline(deadlineValue)}
             </span>
@@ -281,27 +291,8 @@ export const PostDetailsLeftPanel = ({
         )}
       </div>
 
-      {/* Статус и теги */}
+      {/* Теги */}
       <div className="space-y-3">
-        <div className={styles.statusRow}>
-          <span className={styles.statusLabel}>Статус:</span>
-          <span className={styles.statusValue}>{post.post_status}</span>
-
-          {post.approved_by && (
-            <div className={styles.approvedBadge}>
-              <CheckCircle className="w-4 h-4" />
-              <span>Согласовано</span>
-            </div>
-          )}
-
-          {post.is_published && (
-            <div className={styles.publishedBadge}>
-              <Globe className="w-4 h-4" />
-              <span>Опубликовано</span>
-            </div>
-          )}
-        </div>
-
         {/* Теги */}
         {isEditing ? (
           <TagSelector
@@ -336,14 +327,13 @@ export const PostDetailsLeftPanel = ({
 
       {/* Описание */}
       <div>
-        <h3 className={styles.descriptionTitle}>Описание</h3>
         {isEditing ? (
-          <textarea
+          <AutoResizeTextarea
             value={editedDescription}
             onChange={e => onDescriptionChange(e.target.value)}
-            rows={4}
-            className={styles.descriptionTextarea}
             placeholder="Описание поста..."
+            disabled={isSaving || isActionLoading}
+            className={styles.descriptionTextarea}
           />
         ) : (
           <div className={styles.descriptionBox}>
@@ -358,7 +348,6 @@ export const PostDetailsLeftPanel = ({
 
       {/* Ссылка на ТЗ */}
       <div>
-        <h4 className={styles.tzTitle}>Ссылка на ТЗ</h4>
         {isEditing ? (
           <input
             type="text"
@@ -375,7 +364,6 @@ export const PostDetailsLeftPanel = ({
               rel="noopener noreferrer"
               className={styles.tzLink}
             >
-              <ExternalLink className="w-4 h-4" />
               Открыть ТЗ
             </a>
           )
@@ -383,9 +371,9 @@ export const PostDetailsLeftPanel = ({
       </div>
 
       {/* Задачи в виде кнопок */}
-      <div>
-        <h4 className={styles.tasksTitle}>Необходимые задачи</h4>
-        {isEditing ? (
+      {isEditing && (
+        <div>
+          <h4 className={styles.tasksTitle}>Необходимые задачи</h4>
           <div className={styles.taskButtons}>
             {taskButtons.map(button => (
               <button
@@ -397,21 +385,8 @@ export const PostDetailsLeftPanel = ({
               </button>
             ))}
           </div>
-        ) : (
-          <div className={styles.taskButtons}>
-            {TASK_CONFIG.map(cfg => {
-              if (post[cfg.needsKey]) {
-                return (
-                  <span key={cfg.id} className={styles.taskBadge}>
-                    {cfg.label}
-                  </span>
-                );
-              }
-              return null;
-            })}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Соцсети (редактирование ссылок публикации) */}
       {post.is_published && canManageSocial && (
@@ -468,22 +443,12 @@ export const PostDetailsLeftPanel = ({
         </div>
       )}
 
-      {/* Ответственный */}
-      {post.user && (
-        <div>
-          <h4 className={styles.responsibleTitle}>Ответственный</h4>
-          <div className={styles.responsibleBox}>
-            <p className={styles.responsibleName}>{post.user.user_login}</p>
-          </div>
-        </div>
-      )}
-
       {post.approved_by && (
         <div>
-          <h4 className={styles.responsibleTitle}>Согласовано</h4>
           <div className={styles.approvedBox}>
             <p className={styles.approvedName}>
-              <CheckCircle className="w-4 h-4" />
+              <CheckCircle className="w-5 h-5 mx-1" />
+              <span>Согласовано: </span>
               {post.approved_by.user_login}
             </p>
           </div>

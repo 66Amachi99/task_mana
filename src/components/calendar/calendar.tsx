@@ -108,8 +108,27 @@ export const Calendar: React.FC<CalendarProps> = ({
     return text.slice(0, maxLength) + '...';
   };
 
-  const selectedFilterLabel = selectedRoleFilter 
-    ? ROLE_FILTERS.find(f => f.id === selectedRoleFilter)?.label 
+  const getFirstTaskIcon = (post: CalendarPost): string | null => {
+    const taskTypes = [
+      { field: 'post_needs_mini_video_smm', icon: 'icons/mini_video_icon.svg' },
+      { field: 'post_needs_video', icon: 'icons/video_icon.svg' },
+      { field: 'post_needs_photogallery', icon: 'icons/photogallery_icon.svg' },
+      { field: 'post_needs_cover_photo', icon: 'icons/coverphoto_icon.svg' },
+      { field: 'post_needs_photo_cards', icon: 'icons/photocards_icon.svg' },
+      { field: 'post_needs_mini_gallery', icon: 'icons/mini_photogallery.svg' },
+      { field: 'post_needs_text', icon: 'icons/text_icon.svg' },
+    ] as const;
+
+    for (const task of taskTypes) {
+      if (post[task.field]) {
+        return task.icon;
+      }
+    }
+    return null;
+  };
+
+  const selectedFilterLabel = selectedRoleFilter
+    ? ROLE_FILTERS.find(f => f.id === selectedRoleFilter)?.label
     : null;
 
   return (
@@ -250,6 +269,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                 {itemsForDay.map((item, idx) => {
                   const isPost = item.type === 'post';
                   const bgColor = item.tags && item.tags.length > 0 ? item.tags[0].color : undefined;
+                  const postIcon = isPost ? getFirstTaskIcon(item as CalendarPost) : null;
                   return (
                     <div
                       key={`${item.type}-${isPost ? item.post_id : item.task_id}-${idx}`}
@@ -261,7 +281,11 @@ export const Calendar: React.FC<CalendarProps> = ({
                         isPost ? onPostClick?.(item as CalendarPost) : onTaskClick?.(item as CalendarTask);
                       }}
                     >
-                      <span className={styles.itemIcon}>{isPost ? '📄' : '✓'}</span>
+                      {postIcon ? (
+                        <img src={postIcon} alt="" className={styles.itemIcon} />
+                      ) : (
+                        <span className={styles.itemIcon}>{isPost ? '📄' : '✓'}</span>
+                      )}
                       {truncateText(isPost ? item.post_title : item.title, 14)}
                     </div>
                   );

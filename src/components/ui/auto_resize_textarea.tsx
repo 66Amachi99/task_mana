@@ -22,7 +22,7 @@ export const AutoResizeTextarea = ({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      textareaRef.current.style.height = (textareaRef.current.scrollHeight) + 'px';
     }
   }, [value]);
 
@@ -33,7 +33,7 @@ export const AutoResizeTextarea = ({
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden min-h-40 ${className}`}
+      className={`w-full border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden min-h-40 ${className}`}
       rows={2}
     />
   );

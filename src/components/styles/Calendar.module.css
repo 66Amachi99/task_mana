@@ -94,6 +94,7 @@
   right: 0;
   width: 14rem;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  backdrop-filter: blur(2px);
   border: 1px solid #ffffff10;
   border-radius: 20px;
   padding: 0.25rem 0;
@@ -154,7 +155,7 @@
 }
 
 .dayCell {
-  padding: 0.25rem;
+
   border: 1px solid #ffffff15;
   border-radius: 20px;
   cursor: pointer;
@@ -199,8 +200,8 @@
   margin-bottom: 0.25rem;
   font-size: 0.75rem;
   flex-shrink: 0;
-  padding-inline: 4px;
-  padding-top: 4px;
+  padding-inline: 8px;
+  padding-top: 8px;
 }
 
 @media (min-width: 640px) {
@@ -267,8 +268,8 @@
 
 .item {
   font-size: 0.625rem;
-  border-radius: 0.25rem;
-  padding: 0.125rem 0.25rem;
+  padding-inline: 0.35rem;
+  padding-bottom: 0.1rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -276,12 +277,12 @@
   transition: filter 0.2s;
   border: none;
   color: white;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
   background-color: transparent;
+  transition: margin 0.2s;
 }
 
 .item:hover {
-  transform: scale(1.02);
+  margin-inline: 2px;
 }
 
 .scrollable {
@@ -289,6 +290,8 @@
   overflow-x: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  padding: 0px;
+
 }
 
 .scrollable::-webkit-scrollbar {
@@ -303,6 +306,11 @@
 
 .itemIcon {
   margin-right: 0.125rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .filterIcon {

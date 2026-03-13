@@ -189,10 +189,6 @@ export const PostDetailsRightPanel = ({
 
   return (
     <div className={styles.panel}>
-      <div className={styles.header}>
-        <h3 className={styles.headerTitle}>Задачи</h3>
-        <span className={styles.headerCount}>{tasks.length} {pluralizeTasks(tasks.length)}</span>
-      </div>
       <div className={styles.taskList}>
         {tasks.length > 0 ? (
           tasks.map(task => {
