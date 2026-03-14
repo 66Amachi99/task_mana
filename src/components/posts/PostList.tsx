@@ -108,7 +108,7 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
     if (post.post_needs_mini_video_smm) {
       const hasLink = post.post_done_link_mini_video_smm && post.post_done_link_mini_video_smm.trim() !== '';
       tasks.push({ 
-        name: 'Мини-видео для SMM', 
+        name: 'Мини-видео', 
         role: 'smm',
         field: 'post_needs_mini_video_smm',
         isCompleted: hasLink

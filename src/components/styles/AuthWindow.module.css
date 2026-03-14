@@ -41,7 +41,7 @@
 
 .label {
   display: block;
-  font-size: 0.875rem; /* text-sm */
+  font-size: 16px; /* text-sm */
   font-weight: 500; /* font-medium */
   margin-bottom: 0.5rem; /* mb-2 */
 }

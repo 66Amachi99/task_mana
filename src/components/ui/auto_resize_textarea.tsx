@@ -33,8 +33,8 @@ export const AutoResizeTextarea = ({
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={`w-full border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden min-h-40 ${className}`}
-      rows={2}
+      className={`resize-none overflow-hidden ${className}`}
+      rows={1}
     />
   );
 };

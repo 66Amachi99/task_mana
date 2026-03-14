@@ -91,7 +91,7 @@
 }
 
 .description {
-  font-size: 0.875rem;
+  font-size: 16px;
   color: #4b5563;
   margin-top: 0.5rem;
   display: -webkit-box;
@@ -124,7 +124,7 @@
 @media (min-width: 768px) {
   .statusBadge {
     padding: 0.25rem 0.75rem;
-    font-size: 0.875rem;
+    font-size: 16px;
   }
 }
 
@@ -173,7 +173,7 @@
 @media (min-width: 768px) {
   .dateColumn {
     text-align: right;
-    font-size: 0.875rem;
+    font-size: 16px;
   }
 }
 
@@ -221,7 +221,7 @@
 
 @media (min-width: 768px) {
   .assigneesLabel {
-    font-size: 0.875rem;
+    font-size: 16px;
   }
 }
 

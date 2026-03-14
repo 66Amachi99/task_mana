@@ -25,7 +25,7 @@ export const ROLE_FILTERS: RoleFilter[] = [
     id: 'smm',
     label: 'SMM',
     tasks: [
-      { field: 'post_needs_mini_video_smm', label: 'Мини-видео для SMM' },
+      { field: 'post_needs_mini_video_smm', label: 'Мини-видео' },
       { field: 'post_needs_mini_gallery', label: 'Мини-фотогалерея' },
     ],
   },

@@ -44,7 +44,7 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, disabled, className 
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={className || styles.commentTextarea}
+      className={styles.commentTextarea}
       rows={1}
     />
   );
@@ -72,7 +72,7 @@ const TaskTextarea = ({ value, onChange, placeholder, disabled }: {
       placeholder={placeholder}
       disabled={disabled}
       className={styles.taskTextarea}
-      rows={2}
+      rows={1}
     />
   );
 };

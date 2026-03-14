@@ -1,4 +1,6 @@
-/* Основной контейнер модального окна */
+/* PostAddWindow.module.css */
+
+/* Modal Overlay */
 .overlay {
   position: fixed;
   inset: 0;
@@ -6,52 +8,61 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(30px);
   padding: 1rem;
 }
 
+/* Modal Container */
 .container {
-  background-color: #ffffff;
+  display: flex;
+  justify-content: center;
   border-radius: 0.5rem;
   width: 100%;
-  max-width: 64rem; /* max-w-4xl */
+  max-width: 64rem;
   max-height: 90vh;
   overflow-y: auto;
+  color: #ffffff;
 }
 
 .form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   padding: 1.5rem;
+  width: 600px;
+  max-width: 100%;
 }
 
-/* Заголовок */
+/* Header */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #ffffff10;
 }
 
 .headerTitle {
-  font-size: 1.5rem; /* text-2xl */
-  font-weight: 700; /* font-bold */
-  color: #1f2937; /* text-gray-800 */
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .closeButton {
-  padding: 0.5rem;
-  color: #9ca3af; /* text-gray-400 */
+  color: #ffffff60;
   border-radius: 9999px;
-  transition: color 0.2s, background-color 0.2s;
+  transition: color 0.2s, background-color 0.2s, transform 0.3s ease;
   background: none;
   border: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
 }
 
 .closeButton:hover {
-  color: #4b5563; /* hover:text-gray-600 */
-  background-color: #f3f4f6; /* hover:bg-gray-100 */
+  transform: scale(1.15) rotate(90deg);
 }
 
 .closeButton:disabled {
@@ -59,16 +70,16 @@
   cursor: not-allowed;
 }
 
-/* Ошибка */
+/* Error Box */
 .errorBox {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background-color: #fee2e2; /* bg-red-50 */
-  border: 1px solid #fecaca; /* border-red-200 */
+  background-color: rgba(185, 28, 28, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
   border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
-  color: #b91c1c; /* text-red-700 */
+  color: #fca5a5;
+  margin-bottom: 1rem;
 }
 
 .errorIcon {
@@ -76,26 +87,6 @@
   height: 1.25rem;
   margin-right: 0.5rem;
   flex-shrink: 0;
-}
-
-/* Сетка для двух колонок */
-.grid2 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem; /* gap-6 */
-}
-
-@media (min-width: 768px) {
-  .grid2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Левая и правая колонки */
-.leftColumn, .rightColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem; /* space-y-6 */
 }
 
 /* Поля формы */
@@ -106,39 +97,51 @@
 }
 
 .label {
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
-  color: #374151; /* text-gray-700 */
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
 }
 
+.labelWithIcon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Input, Textarea, Select */
 .input,
 .textarea,
 .select {
   width: 100%;
-  padding: 0.75rem 1rem; /* px-4 py-3 */
-  border: 1px solid #d1d5db; /* border-gray-300 */
-  border-radius: 0.5rem; /* rounded-lg */
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ffffff10;
+  border-radius: 0.5rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #ffffff02;
+  color: #ffffff;
+  height: 2.75rem;
+}
+
+.textarea {
+  padding-top: 0.75rem;
+  min-height: 6rem;
+  resize: none;
 }
 
 .input:focus,
 .textarea:focus,
 .select:focus {
-  border-color: transparent;
-  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
+  border-color: #ffffff30;
 }
 
 .input:disabled,
 .textarea:disabled,
 .select:disabled {
-  background-color: #f3f4f6; /* disabled:bg-gray-100 */
+  background-color: #ffffff05;
   cursor: not-allowed;
-}
-
-.textarea {
-  resize: none;
-  min-height: 6rem; /* rows=4 */
+  opacity: 0.6;
 }
 
 /* Специальный контейнер для поля с иконкой поиска */
@@ -148,20 +151,23 @@
 
 .searchInput {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem; /* pl-10 */
-  border: 1px solid #d1d5db;
+  padding: 0.5rem 2.5rem 0.5rem 2.5rem;
+  border: 1px solid #ffffff10;
   border-radius: 0.5rem;
   outline: none;
+  background-color: #ffffff02;
+  color: #ffffff;
+  height: 2.75rem;
 }
 
 .searchInput:focus {
-  border-color: transparent;
-  box-shadow: 0 0 0 2px #3b82f6;
+  border-color: #ffffff30;
 }
 
 .searchInput:disabled {
-  background-color: #f3f4f6;
+  background-color: #ffffff05;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .searchIcon {
@@ -169,7 +175,7 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af; /* text-gray-400 */
+  color: #ffffff60;
   width: 1rem;
   height: 1rem;
   pointer-events: none;
@@ -180,7 +186,7 @@
   right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: #ffffff60;
   background: none;
   border: none;
   cursor: pointer;
@@ -191,16 +197,16 @@
 }
 
 .clearButton:hover {
-  color: #4b5563; /* hover:text-gray-600 */
+  color: #ffffff;
 }
 
 /* Загрузчик */
 .loader {
   position: absolute;
   right: 2.5rem;
-  top: 0.75rem; /* примерно top-3 */
+  top: 0.75rem;
   font-size: 0.75rem;
-  color: #3b82f6;
+  color: #60a5fa;
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -209,128 +215,57 @@
   50% { opacity: 0.5; }
 }
 
-/* Выпадающие списки */
+/* Dropdown (общий) */
+
+.dropdownWrapper {
+  position: relative;
+}
+
 .dropdown {
   position: absolute;
-  z-index: 20;
+  z-index: 10;
   width: 100%;
   margin-top: 0.25rem;
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
+  background-color: #1a1a1a;
+  border: 1px solid #ffffff10;
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-  max-height: 15rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  max-height: 150px;
   overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .dropdownItem {
-  padding: 0.5rem 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  color: #ffffff;
+  height: 36px;
+  display: flex;
+  align-items: center;  
 }
 
 .dropdownItem:hover {
-  background-color: #f3f4f6; /* hover:bg-gray-100 */
+  background-color: #ffffff10;
 }
 
 .dropdownItemSelected {
   composes: dropdownItem;
-  background-color: #eff6ff; /* bg-blue-50 */
+  background-color: #ffffff15;
 }
 
 .userName {
   font-weight: 500;
-  color: #111827; /* text-gray-900 */
+  color: #ffffff;
 }
 
 .userRoles {
   font-size: 0.75rem;
-  color: #6b7280; /* text-gray-500 */
+  color: #ffffff60;
 }
 
-/* Чекбоксы задач */
-.taskCheckbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb; /* border-gray-200 */
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
-  cursor: pointer;
-}
-
-.taskCheckbox:hover {
-  background-color: #f9fafb; /* hover:bg-gray-50 */
-}
-
-.taskCheckboxDisabled {
-  composes: taskCheckbox;
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.taskCheckboxInput {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: #2563eb; /* text-blue-600 */
-  border-radius: 0.25rem;
-  accent-color: #2563eb;
-}
-
-.taskCheckboxLabel {
-  color: #374151; /* text-gray-700 */
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Кнопки внизу */
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
-  border: none;
-  cursor: pointer;
-  min-width: 8.75rem; /* min-w-[140px] */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.buttonCancel {
-  background-color: #f3f4f6; /* bg-gray-100 */
-  color: #374151; /* text-gray-700 */
-}
-
-.buttonCancel:hover:not(:disabled) {
-  background-color: #e5e7eb; /* hover:bg-gray-200 */
-}
-
-.buttonSubmit {
-  background-color: #3b82f6; /* bg-blue-500 */
-  color: #ffffff; /* text-white */
-}
-
-.buttonSubmit:hover:not(:disabled) {
-  background-color: #2563eb; /* hover:bg-blue-600 */
-}
-
-/* Стили для TagSelector (частично скопированы из PostDetailsLeftPanel, можно унифицировать позже) */
+/* TagSelector */
 .tagSelector {
   position: relative;
 }
@@ -339,16 +274,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  min-height: 2.875rem; /* min-h-[46px] */
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  height: 44px;
+  align-items: center;
+  padding: 0 0.5rem;
+  border: 1px solid #ffffff10;
   border-radius: 0.5rem;
-  background-color: #ffffff;
+  background-color: #ffffff02;
 }
 
 .tagSelectorContainer:focus-within {
-  box-shadow: 0 0 0 2px #3b82f6;
+  border-color: #ffffff30;
 }
 
 .tagChip {
@@ -357,19 +292,20 @@
   gap: 0.25rem;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   color: white;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   background-color: var(--tag-color);
+  height: 27px;
 }
 
 .tagRemove {
   background: none;
   border: none;
-  color: white;
+  color: #ffffff80;
   cursor: pointer;
-  opacity: 0.8;
+  opacity: 0.7;
   padding: 0;
   margin-left: 0.25rem;
   display: inline-flex;
@@ -379,16 +315,25 @@
 
 .tagRemove:hover {
   opacity: 1;
+  color: #ffffff;
 }
 
 .tagInput {
   flex: 1;
-  min-width: 7.5rem; /* min-w-[120px] */
+  min-width: 7.5rem;
   outline: none;
-  font-size: 0.875rem;
+  font-size: 16px;
   background: transparent;
   border: none;
-  padding: 0.25rem 0;
+  color: #ffffff;
+}
+
+.tagInput::placeholder {
+  color: #ffffff40;
+}
+
+.tagInput:disabled {
+  cursor: not-allowed;
 }
 
 .tagDropdown {
@@ -396,10 +341,18 @@
 }
 
 .tagOption {
-  composes: dropdownItem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: #ffffff;
+  height: 36px;
+}
+
+.tagOption:hover {
+  background-color: #ffffff10;
 }
 
 .tagColorDot {
@@ -409,12 +362,108 @@
 }
 
 .createTagOption {
-  composes: dropdownItem;
-  color: #2563eb;
-  font-weight: 500;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  color: #60a5fa;
+  transition: background-color 0.2s;
+  height: 36px;
+  display: flex;
+  align-items: center;
 }
 
-.noTags {
-  composes: dropdownItem;
-  color: #6b7280;
+.createTagOption:hover {
+  background-color: #ffffff10;
+}
+
+.noTagsMessage {
+  padding: 0.5rem 1rem;
+  color: #ffffff60;
+  text-align: center;
+}
+
+/* Кнопки задач */
+.taskButtonsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Базовый класс для всех кнопок задач */
+.taskButton {
+  flex: 0 0 auto;
+  height: 27px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  border: 1px solid #ffffff10;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* Неактивное состояние */
+.taskButtonDefault {
+  composes: taskButton;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  color: #ffffffb6;
+}
+
+/* Активное состояние */
+.taskButtonSelected {
+  composes: taskButton;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
+  color: #ffffff;
+  border-color: #ffffff10;
+}
+
+/* Кнопки внизу */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.button {
+  height: 27px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 16px;
+  border: 1px solid #ffffff10;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.button:hover:not(:disabled) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.descriptionTextarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ffffff10;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #ffffff02;
+  color: #ffffff;
+  min-height: 44px;
+}
+
+.descriptionTextarea:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }

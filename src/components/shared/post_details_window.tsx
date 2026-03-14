@@ -9,7 +9,7 @@ import styles from '../styles/PostDetailsWindow.module.css';
 
 // Конфигурация задач (без изменений)
 export const TASK_CONFIG = [
-  { id: 1, name: 'mini_video_smm', label: 'Мини-видео для SMM', needsKey: 'post_needs_mini_video_smm', linkKey: 'post_done_link_mini_video_smm', role: 'smm' },
+  { id: 1, name: 'mini_video_smm', label: 'Мини-видео', needsKey: 'post_needs_mini_video_smm', linkKey: 'post_done_link_mini_video_smm', role: 'smm' },
   { id: 2, name: 'video', label: 'Видео', needsKey: 'post_needs_video', linkKey: 'post_done_link_video', role: 'photographer' },
   { id: 3, name: 'text', label: 'Текст', needsKey: 'post_needs_text', linkKey: 'post_done_link_text', role: 'text' },
   { id: 4, name: 'photogallery', label: 'Фотогалерея', needsKey: 'post_needs_photogallery', linkKey: 'post_done_link_photogallery', role: 'photographer' },
@@ -437,7 +437,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
               </button>
             </div>
             <div className={styles.content}>
-              <div className={styles.leftPanel}>
+              <div className={`${styles.leftPanel} no-scrollbar`}>
                 <PostDetailsLeftPanel
                   post={post}
                   socialLinks={socialLinks}
@@ -484,7 +484,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
                   hasChanges={hasChanges}
                 />
               </div>
-              <div className={styles.rightPanel}>
+              <div className={`${styles.rightPanel} no-scrollbar`}>
                 <PostDetailsRightPanel
                   tasks={tasks}
                   post={post}

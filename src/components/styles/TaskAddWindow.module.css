@@ -81,7 +81,7 @@
 
 .label {
   display: block;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   color: #ffffff;
   margin-bottom: 0.5rem;
@@ -89,40 +89,20 @@
 
 /* Input, Textarea, Select - Common styles */
 .input,
-.textarea {
+.autoTextarea {
   width: 100%;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #ffffff10;
   border-radius: 0.5rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   background-color: #ffffff02;
   color: #ffffff;
-  height: 2.75rem;
+  min-height: 44px;
 }
 
-.textarea {
-  padding-top: 11px;
-}
-
-.input:focus,
-.textarea:focus {
-  border-color: #ffffff20;
-}
-
-.input:disabled,
-.textarea:disabled {
-  background-color: #ffffff05;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.textarea {
-  resize: none;
-  min-height: 2.75rem;
-  overflow-y: hidden;
-  height: auto;
+.autoTextarea:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 /* Priority Buttons */
@@ -223,7 +203,7 @@
 }
 
 .checkboxLabel {
-  font-size: 0.875rem;
+  font-size: 16px;
   color: #ffffff;
 }
 
@@ -309,17 +289,37 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  min-height: 2.5rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+  height: 44px;                /* фиксированная высота */
+  align-items: center;         /* выравнивание по центру */
+  padding: 0 0.5rem;           /* горизонтальные отступы */
   border: 1px solid #ffffff10;
   border-radius: 0.5rem;
   background-color: #ffffff02;
-  color: #ffffff;
 }
 
 .tagSelectorContainer:focus-within {
   border-color: #ffffff30;
+}
+
+/* Tag Input */
+.tagInput {
+  flex: 1;
+  min-width: 8.75rem;
+  outline: none;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  line-height: 28px;           /* для вертикального выравнивания текста */
+  padding: 0;                  /* убираем внутренние отступы */
+}
+
+.tagInput::placeholder {
+  color: #ffffff40;
+}
+
+.tagInput:disabled {
+  cursor: not-allowed;
 }
 
 /* Chips (Assignee & Tag) */
@@ -331,9 +331,9 @@
   padding-left: 0.75rem;
   padding-right: 0.75rem;
   border-radius: 9999px;
-  font-size: 0.875rem;
+  font-size: 16px;
   border: 1px solid #ffffff10;
-  height: 28px;
+  height: 27px;
 }
 
 .assigneeChip {
@@ -371,25 +371,6 @@
 .assigneeChipRemove:disabled,
 .tagRemove:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Tag Input */
-.tagInput {
-  flex: 1;
-  min-width: 8.75rem;
-  outline: none;
-  font-size: 0.875rem;
-  background: transparent;
-  border: none;
-  color: #ffffff;
-}
-
-.tagInput::placeholder {
-  color: #ffffff40;
-}
-
-.tagInput:disabled {
   cursor: not-allowed;
 }
 

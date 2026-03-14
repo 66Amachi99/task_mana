@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/hooks/use-roles';
-import { X, Users, Calendar as CalendarIcon, AlignLeft } from 'lucide-react';
+import { X, Users } from 'lucide-react';
 import { DatePicker } from '../ui/date_picker';
+import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
 import styles from '../styles/TaskAddWindow.module.css';
 
 interface User {
@@ -353,19 +354,15 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
           />
 
           <div className={styles.fieldGroup}>
-            <textarea
-              name="description"
+            <AutoResizeTextarea
               value={formData.description}
-              onChange={(e) => {
-                handleChange(e);
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-              }}
-              rows={1}
-              className={styles.textarea}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Описание..."
+              disabled={isSubmitting}
+              className={styles.autoTextarea}
             />
           </div>
+
           <div>
             <div className={styles.datesGrid}>
               <div>
@@ -381,9 +378,9 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
               <label htmlFor="all_day" className={styles.checkboxLabel}>Весь день</label>
             </div>
           </div>
-          {/* ПРИОРИТЕТ В ВИДЕ КНОПОК */}
+
+          {/* Приоритет в виде кнопок */}
           <div className={styles.fieldGroup}>
-            {/* <label className={styles.label}>Приоритет</label> */}
             <div className={styles.priorityContainer}>
               {priorityOptions.map((opt) => (
                 <button
@@ -401,17 +398,12 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
           </div>
 
           <div className={styles.fieldGroup}>
-            <label className={`${styles.label} ${styles.labelWithIcon}`}>
-              {/* <Users className="w-4 h-4" /> Исполнители */}
-            </label>
             <AssigneesSelector selectedUsers={selectedAssignees} users={users} onChange={setSelectedAssignees} disabled={isSubmitting || loadingUsers} />
           </div>
 
           <div className={styles.fieldGroup}>
-            {/* <label className={styles.label}>Теги</label> */}
             <TagSelector selectedTags={selectedTags} availableTags={tags} onChange={setSelectedTags} onCreate={handleCreateTag} disabled={isSubmitting} />
           </div>
-
 
           <div className={styles.actions}>
             <button type="button" onClick={onClose} className={`${styles.button} ${styles.buttonCancel}`}>Отмена</button>

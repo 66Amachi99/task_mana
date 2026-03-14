@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/use-roles';
 import { Search, X } from 'lucide-react';
+import { DatePicker } from '../ui/date_picker';
 import styles from '../styles/PostAddWindow.module.css';
+import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
 
 interface User {
   user_id: number;
@@ -28,6 +30,15 @@ interface PostAddWindowProps {
   initialDate?: Date;
 }
 
+const TASK_ITEMS = [
+  { id: 'post_needs_mini_video_smm', label: 'Мини-видео' },
+  { id: 'post_needs_video', label: 'Видео' },
+  { id: 'post_needs_cover_photo', label: 'Обложка' },
+  { id: 'post_needs_photo_cards', label: 'Фотокарточки' },
+  { id: 'post_needs_photogallery', label: 'Фотогалерея' },
+  { id: 'post_needs_mini_gallery', label: 'Мини-фотогалерея' },
+];
+
 export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWindowProps) => {
   const router = useRouter();
   const { user: currentUser } = useUser();
@@ -50,7 +61,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     post_title: '',
     post_description: '',
     tz_link: '',
-    post_deadline: '',
     post_status: 'В работе',
     responsible_person_id: '',
     post_needs_mini_video_smm: false,
@@ -60,6 +70,17 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     post_needs_photogallery: false,
     post_needs_mini_gallery: false,
   });
+
+  // Отдельное состояние для даты (объект Date)
+  const [deadline, setDeadline] = useState<Date | null>(null);
+
+  const [taskStates, setTaskStates] = useState(() => 
+    TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean)
+  );
+
+  useEffect(() => {
+    setTaskStates(TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean));
+  }, [formData]);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -74,27 +95,23 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     fetchTags();
   }, []);
 
-  const formatDateForInput = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
-  const getDefaultDateTime = (): string => {
+  // Устанавливаем начальную дату
+  const getDefaultDate = (): Date => {
     if (initialDate) {
       const date = new Date(initialDate);
       date.setHours(12, 0, 0, 0);
-      return formatDateForInput(date);
+      return date;
     }
     const now = new Date();
     const defaultDate = new Date(now);
     defaultDate.setDate(now.getDate() + 7);
     defaultDate.setHours(12, 0, 0, 0);
-    return formatDateForInput(defaultDate);
+    return defaultDate;
   };
+
+  useEffect(() => {
+    setDeadline(getDefaultDate());
+  }, [initialDate]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -138,13 +155,6 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
   }, [currentUser]);
 
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      post_deadline: getDefaultDateTime()
-    }));
-  }, [initialDate]);
-
-  useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = 'hidden';
     return () => {
@@ -162,8 +172,12 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     }
   };
 
-  const handleCheckboxChange = (name: string, checked: boolean) => {
-    setFormData(prev => ({ ...prev, [name]: checked }));
+  const handleTaskToggle = (index: number) => {
+    const newStates = [...taskStates];
+    newStates[index] = !newStates[index];
+    setTaskStates(newStates);
+    const taskId = TASK_ITEMS[index].id;
+    setFormData(prev => ({ ...prev, [taskId]: newStates[index] }));
   };
 
   const handleUserSelect = (user: User) => {
@@ -233,7 +247,7 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.post_title.trim() || !formData.post_deadline) {
+    if (!formData.post_title.trim() || !deadline) {
       setError('Пожалуйста, заполните все обязательные поля');
       return;
     }
@@ -242,13 +256,12 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     setError(null);
 
     try {
-      const deadlineDate = new Date(formData.post_deadline);
       const response = await fetch('/api/posts/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          post_deadline: deadlineDate.toISOString(),
+          post_deadline: deadline.toISOString(),
           post_description: formData.post_description || null,
           tz_link: formData.tz_link || null,
           responsible_person_id: formData.responsible_person_id || null,
@@ -274,7 +287,7 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
       <div className={styles.container} onClick={(e) => e.stopPropagation()}>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.header}>
-            <h2 className={styles.headerTitle}>Добавление нового поста</h2>
+            <h2 className={styles.headerTitle}>Новый пост</h2>
             <button
               type="button"
               onClick={onClose}
@@ -294,195 +307,165 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
             </div>
           )}
 
-          <div className={styles.grid2}>
-            <div className={styles.leftColumn}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Название поста *</label>
-                <input
-                  type="text"
-                  name="post_title"
-                  value={formData.post_title}
-                  onChange={handleChange}
-                  required
-                  disabled={isSubmitting}
-                  className={styles.input}
-                  placeholder="Введите название поста"
-                />
-              </div>
+          {/* Поля в один столбец */}
+          <div className={styles.fieldGroup}>
+            <input
+              type="text"
+              name="post_title"
+              value={formData.post_title}
+              onChange={handleChange}
+              required
+              disabled={isSubmitting}
+              className={styles.input}
+              placeholder="Название поста..."
+            />
+          </div>
 
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Описание</label>
-                <textarea
-                  name="post_description"
-                  value={formData.post_description}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  rows={4}
-                  className={styles.textarea}
-                  placeholder="Опишите детали поста"
-                />
-              </div>
+          <div className={styles.fieldGroup}>
+            <AutoResizeTextarea
+              value={formData.post_description}
+              onChange={(e) => setFormData(prev => ({ ...prev, post_description: e.target.value }))}
+              placeholder="Описание поста..."
+              disabled={isSubmitting}
+              className={styles.descriptionTextarea}
+            />
+          </div>
 
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Ссылка на ТЗ</label>
-                <input
-                  type="text"
-                  name="tz_link"
-                  value={formData.tz_link}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  className={styles.input}
-                  placeholder="https://example.com/document"
-                />
-              </div>
+          <div className={styles.fieldGroup}>
+            <input
+              type="text"
+              name="tz_link"
+              value={formData.tz_link}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              className={styles.input}
+              placeholder="Ссылка на ТЗ..."
+            />
+          </div>
 
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Теги</label>
-                <div className={styles.tagSelector} ref={tagDropdownRef}>
-                  <div className={styles.tagSelectorContainer}>
-                    {selectedTags.map(tag => (
-                      <span
-                        key={tag.tag_id}
-                        className={styles.tagChip}
-                        style={{ backgroundColor: tag.color }}
-                      >
-                        {tag.name}
-                        <button
-                          type="button"
-                          onClick={() => handleTagRemove(tag.tag_id)}
-                          className={styles.tagRemove}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                    <input
-                      type="text"
-                      value={tagSearchQuery}
-                      onChange={(e) => { setTagSearchQuery(e.target.value); setIsTagDropdownOpen(true); }}
-                      onFocus={() => setIsTagDropdownOpen(true)}
-                      placeholder="Поиск или создание..."
-                      className={styles.tagInput}
-                    />
-                  </div>
-                  {isTagDropdownOpen && (
-                    <div className={styles.tagDropdown}>
-                      {filteredTags.map(tag => (
-                        <div
-                          key={tag.tag_id}
-                          onClick={() => handleTagSelect(tag)}
-                          className={styles.tagOption}
-                        >
-                          <span className={styles.tagColorDot} style={{ backgroundColor: tag.color }} />
-                          {tag.name}
-                        </div>
-                      ))}
-                      {tagSearchQuery && filteredTags.length === 0 && (
-                        <div onClick={handleCreateTag} className={styles.createTagOption}>
-                          + Создать "{tagSearchQuery}"
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Ответственный</label>
-                <div ref={dropdownRef}>
-                  <div className={styles.searchInputWrapper}>
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={handleSearchChange}
-                      onFocus={() => setIsDropdownOpen(true)}
-                      placeholder="Поиск ответственного..."
-                      disabled={isSubmitting}
-                      className={styles.searchInput}
-                    />
-                    <Search className={styles.searchIcon} />
-                    {selectedUser && (
-                      <button
-                        type="button"
-                        onClick={clearSelectedUser}
-                        className={styles.clearButton}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  {loadingUsers && users.length === 0 && (
-                    <span className={styles.loader}>Загрузка...</span>
-                  )}
-                  {isDropdownOpen && filteredUsers.length > 0 && (
-                    <div className={styles.dropdown}>
-                      {filteredUsers.map(user => (
-                        <div
-                          key={user.user_id}
-                          onClick={() => handleUserSelect(user)}
-                          className={selectedUser?.user_id === user.user_id ? styles.dropdownItemSelected : styles.dropdownItem}
-                        >
-                          <div className={styles.userName}>{user.user_login}</div>
-                          <div className={styles.userRoles}>
-                            {[
-                              user.admin_role && 'Админ',
-                              user.coordinator_role && 'Координатор',
-                              user.designer_role && 'Дизайнер',
-                              user.SMM_role && 'SMM',
-                              user.photographer_role && 'Фотограф'
-                            ].filter(Boolean).join(' • ')}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.rightColumn}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Дедлайн (дата и время) *</label>
-                <input
-                  type="datetime-local"
-                  name="post_deadline"
-                  value={formData.post_deadline}
-                  onChange={handleChange}
-                  required
-                  disabled={isSubmitting}
-                  className={styles.input}
-                  min={new Date().toISOString().slice(0, 16)}
-                />
-              </div>
-
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Необходимые задачи</label>
-                <div className="grid grid-cols-1 gap-3">
-                  {[
-                    { id: 'post_needs_mini_video_smm', label: 'Мини-видео для SMM' },
-                    { id: 'post_needs_video', label: 'Видео' },
-                    { id: 'post_needs_cover_photo', label: 'Обложка' },
-                    { id: 'post_needs_photo_cards', label: 'Фотокарточки' },
-                    { id: 'post_needs_photogallery', label: 'Фотогалерея' },
-                    { id: 'post_needs_mini_gallery', label: 'Мини-фотогалерея' },
-                  ].map((task) => (
-                    <label
-                      key={task.id}
-                      className={isSubmitting ? styles.taskCheckboxDisabled : styles.taskCheckbox}
+          <div className={styles.fieldGroup}>
+            <div className={styles.tagSelector} ref={tagDropdownRef}>
+              <div className={styles.tagSelectorContainer}>
+                {selectedTags.map(tag => (
+                  <span
+                    key={tag.tag_id}
+                    className={styles.tagChip}
+                    style={{ backgroundColor: tag.color }}
+                  >
+                    {tag.name}
+                    <button
+                      type="button"
+                      onClick={() => handleTagRemove(tag.tag_id)}
+                      className={styles.tagRemove}
                     >
-                      <input
-                        type="checkbox"
-                        name={task.id}
-                        checked={(formData as any)[task.id]}
-                        onChange={(e) => handleCheckboxChange(e.target.name, e.target.checked)}
-                        disabled={isSubmitting}
-                        className={styles.taskCheckboxInput}
-                      />
-                      <span className={styles.taskCheckboxLabel}>{task.label}</span>
-                    </label>
-                  ))}
-                </div>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                <input
+                  type="text"
+                  value={tagSearchQuery}
+                  onChange={(e) => { setTagSearchQuery(e.target.value); setIsTagDropdownOpen(true); }}
+                  onFocus={() => setIsTagDropdownOpen(true)}
+                  placeholder="Поиск или создание тега..."
+                  className={styles.tagInput}
+                />
               </div>
+              {isTagDropdownOpen && (
+                <div className={styles.tagDropdown}>
+                  {filteredTags.map(tag => (
+                    <div
+                      key={tag.tag_id}
+                      onClick={() => handleTagSelect(tag)}
+                      className={styles.tagOption}
+                    >
+                      <span className={styles.tagColorDot} style={{ backgroundColor: tag.color }} />
+                      {tag.name}
+                    </div>
+                  ))}
+                  {tagSearchQuery && filteredTags.length === 0 && (
+                    <div onClick={handleCreateTag} className={styles.createTagOption}>
+                      + Создать "{tagSearchQuery}"
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div ref={dropdownRef} className={styles.dropdownWrapper}>
+            <div className={styles.searchInputWrapper}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => setIsDropdownOpen(true)}
+                placeholder="Поиск ответственного..."
+                disabled={isSubmitting}
+                className={styles.searchInput}
+              />
+              <Search className={styles.searchIcon} />
+              {selectedUser && (
+                <button
+                  type="button"
+                  onClick={clearSelectedUser}
+                  className={styles.clearButton}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {loadingUsers && users.length === 0 && (
+              <span className={styles.loader}>Загрузка...</span>
+            )}
+            {isDropdownOpen && filteredUsers.length > 0 && (
+              <div className={styles.dropdown}>
+                {filteredUsers.map(user => (
+                  <div
+                    key={user.user_id}
+                    onClick={() => handleUserSelect(user)}
+                    className={selectedUser?.user_id === user.user_id ? styles.dropdownItemSelected : styles.dropdownItem}
+                  >
+                    <div className={styles.userName}>{user.user_login}</div>
+                    <div className={styles.userRoles}>
+                      {[
+                        user.admin_role && 'Админ',
+                        user.coordinator_role && 'Координатор',
+                        user.designer_role && 'Дизайнер',
+                        user.SMM_role && 'SMM',
+                        user.photographer_role && 'Фотограф'
+                      ].filter(Boolean).join(' • ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Поле даты с кастомным DatePicker */}
+          <div className={styles.fieldGroup}>
+            <DatePicker
+              value={deadline}
+              onChange={setDeadline}
+              showTimeSelect
+            />
+          </div>
+
+          {/* Кнопки задач */}
+          <div className={styles.fieldGroup}>
+            <div className={styles.taskButtonsContainer}>
+              {TASK_ITEMS.map((task, index) => (
+                <button
+                  key={task.id}
+                  type="button"
+                  onClick={() => handleTaskToggle(index)}
+                  className={`${styles.taskButton} ${
+                    taskStates[index] ? styles.taskButtonSelected : styles.taskButtonDefault
+                  }`}
+                >
+                  {task.label}
+                </button>
+              ))}
             </div>
           </div>
 

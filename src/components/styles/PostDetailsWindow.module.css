@@ -14,10 +14,11 @@
 .container {
   border-radius: 0.5rem;
   width: 100%;
-  max-width: 72rem; /* max-w-6xl */
+  max-width: 72rem;
   max-height: 95vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: row-reverse;
+  gap: 5px;
   overflow: hidden;
 }
 
@@ -32,7 +33,6 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 1rem 1.5rem;
   flex-shrink: 0;
 }
 
@@ -42,17 +42,19 @@
 }
 
 .closeButton {
-  color: #6b7280; /* text-gray-500 */
-  padding: 0.25rem;
-  flex-shrink: 0;
+  color: #ffffff60;
+  border-radius: 9999px;
+  transition: color 0.2s, background-color 0.2s, transform 0.3s ease; 
   background: none;
   border: none;
   cursor: pointer;
-  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .closeButton:hover {
-  color: #374151; /* hover:text-gray-700 */
+  transform: scale(1.15) rotate(90deg);
 }
 
 /* Основное содержимое - две колонки */

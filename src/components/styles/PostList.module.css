@@ -99,7 +99,7 @@
 }
 
 .description {
-  font-size: 0.875rem; /* text-sm */
+  font-size: 16px; /* text-sm */
   color: #4b5563; /* text-gray-600 */
   margin-top: 0.5rem; /* mt-2 */
   display: -webkit-box;
@@ -134,7 +134,7 @@
 @media (min-width: 768px) {
   .statusBadge {
     padding: 0.25rem 0.75rem; /* md:px-3 */
-    font-size: 0.875rem; /* md:text-sm */
+    font-size: 16px; /* md:text-sm */
   }
 }
 
@@ -163,7 +163,7 @@
 @media (min-width: 768px) {
   .dateColumn {
     text-align: right; /* md:text-right */
-    font-size: 0.875rem; /* md:text-sm */
+    font-size: 16px; /* md:text-sm */
   }
 }
 
@@ -190,7 +190,7 @@
 
 @media (min-width: 768px) {
   .responsibleText {
-    font-size: 0.875rem; /* md:text-sm */
+    font-size: 16px; /* md:text-sm */
   }
 }
 
@@ -213,7 +213,7 @@
 
 @media (min-width: 768px) {
   .feedbackText {
-    font-size: 0.875rem; /* md:text-sm */
+    font-size: 16px; /* md:text-sm */
   }
 }
 
@@ -281,7 +281,7 @@
 
 @media (min-width: 768px) {
   .taskName {
-    font-size: 0.875rem; /* md:text-sm */
+    font-size: 16px; /* md:text-sm */
   }
 }
 
@@ -325,7 +325,7 @@
   background-color: #f3f4f6; /* bg-gray-100 */
   color: #374151; /* text-gray-700 */
   border-radius: 0.375rem; /* rounded-md */
-  font-size: 0.875rem; /* text-sm */
+  font-size: 16px; /* text-sm */
   font-weight: 500;
   border: none;
   cursor: pointer;

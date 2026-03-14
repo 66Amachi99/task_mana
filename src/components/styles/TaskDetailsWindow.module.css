@@ -94,7 +94,7 @@
 
 .statusBadge {
   padding: 0.25rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   border-radius: 9999px;
 }
@@ -121,7 +121,7 @@
 
 .priorityBadge {
   padding: 0.25rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   border-radius: 9999px;
 }
@@ -148,7 +148,7 @@
 
 .select {
   padding: 0.25rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
@@ -170,7 +170,7 @@
 .tag {
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   color: white;
   text-shadow: 0 1px 2px rgba(0,0,0,0.2);
@@ -215,7 +215,7 @@
   flex: 1;
   min-width: 120px;
   outline: none;
-  font-size: 0.875rem;
+  font-size: 16px;
   background: transparent;
   border: none;
 }
@@ -291,7 +291,7 @@
   background-color: #dbeafe;
   color: #1e40af;
   border-radius: 9999px;
-  font-size: 0.875rem;
+  font-size: 16px;
 }
 
 .assigneeChipRemove {
@@ -359,7 +359,7 @@
 
 /* Описание */
 .sectionTitle {
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   color: #374151;
   margin-bottom: 0.5rem;
@@ -380,7 +380,7 @@
 }
 
 .descriptionPreviewText {
-  font-size: 0.875rem;
+  font-size: 16px;
   color: #4b5563;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -400,7 +400,7 @@
   resize: none;
   overflow: hidden;
   min-height: 6rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   line-height: 1.5;
   word-wrap: break-word;
   white-space: pre-wrap;
@@ -434,7 +434,7 @@
   background-color: #eff6ff;
   border: 2px solid #bfdbfe;
   border-radius: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   color: #1e40af;
   outline: none;
@@ -462,7 +462,7 @@
 }
 
 .dateText {
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -482,7 +482,7 @@
 }
 
 .checkboxLabel {
-  font-size: 0.875rem;
+  font-size: 16px;
   color: #374151;
 }
 
@@ -525,13 +525,13 @@
 }
 
 .assigneeCardName {
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   color: #1e40af;
 }
 
 .noAssignees {
-  font-size: 0.875rem;
+  font-size: 16px;
   color: #6b7280;
   font-style: italic;
 }
@@ -543,7 +543,7 @@
 }
 
 .resultTitle {
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   color: #374151;
   margin-bottom: 0.75rem;
@@ -583,7 +583,7 @@
 }
 
 .savedResultLink {
-  font-size: 0.875rem;
+  font-size: 16px;
   color: #166534;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -600,7 +600,7 @@
   border-radius: 0.375rem;
   border: none;
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   transition: background-color 0.2s;
   flex-shrink: 0;
@@ -624,7 +624,7 @@
   border-radius: 0.375rem;
   border: none;
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -660,7 +660,7 @@
 .button {
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -727,7 +727,7 @@
 
 /* Вспомогательные классы */
 .textSmall {
-  font-size: 0.875rem;
+  font-size: 16px;
 }
 
 .textGray500 {

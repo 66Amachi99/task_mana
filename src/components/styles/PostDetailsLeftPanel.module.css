@@ -2,7 +2,7 @@
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 20px;
 }
 
 /* Дедлайн */
@@ -24,7 +24,7 @@
 }
 
 .deadlineLabel {
-  font-size: 0.875rem;
+  font-size: 16px;
   display: block;
 }
 
@@ -68,25 +68,25 @@
 .datePickerInput {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #ffffff10;
   border-radius: 0.5rem;
 }
 
 /* Заголовок */
 .titleInput {
   width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.2); /* заменено с border-blue-300 */
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05); /* добавлен тёмный фон */
-  color: #ffffff; /* белый текст */
+  padding: 0.5rem 1rem;
+  font-size: 16px;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02); 
+  color: #ffffff;
   outline: none;
 }
 
 .titleInput:focus {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3); /* заменено с синего */
+  border-color: rgba(255, 255, 255, 0.20); 
 }
 
 .titleDisplay {
@@ -107,12 +107,12 @@
 }
 
 .statusLabel {
-  font-size: 0.875rem;
+  font-size: 16px;
   color: #6b7280;
 }
 
 .statusValue {
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   color: #1f2937;
 }
@@ -143,12 +143,18 @@
 }
 
 .tagChip {
-  padding: 5px 10px 8px 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  min-width: 30px;
+  height: 27px;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 400;
   color: white;
   background-color: var(--tag-color);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* TagSelector (редактирование) */
@@ -159,27 +165,21 @@
 .tagSelectorInputContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  min-height: 2.5rem;
-  padding: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2); /* заменено с #d1d5db */
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05); /* тёмный фон */
+  gap: 1rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1); 
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02); 
   color: #ffffff;
 }
 
+.tagSelectorInputContainer:focus{
+  border-color: rgba(255, 255, 255, 0.10); 
+}
+
 .tagChipEditable {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  background-color: var(--tag-color);
+  composes: tagChip;
 }
 
 .tagRemoveButton {
@@ -208,11 +208,11 @@
   flex: 1;
   min-width: 7.5rem;
   outline: none;
-  font-size: 0.875rem;
+  font-size: 16px;
   background: transparent;
   border: none;
   padding: 0;
-  color: #ffffff; /* белый текст */
+  color: #ffffff;
 }
 
 .tagSearchInput::placeholder {
@@ -229,8 +229,8 @@
   z-index: 10;
   width: 100%;
   margin-top: 0.25rem;
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
+  background-color: #161616;
+  border: 1px solid #ffffff10;
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   max-height: 15rem;
@@ -243,10 +243,11 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: #FFFFFF;
 }
 
 .tagOption:hover {
-  background-color: #f3f4f6;
+  background-color: #2b2b2b;
 }
 
 .tagColorDot {
@@ -268,21 +269,21 @@
 /* Описание */
 .descriptionTextarea {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 0.5rem;
-  font-size: 1rem;
+  font-size: 16px;
   outline: none;
   resize: none;
   overflow: hidden;
-  min-height: 5rem;
-  background: rgba(255, 255, 255, 0.05);
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.02);
   color: #ffffff;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s;
 }
 
 .descriptionTextarea:focus {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.20);
 }
 
 .descriptionPreviewText {
@@ -294,46 +295,31 @@
   overflow-wrap: break-word; 
 }
 
-/* Ссылка на ТЗ */
 .tzInput {
   width: 100%;
   padding: 0.5rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
   color: #ffffff;
   outline: none;
 }
 
 .tzInput:focus {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Ссылка на ТЗ */
 .tzLink {
-  font-size: 16px;
-  color: #ffffff;
-  font-weight: 400;
-  padding: 8px 10px 8px 10px;
-  max-width: 110px;
-  max-height: 27px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  border: 1px solid #ffffff10;
-  border-radius: 10px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.25) 100%);
-}
-
-.tzLink:hover {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  composes: panelButton;
+  width: fit-content;
 }
 
 /* Задачи в виде кнопок (только в режиме редактирования) */
 .tasksTitle {
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
-  color: #ffffff; /* белый, как в обычном режиме */
+  color: #ffffff;
   margin-bottom: 0.75rem;
 }
 
@@ -343,40 +329,13 @@
   gap: 0.5rem;
 }
 
-/* Кнопки задач – теперь в стиле обычных кнопок панели */
-.taskButtonSelected {
-  padding: 0.5rem 1rem;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border: 1px solid #ffffff10;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.25) 100%);
-  color: #ffffff;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.taskButtonSelected:hover {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.3) 100%);
-}
-
-.taskButtonDefault {
-  composes: taskButtonSelected;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.taskButtonDefault:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
 /* Бейджи задач в режиме просмотра (уже есть) */
 .taskBadge {
   padding: 0.375rem 0.75rem;
   background-color: #dbeafe;
   color: #1e40af;
   border-radius: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -389,7 +348,7 @@
 }
 
 .socialTitle {
-  font-size: 0.875rem;
+  font-size: 16px;
   font-weight: 500;
   color: #ffffff;
   margin-bottom: 0.75rem;
@@ -412,7 +371,7 @@
 
 .socialLabel {
   width: 6rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -430,7 +389,7 @@
   padding: 0.5rem 0.75rem;
   border: 1px solid #ffffff10;
   border-radius: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   background: rgba(255, 255, 255, 0.05);
@@ -465,7 +424,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   color: #ffffff;
   text-decoration: none;
   transition: color 0.2s;
@@ -477,14 +436,15 @@
 
 .approvedBox {
   display: inline-block;
-  padding: 5px 10px 8px 5px;
+  padding: 8px 10px;
   border-radius: 10px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.25) 100%);
+  border: 1px solid #ffffff10;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.10) 100%);
   color: #ffffff;
+  font-size: 16px;
 }
 
 .approvedName {
-  composes: responsibleName;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -497,22 +457,54 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  padding-top: 1rem;
 }
 
-.button {
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+/* Общий класс для всех кнопок в левой панели */
+.panelButton {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  border: none;
+  padding: 8px 10px;
+  border: 1px solid #ffffff10;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.10) 100%);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
-  background-color: transparent;
-  color: inherit;
+  height: 27px;
+}
+
+/* .panelButton:hover:not(:disabled) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
+} */
+
+.panelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Кнопки задач – теперь в стиле обычных кнопок панели */
+.taskButtonSelected {
+  composes: panelButton;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.3) 100%);
+}
+
+.taskButtonDefault {
+  composes: panelButton;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* .taskButtonDefault:hover {
+  background: rgba(255, 255, 255, 0.15);
+} */
+
+/* Кнопки действий с разными цветами */
+.button {
+  composes: panelButton;
 }
 
 .button:disabled {
@@ -520,7 +512,6 @@
   cursor: not-allowed;
 }
 
-/* Все кнопки теперь используют одинаковый градиентный стиль */
 .buttonBlue,
 .buttonGray,
 .buttonGreen,
@@ -528,18 +519,5 @@
 .buttonRed,
 .publishButtonPublished,
 .publishButtonUnpublished {
-  border: 1px solid #ffffff10;
-  border-radius: 10px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.25) 100%);
-  color: #ffffff;
-}
-
-.buttonBlue:hover,
-.buttonGray:hover,
-.buttonGreen:hover,
-.buttonLightGray:hover,
-.buttonRed:hover,
-.publishButtonPublished:hover,
-.publishButtonUnpublished:hover {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.3) 100%);
+  composes: panelButton;
 }

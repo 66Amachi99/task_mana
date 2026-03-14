@@ -179,7 +179,7 @@ const TagSelector = ({
       </div>
 
       {showDropdown && (
-        <div className={styles.tagDropdown}>
+        <div className={`${styles.tagDropdown} no-scrollbar`}>
           {filteredTags.length > 0 ? (
             filteredTags.map(tag => (
               <div
@@ -292,7 +292,7 @@ export const PostDetailsLeftPanel = ({
       </div>
 
       {/* Теги */}
-      <div className="space-y-3">
+      <div>
         {/* Теги */}
         {isEditing ? (
           <TagSelector
@@ -443,7 +443,7 @@ export const PostDetailsLeftPanel = ({
         <div>
           <div className={styles.approvedBox}>
             <p className={styles.approvedName}>
-              <CheckCircle className="w-5 h-5 mx-1" />
+              <CheckCircle className="w-4 h-4" />
               <span>Согласовано: </span>
               {post.approved_by.user_login}
             </p>
