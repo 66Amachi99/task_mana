@@ -51,7 +51,7 @@
 .closeButton {
   color: #ffffff60;
   border-radius: 9999px;
-  transition: color 0.2s, background-color 0.2s;
+  transition: color 0.2s, background-color 0.2s, transform 0.3s ease; 
   background: none;
   border: none;
   cursor: pointer;
@@ -61,8 +61,7 @@
 }
 
 .closeButton:hover {
-  color: #ffffff;
-  background-color: #ffffff10;
+  transform: scale(1.15) rotate(90deg);
 }
 
 .closeButton:disabled {
@@ -138,26 +137,23 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding-left: 10px;
-  padding-right: 10px;
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
+  border-radius: 10px;
+  color: #ffffffb6;
   cursor: pointer;
-  transition: all 0.2s ease;
-  height: 40px;
+  transition: all 0.2s;
+  height: 27px;
 }
 
 .priorityButton:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
 }
 
 .priorityActive {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: var(--accent-color) !important;
-  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent-color);
+  color: #ffffff;
   box-shadow: 0 0 15px -5px var(--accent-color);
 }
 
@@ -239,18 +235,12 @@
 }
 
 .button {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  border-radius: 0.5rem;
+  border-radius: 10px;
   font-weight: 500;
   transition: background-color 0.2s, opacity 0.2s;
-  border: none;
   cursor: pointer;
   min-width: 8rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
+  height: 27px;
 }
 
 .button:disabled {
@@ -260,14 +250,14 @@
 
 .buttonCancel,
 .buttonSubmit {
-  background-color: #ffffff02;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   border: 1px solid #ffffff10;
   color: #ffffff;
 }
 
 .buttonCancel:hover:not(:disabled),
 .buttonSubmit:hover:not(:disabled) {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.20) 100%);
 }
 
 /* Selector Components */

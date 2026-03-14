@@ -416,7 +416,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
           <div className={styles.actions}>
             <button type="button" onClick={onClose} className={`${styles.button} ${styles.buttonCancel}`}>Отмена</button>
             <button type="submit" disabled={isSubmitting} className={`${styles.button} ${styles.buttonSubmit}`}>
-              {isSubmitting ? 'Создание...' : 'Создать задачу'}
+              {isSubmitting ? 'Создание...' : 'Создать'}
             </button>
           </div>
         </form>
