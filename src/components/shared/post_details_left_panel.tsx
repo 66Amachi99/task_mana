@@ -391,10 +391,6 @@ export const PostDetailsLeftPanel = ({
       {/* Соцсети (редактирование ссылок публикации) */}
       {post.is_published && canManageSocial && (
         <div className={styles.socialSection}>
-          <h3 className={styles.socialTitle}>
-            <Link className="w-4 h-4" />
-            Ссылки на посты в соцсетях
-          </h3>
           <div className={styles.socialList}>
             {SOCIAL_CONFIG.map(social => (
               <div key={social.key} className={styles.socialItem}>

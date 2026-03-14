@@ -11,11 +11,12 @@ import {
   subMonths,
   isSameMonth,
   getDay,
+  subDays,
+  addDays,
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { CalendarItem, DayStats, CalendarPost, CalendarTask } from '../../../types/calendar';
 import { ROLE_FILTERS } from '@/hooks/use-roles';
-import { ChevronDown } from 'lucide-react';
 import styles from '../styles/Calendar.module.css';
 
 interface CalendarProps {
@@ -25,13 +26,13 @@ interface CalendarProps {
   onPostClick?: (post: CalendarPost) => void;
   onTaskClick?: (task: CalendarTask) => void;
   showPosts: boolean;
-  onShowPostsChange: (value: boolean) => void;
   showTasks: boolean;
-  onShowTasksChange: (value: boolean) => void;
   selectedRoleFilter: string | null;
   onRoleFilterChange: (filter: string | null) => void;
   totalPostsCount: number;
   totalTasksCount: number;
+  handlePostsClick: () => void;
+  handleTasksClick: () => void;
 }
 
 const getDayOfWeekShort = (date: Date): string => {
@@ -61,13 +62,13 @@ export const Calendar: React.FC<CalendarProps> = ({
   onPostClick,
   onTaskClick,
   showPosts,
-  onShowPostsChange,
   showTasks,
-  onShowTasksChange,
   selectedRoleFilter,
   onRoleFilterChange,
   totalPostsCount,
   totalTasksCount,
+  handlePostsClick,
+  handleTasksClick,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -85,12 +86,19 @@ export const Calendar: React.FC<CalendarProps> = ({
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const startDay = monthStart.getDay();
-  const emptyDays = startDay === 0 ? 6 : startDay - 1;
+  // Первый отображаемый день (понедельник перед началом месяца)
+  const startDayOfWeek = monthStart.getDay();
+  const daysBefore = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+  const firstDisplayDate = subDays(monthStart, daysBefore);
 
-  const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  // Последний отображаемый день (воскресенье после конца месяца)
+  const endDayOfWeek = monthEnd.getDay();
+  const daysAfter = endDayOfWeek === 0 ? 0 : 7 - endDayOfWeek;
+  const lastDisplayDate = addDays(monthEnd, daysAfter);
+
+  // Массив всех дней для отображения
+  const displayDays = eachDayOfInterval({ start: firstDisplayDate, end: lastDisplayDate });
 
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -127,15 +135,9 @@ export const Calendar: React.FC<CalendarProps> = ({
     return null;
   };
 
-  const selectedFilterLabel = selectedRoleFilter
-    ? ROLE_FILTERS.find(f => f.id === selectedRoleFilter)?.label
-    : null;
-
   return (
     <div className={styles.calendar}>
-      {/* Заголовок с фильтрами */}
       <div className={styles.header}>
-        {/* Левая группа: кликабельная кнопка с предыдущим месяцем */}
         <button onClick={handlePrevMonth} className={styles.prevGroupButton}>
           <img className={styles.navButtonSymbol} src="/icons/Left Arrow.svg" alt="" />
           <span className={styles.prevMonthName}>
@@ -150,13 +152,13 @@ export const Calendar: React.FC<CalendarProps> = ({
           
           <div className={styles.filterButtons}>
             <button
-              onClick={() => onShowPostsChange(!showPosts)}
+              onClick={handlePostsClick}
               className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : styles.filterButtonInactive}`}
             >
               Постов {totalPostsCount}
             </button>
             <button
-              onClick={() => onShowTasksChange(!showTasks)}
+              onClick={handleTasksClick}
               className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : styles.filterButtonInactive}`}
             >
               Задач {totalTasksCount}
@@ -206,7 +208,6 @@ export const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
         
-        {/* Правая группа: кликабельная кнопка со следующим месяцем */}
         <button onClick={handleNextMonth} className={styles.nextGroupButton}>
           <span className={styles.nextMonthName}>
             {format(nextMonth, 'LLLL', { locale: ru })}
@@ -215,23 +216,19 @@ export const Calendar: React.FC<CalendarProps> = ({
         </button>
       </div>
 
-      {/* Дни недели */}
-      {/* <div className={styles.weekDays}>
-        {weekDays.map(day => <div key={day}>{day}</div>)}
-      </div> */}
-
-      {/* Сетка календаря */}
       <div className={styles.dayGrid}>
-        {Array.from({ length: emptyDays }).map((_, i) => (
-          <div key={`empty-${i}`} className={styles.emptyCell} />
-        ))}
-
-        {days.map(day => {
+        {displayDays.map(day => {
           const isSelected = format(day, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
           const isCurrentDay = isToday(day);
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const itemsForDay = getItemsForDay(day);
-          const dayStats = getDayStats(itemsForDay);
+          
+          // Фильтруем элементы согласно состоянию кнопок
+          const filteredItems = itemsForDay.filter(item => 
+            (showPosts && item.type === 'post') || (showTasks && item.type === 'task')
+          );
+          
+          const dayStats = getDayStats(filteredItems);
           const dayNumber = format(day, 'dd');
           const dayOfWeek = getDayOfWeekShort(day);
           const isWeekend = day.getDay() === 0 || day.getDay() === 6;
@@ -252,7 +249,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                 <span className={styles.dayNumber}>
                   {dayNumber} <span className={styles.dayWeekday}>{dayOfWeek}</span>
                 </span>
-                {itemsForDay.length > 0 && (
+                {filteredItems.length > 0 && (
                   <span
                     className={`${styles.dayStats} ${
                       dayStats.completed === dayStats.total
@@ -266,7 +263,7 @@ export const Calendar: React.FC<CalendarProps> = ({
               </div>
               
               <div className={`${styles.itemsContainer} ${styles.scrollable}`}>
-                {itemsForDay.map((item, idx) => {
+                {filteredItems.map((item, idx) => {
                   const isPost = item.type === 'post';
                   const bgColor = item.tags && item.tags.length > 0 ? item.tags[0].color : undefined;
                   const postIcon = isPost ? getFirstTaskIcon(item as CalendarPost) : null;

@@ -5,15 +5,16 @@ import { Header } from '@/components/layout/Header/Header';
 import { Calendar } from '../../components/calendar/calendar';
 import { PostDetailsWindow } from '@/components/shared/post_details_window';
 import { TaskDetailsWindow } from '@/components/shared/task_details_window';
+import { PostAddWindow } from '@/components/shared/post_add_window';
+import { TaskAddWindow } from '@/components/shared/task_add_window';
 import { format } from 'date-fns';
-import { getPostStatus, getStatusColor } from '../../lib/post-status';
 import { useUser } from '../../hooks/use-roles';
 import { CalendarPost, CalendarTask, CalendarItem } from '../../../types/calendar';
-import { CheckCircle, Circle, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { ru } from 'date-fns/locale';
 import styles from '../../components/styles/CalendarPage.module.css';
 
-// Вспомогательная функция для получения цвета статусного кружка
+// Вспомогательная функция для цвета статусного кружка
 const getStatusDotColor = (item: CalendarItem): string => {
   if (item.type === 'post') {
     return item.post_status === 'Завершен' ? '#449627' : '#FFCC00';
@@ -30,11 +31,22 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedItem, setSelectedItem] = useState<{ post?: CalendarPost; task?: CalendarTask } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showCompletedOnly, setShowCompletedOnly] = useState(false);
-  const [showPosts, setShowPosts] = useState(true);
-  const [showTasks, setShowTasks] = useState(true);
 
-  const { filterPostByRole } = useUser();
+  // Фильтры для календаря
+  const [calendarShowPosts, setCalendarShowPosts] = useState(true);
+  const [calendarShowTasks, setCalendarShowTasks] = useState(true);
+
+  // Фильтры для сайдбара
+  const [sidebarShowPosts, setSidebarShowPosts] = useState(true);
+  const [sidebarShowTasks, setSidebarShowTasks] = useState(true);
+  const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
+
+  // Состояния для модалок создания
+  const [showAddPostModal, setShowAddPostModal] = useState(false);
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+
+  const { user, filterPostByRole, canCreateTask } = useUser();
+  const canAddPost = user && (user.admin_role || user.SMM_role);
 
   const fetchAllContent = useCallback(async () => {
     try {
@@ -43,7 +55,7 @@ export default function CalendarPage() {
         fetch('/api/posts?limit=100'),
         fetch('/api/tasks?limit=100')
       ]);
-      
+
       const postsData = await postsRes.json();
       const tasksData = await tasksRes.json();
 
@@ -78,7 +90,7 @@ export default function CalendarPage() {
   const currentMonth = new Date();
   const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
   const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-  
+
   const postsInMonth = useMemo(() => {
     return posts.filter(p => {
       const date = new Date(p.post_deadline);
@@ -93,20 +105,14 @@ export default function CalendarPage() {
     }).length;
   }, [tasks, monthStart, monthEnd]);
 
-  const itemsByDate = useMemo(() => {
+  // Полный маппинг всех элементов по датам (без фильтрации)
+  const allItemsByDate = useMemo(() => {
     const map = new Map<string, CalendarItem[]>();
-    
-    const showPostsActual = showPosts || (!showPosts && !showTasks);
-    const showTasksActual = showTasks || (!showPosts && !showTasks);
-    
-    const allItems: CalendarItem[] = [];
-    if (showPostsActual) {
-      const filtered = selectedRoleFilter 
-        ? posts.filter(p => filterPostByRole(p, selectedRoleFilter))
-        : posts;
-      allItems.push(...filtered);
-    }
-    if (showTasksActual) allItems.push(...tasks);
+
+    const allItems: CalendarItem[] = [
+      ...posts.map(p => ({ ...p, type: 'post' as const })),
+      ...tasks.map(t => ({ ...t, type: 'task' as const }))
+    ];
 
     allItems.forEach(item => {
       const date = item.type === 'post' ? item.post_deadline : new Date(item.end_time);
@@ -115,31 +121,43 @@ export default function CalendarPage() {
       map.get(dateStr)!.push(item);
     });
     return map;
-  }, [posts, tasks, showPosts, showTasks, selectedRoleFilter, filterPostByRole]);
+  }, [posts, tasks]);
 
+  // Статистика для выбранного дня (полная)
   const dayStats = useMemo(() => {
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    const items = itemsByDate.get(dateStr) || [];
-
-    return { 
+    const items = allItemsByDate.get(dateStr) || [];
+    return {
       items,
-      total: items.length, 
-      postsCount: items.filter(i => i.type === 'post').length, 
-      tasksCount: items.filter(i => i.type === 'task').length 
+      total: items.length,
+      postsCount: items.filter(i => i.type === 'post').length,
+      tasksCount: items.filter(i => i.type === 'task').length
     };
-  }, [itemsByDate, selectedDate]);
+  }, [allItemsByDate, selectedDate]);
 
-  const filteredDayItems = useMemo(() => {
-    if (!showCompletedOnly) return dayStats.items;
-    return dayStats.items.filter(i => 
-      i.type === 'post' ? i.post_status === 'Завершен' : i.task_status === 'Выполнена'
+  // Отфильтрованные элементы для сайдбара
+  const sidebarFilteredItems = useMemo(() => {
+    let filtered = dayStats.items;
+
+    // Фильтр по типу
+    filtered = filtered.filter(item =>
+      (sidebarShowPosts && item.type === 'post') || (sidebarShowTasks && item.type === 'task')
     );
-  }, [dayStats.items, showCompletedOnly]);
+
+    // Фильтр по готовности
+    if (showIncompleteOnly) {
+      filtered = filtered.filter(item =>
+        item.type === 'post' ? item.post_status !== 'Завершен' : item.task_status !== 'Выполнена'
+      );
+    }
+
+    return filtered;
+  }, [dayStats.items, sidebarShowPosts, sidebarShowTasks, showIncompleteOnly]);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
     setIsSidebarOpen(true);
-    setShowCompletedOnly(false);
+    setShowIncompleteOnly(false);
   };
 
   const handleItemClick = (item: CalendarItem) => {
@@ -147,11 +165,73 @@ export default function CalendarPage() {
     else setSelectedItem({ task: item });
   };
 
-  // Функция рендера карточки
+  // Обработчики для кнопок в календаре
+  const handleCalendarPostsClick = () => {
+    if (calendarShowPosts && calendarShowTasks) {
+      setCalendarShowPosts(false);
+      setCalendarShowTasks(true);
+    } else if (calendarShowPosts && !calendarShowTasks) {
+      setCalendarShowPosts(false);
+      setCalendarShowTasks(true);
+    } else if (!calendarShowPosts && calendarShowTasks) {
+      setCalendarShowPosts(true);
+      setCalendarShowTasks(true);
+    }
+  };
+
+  const handleCalendarTasksClick = () => {
+    if (calendarShowPosts && calendarShowTasks) {
+      setCalendarShowPosts(true);
+      setCalendarShowTasks(false);
+    } else if (calendarShowPosts && !calendarShowTasks) {
+      setCalendarShowPosts(true);
+      setCalendarShowTasks(true);
+    } else if (!calendarShowPosts && calendarShowTasks) {
+      setCalendarShowPosts(true);
+      setCalendarShowTasks(false);
+    }
+  };
+
+  // Обработчики для кнопок в сайдбаре
+  const handleSidebarPostsClick = () => {
+    if (sidebarShowPosts && sidebarShowTasks) {
+      setSidebarShowPosts(false);
+      setSidebarShowTasks(true);
+    } else if (sidebarShowPosts && !sidebarShowTasks) {
+      setSidebarShowPosts(false);
+      setSidebarShowTasks(true);
+    } else if (!sidebarShowPosts && sidebarShowTasks) {
+      setSidebarShowPosts(true);
+      setSidebarShowTasks(true);
+    }
+  };
+
+  const handleSidebarTasksClick = () => {
+    if (sidebarShowPosts && sidebarShowTasks) {
+      setSidebarShowPosts(true);
+      setSidebarShowTasks(false);
+    } else if (sidebarShowPosts && !sidebarShowTasks) {
+      setSidebarShowPosts(true);
+      setSidebarShowTasks(true);
+    } else if (!sidebarShowPosts && sidebarShowTasks) {
+      setSidebarShowPosts(true);
+      setSidebarShowTasks(false);
+    }
+  };
+
+  // Обработчики для кнопок в хедере (с подстановкой даты)
+  const handleOpenPostModal = () => {
+    setShowAddPostModal(true);
+  };
+
+  const handleOpenTaskModal = () => {
+    setShowAddTaskModal(true);
+  };
+
   const renderCard = (item: CalendarItem) => {
     const isPost = item.type === 'post';
     const firstTag = item.tags && item.tags.length > 0 ? item.tags[0] : null;
-    
+
     const deadline = isPost
       ? new Date(item.post_deadline)
       : new Date(item.end_time);
@@ -215,30 +295,32 @@ export default function CalendarPage() {
   return (
     <div className={styles.page}>
       <div className={styles.headerPlaceholder}>
-        <Header />
+        <Header
+          onOpenPostModal={handleOpenPostModal}
+          onOpenTaskModal={handleOpenTaskModal}
+        />
       </div>
 
       <main className={styles.main}>
         <div className={styles.contentWrapper}>
-          
           <div className={`${styles.calendarWrapper} ${
             isSidebarOpen ? styles.calendarWrapperWithSidebar : styles.calendarWrapperFull
           }`}>
             <div className={styles.calendarContainer}>
               <Calendar
-                itemsByDate={itemsByDate}
+                itemsByDate={allItemsByDate}
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
                 onPostClick={(p) => handleItemClick(p)}
                 onTaskClick={(t) => handleItemClick(t)}
-                showPosts={showPosts}
-                onShowPostsChange={setShowPosts}
-                showTasks={showTasks}
-                onShowTasksChange={setShowTasks}
+                showPosts={calendarShowPosts}
+                showTasks={calendarShowTasks}
                 selectedRoleFilter={selectedRoleFilter}
                 onRoleFilterChange={setSelectedRoleFilter}
                 totalPostsCount={postsInMonth}
                 totalTasksCount={tasksInMonth}
+                handlePostsClick={handleCalendarPostsClick}
+                handleTasksClick={handleCalendarTasksClick}
               />
             </div>
           </div>
@@ -256,19 +338,26 @@ export default function CalendarPage() {
                     <X className={styles.closeIcon} />
                   </button>
                 </div>
-                
+
                 <div className={styles.statsWrapper}>
-                  <div className={styles.statsRowPosts}>
+                  {/* Кликабельные строки статистики */}
+                  <button
+                    onClick={handleSidebarPostsClick}
+                    className={`${styles.statsRowPosts} ${sidebarShowPosts ? styles.active : ''}`}
+                  >
                     <span>Постов {dayStats.postsCount}</span>
-                  </div>
-                  <div className={styles.statsRowTasks}>
+                  </button>
+                  <button
+                    onClick={handleSidebarTasksClick}
+                    className={`${styles.statsRowTasks} ${sidebarShowTasks ? styles.active : ''}`}
+                  >
                     <span>Задач {dayStats.tasksCount}</span>
-                  </div>
+                  </button>
 
                   <button
-                    onClick={() => setShowCompletedOnly(!showCompletedOnly)}
+                    onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
                     className={`${styles.filterButton} ${
-                      showCompletedOnly ? styles.filterButtonActive : styles.filterButtonInactive
+                      showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
                     }`}
                   >
                     Не готовые
@@ -277,12 +366,12 @@ export default function CalendarPage() {
               </div>
 
               <div className={`${styles.itemsList} no-scrollbar`}>
-                {filteredDayItems.length === 0 ? (
+                {sidebarFilteredItems.length === 0 ? (
                   <div className={styles.emptyState}>
                     <p>Событий нет</p>
                   </div>
                 ) : (
-                  filteredDayItems.map(renderCard)
+                  sidebarFilteredItems.map(renderCard)
                 )}
               </div>
             </div>
@@ -291,17 +380,39 @@ export default function CalendarPage() {
       </main>
 
       {selectedItem?.post && (
-        <PostDetailsWindow 
-          post={selectedItem.post} 
-          onClose={() => setSelectedItem(null)} 
-          onSuccess={fetchAllContent} 
+        <PostDetailsWindow
+          post={selectedItem.post}
+          onClose={() => setSelectedItem(null)}
+          onSuccess={fetchAllContent}
         />
       )}
       {selectedItem?.task && (
-        <TaskDetailsWindow 
-          task={selectedItem.task} 
-          onClose={() => setSelectedItem(null)} 
-          onSuccess={fetchAllContent} 
+        <TaskDetailsWindow
+          task={selectedItem.task}
+          onClose={() => setSelectedItem(null)}
+          onSuccess={fetchAllContent}
+        />
+      )}
+
+      {/* Модалки создания с подстановкой даты */}
+      {showAddPostModal && (
+        <PostAddWindow
+          onClose={() => setShowAddPostModal(false)}
+          onPostAdded={async () => {
+            await fetchAllContent();
+            setShowAddPostModal(false);
+          }}
+          initialDate={selectedDate}
+        />
+      )}
+      {showAddTaskModal && (
+        <TaskAddWindow
+          onClose={() => setShowAddTaskModal(false)}
+          onTaskAdded={async () => {
+            await fetchAllContent();
+            setShowAddTaskModal(false);
+          }}
+          initialDate={selectedDate}
         />
       )}
     </div>

@@ -133,10 +133,21 @@
 .statsRowTasks {
   color: #ffffff;
   padding: 0.2rem 0.75rem;
+  font-size: 0.875rem;
   transition: background-color 0.2s, color 0.2s;
   border: 1px solid #ffffff10;
   border-radius: 10px;
+  cursor: pointer;
+}
+
+.statsRowPosts.active,
+.statsRowTasks.active {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+}
+
+.statsRowPosts.Inactive,
+.statsRowTasks.Inactive {
+  background-color: #ffffff02;
 }
 
 .closeButton {
@@ -165,13 +176,13 @@
   justify-content: center;
   padding-inline: 0.5rem;
   min-width: 94px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb36;
-  transition: all 0.2s;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
   color: #ffffff;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.875rem;
+  transition: background-color 0.2s, color 0.2s;
+  border: 1px solid #ffffff10;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 .filterButtonActive {

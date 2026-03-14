@@ -92,7 +92,7 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
           className={styles.tagInput}
         />
       </div>
-      
+
       {isOpen && filtered.length > 0 && (
         <div className={`${styles.dropdown} no-scrollbar`}>
           {filtered.map(user => (
@@ -131,8 +131,8 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
   const [search, setSearch] = useState('');
   const ref = useOutsideClick(() => setIsOpen(false));
 
-  const filtered = availableTags.filter(t => 
-    t.name.toLowerCase().includes(search.toLowerCase()) && 
+  const filtered = availableTags.filter(t =>
+    t.name.toLowerCase().includes(search.toLowerCase()) &&
     !selectedTags.some(st => st.tag_id === t.tag_id)
   );
 
@@ -211,7 +211,7 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [tags, setTags] = useState<Tag[]>([]);
-  
+
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -342,39 +342,36 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
 
           {error && <div className={styles.errorBox}>{error}</div>}
 
-          <div className="space-y-6">
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>Название задачи *</label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                className={styles.input}
-                placeholder="Что нужно сделать?"
-                required
-              />
-            </div>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            className={styles.input}
+            placeholder="Что нужно сделать?"
+            required
+          />
 
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>Описание</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                className={styles.textarea}
-                placeholder="Детали задачи..."
-              />
-            </div>
-
+          <div className={styles.fieldGroup}>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={(e) => {
+                handleChange(e);
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+              }}
+              rows={1}
+              className={styles.textarea}
+              placeholder="Описание..."
+            />
+          </div>
+          <div>
             <div className={styles.datesGrid}>
               <div>
-                <label className={styles.label}>Начало</label>
                 <DatePicker value={startDate} onChange={handleStartDateChange} showTimeSelect={!formData.all_day} />
               </div>
               <div>
-                <label className={styles.label}>Окончание</label>
                 <DatePicker value={endDate} onChange={handleEndDateChange} minDate={startDate || undefined} showTimeSelect={!formData.all_day} />
               </div>
             </div>
@@ -383,38 +380,38 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
               <input type="checkbox" name="all_day" id="all_day" checked={formData.all_day} onChange={handleChange} className={styles.checkbox} />
               <label htmlFor="all_day" className={styles.checkboxLabel}>Весь день</label>
             </div>
-
-            {/* ПРИОРИТЕТ В ВИДЕ КНОПОК */}
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>Приоритет</label>
-              <div className={styles.priorityContainer}>
-                {priorityOptions.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, priority: opt.id }))}
-                    className={`${styles.priorityButton} ${formData.priority === opt.id ? styles.priorityActive : ''}`}
-                    style={{ '--accent-color': opt.color } as React.CSSProperties}
-                  >
-                    <span className={styles.priorityDot} style={{ backgroundColor: opt.color }} />
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <label className={`${styles.label} ${styles.labelWithIcon}`}>
-                <Users className="w-4 h-4" /> Исполнители
-              </label>
-              <AssigneesSelector selectedUsers={selectedAssignees} users={users} onChange={setSelectedAssignees} disabled={isSubmitting || loadingUsers} />
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>Теги</label>
-              <TagSelector selectedTags={selectedTags} availableTags={tags} onChange={setSelectedTags} onCreate={handleCreateTag} disabled={isSubmitting} />
+          </div>
+          {/* ПРИОРИТЕТ В ВИДЕ КНОПОК */}
+          <div className={styles.fieldGroup}>
+            {/* <label className={styles.label}>Приоритет</label> */}
+            <div className={styles.priorityContainer}>
+              {priorityOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, priority: opt.id }))}
+                  className={`${styles.priorityButton} ${formData.priority === opt.id ? styles.priorityActive : ''}`}
+                  style={{ '--accent-color': opt.color } as React.CSSProperties}
+                >
+                  <span className={styles.priorityDot} style={{ backgroundColor: opt.color }} />
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={`${styles.label} ${styles.labelWithIcon}`}>
+              {/* <Users className="w-4 h-4" /> Исполнители */}
+            </label>
+            <AssigneesSelector selectedUsers={selectedAssignees} users={users} onChange={setSelectedAssignees} disabled={isSubmitting || loadingUsers} />
+          </div>
+
+          <div className={styles.fieldGroup}>
+            {/* <label className={styles.label}>Теги</label> */}
+            <TagSelector selectedTags={selectedTags} availableTags={tags} onChange={setSelectedTags} onCreate={handleCreateTag} disabled={isSubmitting} />
+          </div>
+
 
           <div className={styles.actions}>
             <button type="button" onClick={onClose} className={`${styles.button} ${styles.buttonCancel}`}>Отмена</button>

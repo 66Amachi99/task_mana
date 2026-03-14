@@ -1,4 +1,4 @@
-/* Основные стили для модального окна */
+/* Modal Overlay */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -8,44 +8,47 @@
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(30px);
-  padding: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
+/* Modal Container */
 .modalContainer {
   display: flex;
   justify-content: center;
   border-radius: 0.5rem;
   width: 100%;
-  max-width: 64rem; /* max-w-4xl */
+  max-width: 64rem;
   max-height: 90vh;
   overflow-y: auto;
   color: #ffffff;
 }
 
 .modalForm {
-  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
   width: 600px;
   max-width: 100%;
 }
 
-/* Заголовок */
+/* Header */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
   border-bottom: 1px solid #ffffff10;
 }
 
 .headerTitle {
-  font-size: 1.5rem; /* text-2xl */
-  font-weight: 700; /* font-bold */
+  font-size: 1.5rem;
+  font-weight: 700;
   color: #ffffff;
 }
 
 .closeButton {
-  padding: 0.5rem;
   color: #ffffff60;
   border-radius: 9999px;
   transition: color 0.2s, background-color 0.2s;
@@ -67,11 +70,9 @@
   cursor: not-allowed;
 }
 
-/* Ошибка */
+/* Error Box */
 .errorBox {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background-color: rgba(185, 28, 28, 0.1); /* Темно-красный прозрачный */
+  background-color: rgba(185, 28, 28, 0.1);
   border: 1px solid rgba(248, 113, 113, 0.2);
   border-radius: 0.5rem;
   display: flex;
@@ -79,48 +80,56 @@
   color: #fca5a5;
 }
 
-.errorIcon {
-  width: 1.25rem;
-  height: 1.25rem;
-  margin-right: 0.5rem;
-}
-
-/* Поля формы */
-.fieldGroup {
-  margin-bottom: 1.5rem;
-}
-
 .label {
   display: block;
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
+  font-size: 0.875rem;
+  font-weight: 500;
   color: #ffffff;
   margin-bottom: 0.5rem;
 }
 
-.labelWithIcon {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
+/* Input, Textarea, Select - Common styles */
 .input,
-.textarea,
-.select {
+.textarea {
   width: 100%;
-  padding: 0.75rem 1rem; /* px-4 py-3 */
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
   border: 1px solid #ffffff10;
-  border-radius: 0.5rem; /* rounded-lg */
+  border-radius: 0.5rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   background-color: #ffffff02;
   color: #ffffff;
+  height: 2.75rem;
 }
 
+.textarea {
+  padding-top: 11px;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: #ffffff20;
+}
+
+.input:disabled,
+.textarea:disabled {
+  background-color: #ffffff05;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.textarea {
+  resize: none;
+  min-height: 2.75rem;
+  overflow-y: hidden;
+  height: auto;
+}
+
+/* Priority Buttons */
 .priorityContainer {
   display: flex;
   gap: 10px;
-  margin-top: 8px;
 }
 
 .priorityButton {
@@ -129,7 +138,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -137,16 +147,16 @@
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: 40px;
 }
 
 .priorityButton:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* Эффект при выборе */
 .priorityActive {
   background: rgba(255, 255, 255, 0.12) !important;
-  border-color: var(--accent-color) !important; /* Цвет из inline-style */
+  border-color: var(--accent-color) !important;
   color: #ffffff !important;
   box-shadow: 0 0 15px -5px var(--accent-color);
 }
@@ -157,37 +167,11 @@
   border-radius: 50%;
 }
 
-.input:focus,
-.textarea:focus,
-.select:focus {
-  border-color: #ffffff10;
-}
-
-.input:disabled,
-.textarea:disabled,
-.select:disabled {
-  background-color: #ffffff05;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.textarea {
-  resize: none; /* resize-none */
-  min-height: 6rem; /* rows=4 */
-}
-
-/* Специально для выпадающего списка select (чтобы опции были читаемы) */
-.select option {
-  background-color: #ffffff02;
-  color: #ffffff;
-}
-
-/* Сетка для дат */
+/* Dates Grid */
 .datesGrid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-  margin-bottom: 1rem;
 }
 
 @media (min-width: 768px) {
@@ -196,20 +180,20 @@
   }
 }
 
-/* Чекбокс "Весь день" */
+/* Checkbox */
 .checkboxGroup {
+  margin-top: 10px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
 }
 
 .checkbox {
-  width: 1.25rem; /* w-5 */
-  height: 1.25rem; /* h-5 */
+  width: 1.25rem;
+  height: 1.25rem;
   border: 1px solid #ffffff10;
   background-color: #ffffff02;
-  border-radius: 0.5rem; /* rounded-full */
+  border-radius: 0.5rem;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -243,31 +227,30 @@
 }
 
 .checkboxLabel {
-  font-size: 0.875rem; /* text-sm */
-  color: #ffffff; /* Текст белый */
+  font-size: 0.875rem;
+  color: #ffffff;
 }
 
-/* Кнопки формы */
+/* Action Buttons */
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #ffffff10;
 }
 
 .button {
-  padding: 0.75rem 1.5rem; /* px-6 py-3 */
-  border-radius: 0.5rem; /* rounded-lg */
-  font-weight: 500; /* font-medium */
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
   transition: background-color 0.2s, opacity 0.2s;
   border: none;
   cursor: pointer;
-  min-width: 8rem; /* min-w-32 */
+  min-width: 8rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 40px;
 }
 
 .button:disabled {
@@ -275,99 +258,30 @@
   cursor: not-allowed;
 }
 
-.buttonCancel {
-  background-color: #ffffff02; /* Прозрачный белый */
-  border: 1px solid #ffffff10;
-  color: #ffffff;
-}
-
-.buttonCancel:hover:not(:disabled) {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
-}
-
+.buttonCancel,
 .buttonSubmit {
-  background-color: #ffffff02; /* Оставляем синий для акцента, но текст белый */
+  background-color: #ffffff02;
   border: 1px solid #ffffff10;
   color: #ffffff;
 }
 
+.buttonCancel:hover:not(:disabled),
 .buttonSubmit:hover:not(:disabled) {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
 }
 
-/* Стили для селекторов (AssigneesSelector и TagSelector) */
+/* Selector Components */
 .relative {
   position: relative;
 }
 
-/* AssigneesSelector */
-.selectedAssignees {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.assigneeChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem; /* px-3 py-1 */
-  background-color: #ffffff15; /* Прозрачный фон вместо светлого */
-  color: #ffffff; /* Текст белый */
-  border-radius: 9999px; /* rounded-full */
-  font-size: 0.875rem; /* text-sm */
-  border: 1px solid #ffffff10;
-}
-
-.assigneeChipRemove {
-  background: none;
-  border: none;
-  color: #ffffff80;
-  cursor: pointer;
-  opacity: 0.7;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.assigneeChipRemove:hover {
-  opacity: 1;
-  color: #ffffff;
-}
-
-.assigneeChipRemove:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.assigneeInput {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #ffffff10;
-  border-radius: 0.5rem;
-  outline: none;
-  background-color: #ffffff02;
-  color: #ffffff;
-  transition: border-color 0.2s;
-}
-
-.assigneeInput:focus {
-  border-color: #ffffff30;
-}
-
-.assigneeInput:disabled {
-  background-color: #ffffff05;
-  cursor: not-allowed;
-}
-
+/* Dropdown */
 .dropdown {
   position: absolute;
   z-index: 10;
   width: 100%;
-  margin-top: 0.25rem; /* mt-1 */
-  background-color: #1a1a1a; /* Темный фон вместо белого */
+  margin-top: 0.25rem;
+  background-color: #1a1a1a;
   border: 1px solid #ffffff10;
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
@@ -376,10 +290,14 @@
 }
 
 .dropdownItem {
-  padding: 0.5rem 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   cursor: pointer;
   transition: background-color 0.2s;
   color: #ffffff;
+  height: 36px;
+  display: flex;
+  align-items: center;
 }
 
 .dropdownItem:hover {
@@ -396,20 +314,14 @@
   color: #ffffff60;
 }
 
-.emptyResult {
-  padding: 1rem;
-  color: #ffffff60;
-  text-align: center;
-}
-
-/* TagSelector */
+/* Tag Selector Container */
 .tagSelectorContainer {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
   min-height: 2.5rem;
-  padding: 0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
   border: 1px solid #ffffff10;
   border-radius: 0.5rem;
   background-color: #ffffff02;
@@ -420,31 +332,59 @@
   border-color: #ffffff30;
 }
 
+/* Chips (Assignee & Tag) */
+.assigneeChip,
 .tag {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
   border-radius: 9999px;
   font-size: 0.875rem;
+  border: 1px solid #ffffff10;
+  height: 28px;
+}
+
+.assigneeChip {
+  background-color: #ffffff15;
+  color: #ffffff;
+}
+
+.tag {
   font-weight: 500;
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  background-color: var(--tag-color); /* Сохраняем цвет тега */
+  background-color: var(--tag-color);
 }
 
+/* Chip/Tag Remove Button */
+.assigneeChipRemove,
 .tagRemove {
   background: none;
   border: none;
-  color: white;
+  color: #ffffff80;
   cursor: pointer;
-  opacity: 0.8;
-  margin-left: 0.25rem;
+  opacity: 0.7;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
+.assigneeChipRemove:hover,
+.tagRemove:hover {
+  opacity: 1;
+  color: #ffffff;
+}
+
+.assigneeChipRemove:disabled,
+.tagRemove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tag Input */
 .tagInput {
   flex: 1;
   min-width: 8.75rem;
@@ -452,7 +392,6 @@
   font-size: 0.875rem;
   background: transparent;
   border: none;
-  padding: 0.25rem 0;
   color: #ffffff;
 }
 
@@ -464,15 +403,17 @@
   cursor: not-allowed;
 }
 
+/* Tag Option */
 .tagOption {
-  /* Наследует стили dropdownItem */
-  padding: 0.5rem 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   cursor: pointer;
   transition: background-color 0.2s;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   color: #ffffff;
+  height: 36px;
 }
 
 .tagOption:hover {
@@ -485,61 +426,24 @@
   border-radius: 9999px;
 }
 
+/* Create Tag Option */
 .createTagOption {
-  padding: 0.5rem 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   cursor: pointer;
-  color: #60a5fa; /* Светло-синий для акцента */
+  color: #60a5fa;
   transition: background-color 0.2s;
+  height: 36px;
+  display: flex;
+  align-items: center;
 }
 
 .createTagOption:hover {
   background-color: #ffffff10;
 }
 
+/* No Tags Message */
 .noTagsMessage {
-  padding: 1rem;
   color: #ffffff60;
   text-align: center;
-}
-
-/* Дополнительные утилиты */
-.flexRow {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.flexRowCenter {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.wFull {
-  width: 100%;
-}
-
-.mb2 {
-  margin-bottom: 0.5rem;
-}
-
-.mb4 {
-  margin-bottom: 1rem;
-}
-
-.mt8 {
-  margin-top: 2rem;
-}
-
-.pt6 {
-  padding-top: 1.5rem;
-}
-
-.borderT {
-  border-top: 1px solid #ffffff10;
-}
-
-.roundedFull {
-  border-radius: 9999px;
 }
