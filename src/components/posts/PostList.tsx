@@ -172,16 +172,6 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
     return tasks;
   };
 
-  const getBorderStyle = (post: PostWithRelations) => {
-    if (post.is_published === true) {
-      return { border: '2px solid #3b82f6' };
-    }
-    if (post.approved_by) {
-      return { border: '2px solid #22c55e' };
-    }
-    return { border: '2px solid #e5e7eb' };
-  };
-
   // Добавим класс для пустого состояния, если его нет в CSS-модуле
   const emptyContainerClass = styles.emptyContainer || 'text-center py-6 md:py-10';
   const emptyTextClass = styles.emptyText || 'text-gray-500 text-sm md:text-base';
@@ -192,12 +182,10 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
         const requiredTasks = getRequiredTasks(post);
         const postStatus = post.post_status;
         const statusColor = getStatusColor(postStatus); // возвращает строку классов (глобальные)
-        const borderStyle = getBorderStyle(post);
         
         return (
           <div
             key={post.post_id}
-            style={borderStyle}
             className={styles.card}
           >
             <div className={styles.cardHeader}>
@@ -332,7 +320,7 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
               {post.tz_link && (
                 <button
                   onClick={(e) => handleTzLinkClick(post.tz_link, e)}
-                  className={styles.tzButton}
+                  className={styles.Button}
                   title="Открыть техническое задание"
                 >
                   <ExternalLink className="w-4 h-4" />

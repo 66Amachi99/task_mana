@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { PostDetailsWindow } from '../shared/post_details_window';
 import { Eye } from 'lucide-react';
+import styles from '../styles/PostList.module.css';
 
 interface PostData {
   post_id: number;
@@ -94,7 +95,7 @@ export const PostDetailsButton = ({ post, onPostUpdate }: PostDetailsButtonProps
     <>
       <button
         onClick={handleOpen}
-        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium"
+        className={styles.Button}
       >
         <Eye className="w-4 h-4" />
         Подробнее

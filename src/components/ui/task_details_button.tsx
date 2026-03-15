@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { TaskDetailsWindow } from '../shared/task_details_window';
 import { Eye } from 'lucide-react';
 import { Task } from '../../../types/task';
+import styles from '../styles/PostList.module.css';
 
 interface TaskDetailsButtonProps {
   task: Task;
@@ -30,7 +31,7 @@ export const TaskDetailsButton = ({ task, onTaskUpdate }: TaskDetailsButtonProps
     <>
       <button
         onClick={handleOpen}
-        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium"
+        className={styles.Button}
       >
         <Eye className="w-4 h-4" />
         Подробнее

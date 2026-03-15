@@ -1,14 +1,14 @@
 .page {
-  min-height: 100vh;
   background-image: url('/images/background.webp');
   background-size: cover;
   background-position: center;
-  overflow: hidden;
+  background-attachment: fixed;
+  overflow-y: auto;
   position: relative;
 }
 
 .contentWrapper {
-  padding-bottom: 4rem; /* pb-16 */
+  margin-bottom: 4rem;
 }
 
 .container {

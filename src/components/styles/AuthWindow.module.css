@@ -5,93 +5,121 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5); /* bg-black/50 */
-  padding: 1rem; /* p-4 */
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(30px); /* Матовое стекло */
+  padding: 1rem;
 }
 
 .modal {
-  background-color: white; /* bg-white */
-  border-radius: 0.5rem; /* rounded-lg */
+  background-color: rgba(20, 20, 20, 0.8); /* Темный фон */
+  border: 1px solid #ffffff10;
+  border-radius: 10px;
   width: 100%;
-  max-width: 28rem; /* max-w-md */
-  padding: 1.5rem; /* p-6 */
+  max-width: 28rem;
+  padding: 1.5rem;
+  color: #ffffff;
 }
 
 .title {
-  font-size: 1.5rem; /* text-2xl */
-  font-weight: 700; /* font-bold */
-  margin-bottom: 1.5rem; /* mb-6 */
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  text-align: center;
 }
 
 .error {
-  margin-bottom: 1rem; /* mb-4 */
-  padding: 0.75rem; /* p-3 */
-  background-color: #fee2e2; /* bg-red-50 */
-  color: #b91c1c; /* text-red-700 */
-  border-radius: 0.5rem; /* rounded-lg */
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: rgba(185, 28, 28, 0.1); /* Темно-красный прозрачный */
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .form {
-  /* нет дополнительных стилей */
+  /* стили контейнера формы */
 }
 
 .field {
-  margin-bottom: 1rem; /* mb-4 */
+  margin-bottom: 1rem;
 }
 
 .label {
   display: block;
-  font-size: 16px; /* text-sm */
-  font-weight: 500; /* font-medium */
-  margin-bottom: 0.5rem; /* mb-2 */
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #ffffffb6;
 }
 
+/* Обновленный стиль инпута */
 .input {
-  width: 100%; /* w-full */
-  padding: 0.5rem 1rem; /* px-4 py-2 */
-  border: 1px solid #d1d5db; /* border */
-  border-radius: 0.5rem; /* rounded-lg */
+  width: 100%;
+  padding: 0 1rem; /* Горизонтальные отступы */
+  border: 1px solid #ffffff10;
+  background-color: #ffffff02;
+  border-radius: 10px;
+  height: 44px; /* Фиксированная высота */
+  color: #ffffff;
   outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .input:focus {
-  box-shadow: 0 0 0 2px #3b82f6; /* focus:ring-2 focus:ring-blue-500 */
-  border-color: transparent; /* focus:border-transparent */
+  border: 1px solid #ffffff20;
+}
+
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .passwordField {
-  margin-bottom: 1.5rem; /* mb-6 */
+  margin-bottom: 1.5rem;
 }
 
 .buttons {
   display: flex;
-  justify-content: flex-end; /* justify-end */
-  gap: 0.75rem; /* gap-3 */
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
 }
 
-.buttonCancel {
-  padding: 0.5rem 1rem; /* px-4 py-2 */
-  color: #4b5563; /* text-gray-600 */
-  border-radius: 0.5rem; /* rounded-lg */
-  transition: background-color 0.2s;
-}
-
-.buttonCancel:hover {
-  background-color: #f3f4f6; /* hover:bg-gray-100 */
-}
-
+/* Общий стиль для кнопок (27px) */
+.buttonCancel,
 .buttonSubmit {
-  padding: 0.5rem 1rem; /* px-4 py-2 */
-  background-color: #3b82f6; /* bg-blue-500 */
-  color: white; /* text-white */
-  border-radius: 0.5rem; /* rounded-lg */
-  transition: background-color 0.2s;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #ffffffb6;
+  cursor: pointer;
+  transition: all 0.2s;
+  height: 27px; /* Фиксированная высота */
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0 1rem;
 }
 
+.buttonCancel:hover,
 .buttonSubmit:hover:not(:disabled) {
-  background-color: #2563eb; /* hover:bg-blue-600 */
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Опционально: выделить кнопку Submit более ярким текстом */
+.buttonSubmit {
+  color: #ffffff;
 }
 
 .buttonSubmit:disabled {
-  opacity: 0.5; /* disabled:opacity-50 */
+  opacity: 0.5;
+  cursor: not-allowed;
 }
