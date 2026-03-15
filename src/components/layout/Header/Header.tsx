@@ -37,25 +37,23 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const handleLogoutConfirm = async () => {
-    const { signOut } = await import('next-auth/react');
-    await signOut({ redirect: false });
-    window.location.reload();
+    // Выход происходит внутри LogoutWindow, здесь только закрываем окно
     setShowLogoutWindow(false);
   };
 
   const handleAuthSuccess = () => {
     setShowAuthWindow(false);
-    window.dispatchEvent(new CustomEvent('contentUpdated'));
+    // Больше не диспатчим событие
   };
 
   const handlePostAdded = async () => {
     setLocalShowPostModal(false);
-    window.dispatchEvent(new CustomEvent('contentUpdated'));
+    // Больше не диспатчим событие
   };
 
   const handleTaskAdded = async () => {
     setLocalShowTaskModal(false);
-    window.dispatchEvent(new CustomEvent('contentUpdated'));
+    // Больше не диспатчим событие
   };
 
   const postIcon = pathname === '/' 
@@ -147,17 +145,17 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Модальные окна */}
       {showAuthWindow && (
-        <AuthWindow onClose={() => setShowAuthWindow(false)} onSuccess={handleAuthSuccess} />
+        <AuthWindow onClose={() => setShowAuthWindow(false)} />
       )}
       {showLogoutWindow && (
-        <LogoutWindow onClose={() => setShowLogoutWindow(false)} onConfirm={handleLogoutConfirm} />
+        <LogoutWindow onClose={() => setShowLogoutWindow(false)} />
       )}
       {/* Локальные модалки (для страниц без календаря) */}
       {!onOpenPostModal && localShowPostModal && (
-        <PostAddWindow onClose={() => setLocalShowPostModal(false)} onPostAdded={handlePostAdded} />
+        <PostAddWindow onClose={() => setLocalShowPostModal(false)} />
       )}
       {!onOpenTaskModal && localShowTaskModal && (
-        <TaskAddWindow onClose={() => setLocalShowTaskModal(false)} onTaskAdded={handleTaskAdded} />
+        <TaskAddWindow onClose={() => setLocalShowTaskModal(false)} />
       )}
     </>
   );

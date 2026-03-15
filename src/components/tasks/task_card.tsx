@@ -7,7 +7,6 @@ import styles from '../styles/TaskCard.module.css';
 
 interface TaskCardProps {
   task: Task;
-  onTaskUpdate: () => Promise<void>;
 }
 
 const getPriorityClass = (priority: number): string => {
@@ -48,7 +47,7 @@ const formatDate = (dateString: string) => {
   });
 };
 
-export const TaskCard = ({ task, onTaskUpdate }: TaskCardProps) => {
+export const TaskCard = ({ task }: TaskCardProps) => {
   const priorityClass = getPriorityClass(task.priority);
   const statusClass = getStatusClass(task.task_status);
 
@@ -121,7 +120,7 @@ export const TaskCard = ({ task, onTaskUpdate }: TaskCardProps) => {
       )}
 
       <div className={styles.footer}>
-        <TaskDetailsButton task={task} onTaskUpdate={onTaskUpdate} />
+        <TaskDetailsButton task={task} />
       </div>
     </div>
   );

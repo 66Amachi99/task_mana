@@ -1,6 +1,16 @@
 'use client';
 
 import { SessionProvider } from "next-auth/react";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -8,7 +18,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       refetchInterval={0} 
       refetchOnWindowFocus={false}
     >
-      {children}
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
     </SessionProvider>
   );
 }

@@ -7,6 +7,7 @@ import { Search, X } from 'lucide-react';
 import { DatePicker } from '../ui/date_picker';
 import styles from '../styles/PostAddWindow.module.css';
 import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
+import { useCreatePost } from '@/hooks/usePosts'; // <-- импорт мутации
 
 interface User {
   user_id: number;
@@ -26,7 +27,7 @@ interface Tag {
 
 interface PostAddWindowProps {
   onClose: () => void;
-  onPostAdded: () => Promise<void>;
+  // onPostAdded больше не нужен
   initialDate?: Date;
 }
 
@@ -39,7 +40,7 @@ const TASK_ITEMS = [
   { id: 'post_needs_mini_gallery', label: 'Мини-фотогалерея' },
 ];
 
-export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWindowProps) => {
+export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
   const router = useRouter();
   const { user: currentUser } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,6 +78,8 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
   const [taskStates, setTaskStates] = useState(() => 
     TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean)
   );
+
+  const createPost = useCreatePost(); // мутация
 
   useEffect(() => {
     setTaskStates(TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean));
@@ -256,25 +259,15 @@ export const PostAddWindow = ({ onClose, onPostAdded, initialDate }: PostAddWind
     setError(null);
 
     try {
-      const response = await fetch('/api/posts/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          post_deadline: deadline.toISOString(),
-          post_description: formData.post_description || null,
-          tz_link: formData.tz_link || null,
-          responsible_person_id: formData.responsible_person_id || null,
-          tag_ids: selectedTags.map(t => t.tag_id),
-        }),
+      await createPost.mutateAsync({
+        ...formData,
+        post_deadline: deadline.toISOString(),
+        post_description: formData.post_description || null,
+        tz_link: formData.tz_link || null,
+        responsible_person_id: formData.responsible_person_id || null,
+        tag_ids: selectedTags.map(t => t.tag_id),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка при создании поста');
-      }
-
-      await onPostAdded();
+      onClose(); // закрываем окно после успеха
     } catch (error) {
       console.error('Ошибка при создании поста:', error);
       setError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');

@@ -8,10 +8,9 @@ import styles from '../styles/PostList.module.css';
 
 interface TaskDetailsButtonProps {
   task: Task;
-  onTaskUpdate: () => Promise<void>;
 }
 
-export const TaskDetailsButton = ({ task, onTaskUpdate }: TaskDetailsButtonProps) => {
+export const TaskDetailsButton = ({ task }: TaskDetailsButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpen = () => {
@@ -20,11 +19,6 @@ export const TaskDetailsButton = ({ task, onTaskUpdate }: TaskDetailsButtonProps
 
   const handleClose = () => {
     setIsOpen(false);
-  };
-
-  const handleSuccess = async () => {
-    await onTaskUpdate();
-    handleClose();
   };
 
   return (
@@ -41,7 +35,6 @@ export const TaskDetailsButton = ({ task, onTaskUpdate }: TaskDetailsButtonProps
         <TaskDetailsWindow
           task={task}
           onClose={handleClose}
-          onSuccess={handleSuccess}
         />
       )}
     </>

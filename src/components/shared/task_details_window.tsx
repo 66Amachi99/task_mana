@@ -6,13 +6,14 @@ import { useUser } from '@/hooks/use-roles';
 import { Task } from '../../../types/task';
 import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
 import { DatePicker } from '../ui/date_picker';
+import { useUpdateTask, usePatchTask, useDeleteTask } from '@/hooks/useTasks';
 import styles from '../styles/TaskDetailsWindow.module.css';
 
 // --- ИНТЕРФЕЙСЫ ---
 interface TaskDetailsWindowProps {
   onClose: () => void;
   task: Task | null;
-  onSuccess: () => Promise<void>;
+  // onSuccess удалён
 }
 
 interface Tag {
@@ -121,16 +122,7 @@ const CustomSelect = ({ value, options, onChange, disabled }: {
   );
 };
 
-const isUrl = (str: string): boolean => {
-  try {
-    new URL(str);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-// --- КОМПОНЕНТЫ-ПОМОЩНИКИ (TagSelector, AssigneesSelector без изменений) ---
+// --- КОМПОНЕНТЫ-ПОМОЩНИКИ ---
 const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
   selectedTags: Tag[];
   availableTags: Tag[];
@@ -295,7 +287,7 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
 };
 
 // --- ГЛАВНЫЙ КОМПОНЕНТ ---
-export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindowProps) => {
+export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => {
   const { user } = useUser();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -309,6 +301,10 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
   
   const [formData, setFormData] = useState<FormData | null>(null);
   const [initialData, setInitialData] = useState<FormData | null>(null);
+
+  const updateTask = useUpdateTask();
+  const patchTask = usePatchTask();
+  const deleteTask = useDeleteTask();
 
   const canDelete = user?.admin_role || task?.created_by_id === user?.id;
 
@@ -344,7 +340,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
     const state: FormData = {
       title: task.title || '',
       description: task.description || '',
-      start_time: task.start_time, // оставляем строку, как приходит
+      start_time: task.start_time,
       end_time: task.end_time,
       all_day: task.all_day || false,
       priority: task.priority || 0,
@@ -357,12 +353,10 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
     setInitialData(state);
   }, [task, users, isLoading.data]);
 
-  // Обработчики для дат с использованием DatePicker
   const handleStartDateChange = (date: Date) => {
     if (!formData) return;
-    const newStart = date.toISOString(); // полная ISO строка
+    const newStart = date.toISOString();
     handleChange('start_time', newStart);
-    // Если окончание стало раньше нового начала, подтягиваем окончание
     if (new Date(formData.end_time) < date) {
       handleChange('end_time', newStart);
     }
@@ -371,7 +365,6 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
   const handleEndDateChange = (date: Date) => {
     if (!formData) return;
     const newEnd = date.toISOString();
-    // minDate не даст выбрать раньше, но на всякий случай проверяем
     if (date < new Date(formData.start_time)) return;
     handleChange('end_time', newEnd);
   };
@@ -429,21 +422,12 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
     
     setIsSavingCompleted(true);
     try {
-      const response = await fetch('/api/tasks/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          taskId: task.task_id,
-          completed_task: completedTaskInput.trim() || null,
-        }),
+      await patchTask.mutateAsync({
+        taskId: task.task_id,
+        completed_task: completedTaskInput.trim() || undefined,
       });
-
-      if (!response.ok) throw new Error('Ошибка сохранения');
-      
       setSavedCompletedTask(completedTaskInput);
-      await onSuccess();
       onClose();
-      
     } catch (error) {
       console.error('Ошибка сохранения результата:', error);
       alert('Не удалось сохранить результат выполнения');
@@ -464,28 +448,20 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
 
     setIsLoading(prev => ({ ...prev, action: true }));
     try {
-      const response = await fetch('/api/tasks/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          taskId: task.task_id,
-          data: {
-            title: formData.title,
-            description: formData.description || null,
-            start_time: new Date(formData.start_time).toISOString(),
-            end_time: new Date(formData.end_time).toISOString(),
-            all_day: formData.all_day,
-            priority: Number(formData.priority),
-            task_status: formData.task_status,
-            assignee_ids: formData.assignees.map(a => a.user_id),
-            tag_ids: formData.tags.map(t => t.tag_id),
-          },
-        }),
+      await updateTask.mutateAsync({
+        taskId: task.task_id,
+        data: {
+          title: formData.title,
+          description: formData.description || null,
+          start_time: new Date(formData.start_time).toISOString(),
+          end_time: new Date(formData.end_time).toISOString(),
+          all_day: formData.all_day,
+          priority: Number(formData.priority),
+          task_status: formData.task_status,
+          assignee_ids: formData.assignees.map(a => a.user_id),
+          tag_ids: formData.tags.map(t => t.tag_id),
+        },
       });
-
-      if (!response.ok) throw new Error((await response.json()).error || 'Ошибка обновления');
-      
-      await onSuccess();
       onClose();
       setInitialData(formData);
       setIsEditing(false);
@@ -501,11 +477,8 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
     
     setIsLoading(prev => ({ ...prev, action: true }));
     try {
-      const res = await fetch(`/api/tasks/delete?id=${task.task_id}`, { method: 'DELETE' });
-      if (res.ok) {
-        await onSuccess();
-        onClose();
-      }
+      await deleteTask.mutateAsync(task.task_id);
+      onClose();
     } catch (err) {
       console.error('Ошибка удаления:', err);
       setIsLoading(prev => ({ ...prev, action: false }));
@@ -580,7 +553,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               )}
             </div>
 
-            {/* Теги (без изменений) */}
+            {/* Теги */}
             {isEditing ? (
               <TagSelector
                 selectedTags={formData.tags}
@@ -603,7 +576,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               </div>
             )}
 
-            {/* Описание (без изменений) */}
+            {/* Описание */}
             <div>
               {isEditing ? (
                 <AutoResizeTextarea
@@ -624,10 +597,9 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               )}
             </div>
 
-            {/* Даты с новым DatePicker */}
+            {/* Даты */}
             <div className={styles.datesGrid}>
               <div className={styles.dateItem}>
-                {/* <h4 className={styles.dateLabel}>Начало</h4> */}
                 {isEditing ? (
                   <DatePicker
                     value={new Date(formData.start_time)}
@@ -644,7 +616,6 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
                 )}
               </div>
               <div className={styles.dateItem}>
-                {/* <h4 className={styles.dateLabel}>Окончание</h4> */}
                 {isEditing ? (
                   <DatePicker
                     value={new Date(formData.end_time)}
@@ -663,7 +634,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               </div>
             </div>
 
-            {/* Весь день (только в редактировании) */}
+            {/* Весь день */}
             {isEditing && (
               <div className={styles.allDayCheckbox}>
                 <input
@@ -679,7 +650,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               </div>
             )}
 
-            {/* Исполнители (без изменений) */}
+            {/* Исполнители */}
             <div>
               <div className={styles.assigneesSectionHeader}>
                 <Users className="w-4 h-4" />
@@ -706,10 +677,8 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               )}
             </div>
 
-            {/* Результат выполнения (без изменений) */}
+            {/* Результат выполнения */}
             <div className={styles.resultSection}>
-              {/* <h4 className={styles.resultTitle}>Результат выполнения</h4> */}
-              
               <AutoResizeTextarea
                 value={completedTaskInput}
                 onChange={(e) => setCompletedTaskInput(e.target.value)}
@@ -717,28 +686,6 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
                 disabled={isSavingCompleted}
                 className={styles.resultTextarea}
               />
-              
-              {/* {savedCompletedTask && (
-                <div className={styles.savedResult}>
-                  <div className={styles.savedResultContent}>
-                    <div className={styles.savedResultText}>
-                      <CheckCircle className={styles.savedResultIcon} />
-                      <span className={styles.savedResultLink} title={savedCompletedTask}>
-                        Сохраненный результат: {savedCompletedTask}
-                      </span>
-                    </div>
-                    {isUrl(savedCompletedTask) && (
-                      <button
-                        onClick={e => handleLinkClick(savedCompletedTask, e)}
-                        className={styles.openLinkButton}
-                        title="Открыть ссылку"
-                      >
-                        <ExternalLink className="w-4 h-4" /> Открыть
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )} */}
               
               {hasCompletedChanges && (
                 <div className={styles.saveResultButtonContainer}>
@@ -756,7 +703,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
           </div>
         </div>
 
-        {/* ФУТЕР (без изменений) */}
+        {/* ФУТЕР */}
         <div className={styles.footer}>
           <div className={styles.actions}>
             {!isEditing ? (

@@ -8,7 +8,7 @@ import styles from '../styles/PostList.module.css';
 interface PostWithRelations {
   post_id: number;
   post_title: string;
-  post_description: string;
+  post_description: string | null;
   post_status: string;
   is_published: boolean;
   telegram_published?: string | null;
@@ -72,10 +72,9 @@ interface PostWithRelations {
 
 interface PostListProps {
   posts: PostWithRelations[];
-  onPostUpdate: () => Promise<void>;
 }
 
-export function PostList({ posts, onPostUpdate }: PostListProps) {
+export function PostList({ posts }: PostListProps) {
   if (!posts || posts.length === 0) {
     return (
       <div className={styles.emptyContainer}>
@@ -172,17 +171,13 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
     return tasks;
   };
 
-  // Добавим класс для пустого состояния, если его нет в CSS-модуле
-  const emptyContainerClass = styles.emptyContainer || 'text-center py-6 md:py-10';
-  const emptyTextClass = styles.emptyText || 'text-gray-500 text-sm md:text-base';
-
   return (
     <div className={styles.list}>
       {posts.map((post) => {
         const requiredTasks = getRequiredTasks(post);
         const postStatus = post.post_status;
-        const statusColor = getStatusColor(postStatus); // возвращает строку классов (глобальные)
-        
+        const statusColor = getStatusColor(postStatus);
+
         return (
           <div
             key={post.post_id}
@@ -238,8 +233,8 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
                   )}
                 </div>
                 
-                <p className={styles.description} title={post.post_description}>
-                  {post.post_description}
+                <p className={styles.description} title={post.post_description ?? ''}>
+                  {post.post_description ?? 'Нет описания'}
                 </p>
                 
                 <div className={styles.statusRow}>
@@ -293,25 +288,23 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
               <div className={styles.tasksSection}>
                 <h3 className={styles.tasksTitle}>Требуемые задачи:</h3>
                 <div className={styles.tasksGrid}>
-                  {requiredTasks.map((task, index) => {
-                    return (
-                      <div
-                        key={index}
-                        className={styles.taskCard}
-                      >
-                        <div className={styles.taskRow}>
-                          <span className={styles.taskName}>
-                            {task.name}
-                          </span>
-                          <span className={`${styles.taskStatus} ${
-                            task.isCompleted ? styles.taskStatusCompleted : styles.taskStatusPending
-                          }`}>
-                            {task.isCompleted ? 'Выполнено' : 'Ожидает выполнения'}
-                          </span>
-                        </div>
+                  {requiredTasks.map((task, index) => (
+                    <div
+                      key={index}
+                      className={styles.taskCard}
+                    >
+                      <div className={styles.taskRow}>
+                        <span className={styles.taskName}>
+                          {task.name}
+                        </span>
+                        <span className={`${styles.taskStatus} ${
+                          task.isCompleted ? styles.taskStatusCompleted : styles.taskStatusPending
+                        }`}>
+                          {task.isCompleted ? 'Выполнено' : 'Ожидает выполнения'}
+                        </span>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -328,7 +321,7 @@ export function PostList({ posts, onPostUpdate }: PostListProps) {
                 </button>
               )}
               
-              <PostDetailsButton post={post} onPostUpdate={onPostUpdate} />
+              <PostDetailsButton post={post} />
             </div>
           </div>
         );

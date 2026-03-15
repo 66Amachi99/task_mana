@@ -1,18 +1,20 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { PostList } from '../components/posts/PostList';
 import { TaskCard } from '../components/tasks/task_card';
 import { Pagination } from '../components/ui/pagination';
 import { useUser } from '../hooks/use-roles';
 import { Task } from '../../types/task';
 import { Header } from '../components/layout/Header/Header';
+import { usePosts } from '@/hooks/usePosts';
+import { useTasks } from '@/hooks/useTasks';
 import styles from '../components/styles/HomePage.module.css';
 
 interface PostWithRelations {
   post_id: number;
   post_title: string;
-  post_description: string;
+  post_description: string | null;
   post_status: string;
   is_published: boolean;
   tz_link?: string | null;
@@ -46,55 +48,33 @@ type ContentItem = PostWithRelations | Task;
 type ViewMode = 'all' | 'posts' | 'tasks';
 
 export default function HomePage() {
-  const [allPosts, setAllPosts] = useState<PostWithRelations[]>([]);
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
   const { filterPostByRole } = useUser();
 
-  const fetchAllContent = useCallback(async () => {
-    try {
-      setLoading(true);
-      const postsResponse = await fetch(`/api/posts?limit=100`);
-      const postsData = await postsResponse.json();
-      const tasksResponse = await fetch('/api/tasks?limit=100');
-      const tasksData = await tasksResponse.json();
+  const { data: postsData, isLoading: postsLoading } = usePosts(1, 100);
+  const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 100);
 
-      const postsWithDates = (postsData.posts || []).map((post: any) => ({
-        ...post,
-        post_date: post.post_date ? new Date(post.post_date) : null,
-        post_deadline: new Date(post.post_deadline),
-        type: 'post' as const,
-      }));
+  const allPosts = useMemo(() => {
+    return (postsData?.posts || []).map((post) => ({
+      ...post,
+      post_date: post.post_date ? new Date(post.post_date) : null,
+      post_deadline: new Date(post.post_deadline),
+      type: 'post' as const,
+    }));
+  }, [postsData]);
 
-      const tasksWithDates = (tasksData.tasks || []).map((task: any) => ({
-        ...task,
-        type: 'task' as const,
-      }));
+  const allTasks = useMemo(() => {
+    return (tasksData?.tasks || []).map((task) => ({
+      ...task,
+      type: 'task' as const,
+    }));
+  }, [tasksData]);
 
-      setAllPosts(postsWithDates);
-      setAllTasks(tasksWithDates);
-    } catch (error) {
-      console.error('Error fetching content:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAllContent();
-  }, [fetchAllContent]);
-
-  useEffect(() => {
-    const handleContentUpdated = () => fetchAllContent();
-    window.addEventListener('contentUpdated', handleContentUpdated);
-    return () => window.removeEventListener('contentUpdated', handleContentUpdated);
-  }, [fetchAllContent]);
+  const loading = postsLoading || tasksLoading;
 
   const filteredContent = useMemo(() => {
     let filtered: ContentItem[] = [];
@@ -125,11 +105,7 @@ export default function HomePage() {
     return filtered;
   }, [viewMode, selectedRoleFilter, allPosts, allTasks, filterPostByRole]);
 
-  useEffect(() => {
-    const total = Math.ceil(filteredContent.length / itemsPerPage);
-    setTotalPages(total || 1);
-    setCurrentPage(1);
-  }, [filteredContent]);
+  const totalPages = Math.ceil(filteredContent.length / itemsPerPage) || 1;
 
   const currentItems = useMemo(() => {
     return filteredContent.slice(
@@ -169,7 +145,6 @@ export default function HomePage() {
                   <PostList
                     key={`post-${item.post_id}`}
                     posts={[item]}
-                    onPostUpdate={fetchAllContent}
                   />
                 );
               } else {
@@ -177,7 +152,6 @@ export default function HomePage() {
                   <TaskCard
                     key={`task-${item.task_id}`}
                     task={item}
-                    onTaskUpdate={fetchAllContent}
                   />
                 );
               }

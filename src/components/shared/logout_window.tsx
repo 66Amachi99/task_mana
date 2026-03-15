@@ -1,12 +1,21 @@
 'use client';
+import { signOut } from 'next-auth/react';
+import { useQueryClient } from '@tanstack/react-query';
 import styles from '../styles/LogoutWindow.module.css';
 
 interface LogoutWindowProps {
   onClose: () => void;
-  onConfirm: () => void;
 }
 
-export const LogoutWindow = ({ onClose, onConfirm }: LogoutWindowProps) => {
+export const LogoutWindow = ({ onClose }: LogoutWindowProps) => {
+  const queryClient = useQueryClient();
+
+  const handleConfirm = async () => {
+    await signOut({ redirect: false });
+    queryClient.clear(); // сбрасываем кэш после выхода
+    onClose();
+  };
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -27,7 +36,7 @@ export const LogoutWindow = ({ onClose, onConfirm }: LogoutWindowProps) => {
             <button type="button" onClick={onClose} className={styles.buttonCancel}>
               Отмена
             </button>
-            <button type="button" onClick={onConfirm} className={styles.buttonConfirm}>
+            <button type="button" onClick={handleConfirm} className={styles.buttonConfirm}>
               Выйти
             </button>
           </div>

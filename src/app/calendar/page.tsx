@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react'; // добавлен useRef
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Header } from '@/components/layout/Header/Header';
 import { Calendar } from '../../components/calendar/calendar';
 import { PostDetailsWindow } from '@/components/shared/post_details_window';
@@ -14,6 +14,8 @@ import { X } from 'lucide-react';
 import { ru } from 'date-fns/locale';
 import styles from '../../components/styles/CalendarPage.module.css';
 import { ROLE_FILTERS } from '@/hooks/use-roles';
+import { usePosts } from '@/hooks/usePosts';
+import { useTasks } from '@/hooks/useTasks';
 
 // Вспомогательная функция для цвета статусного кружка
 const getStatusDotColor = (item: CalendarItem): string => {
@@ -25,9 +27,6 @@ const getStatusDotColor = (item: CalendarItem): string => {
 };
 
 export default function CalendarPage() {
-  const [posts, setPosts] = useState<CalendarPost[]>([]);
-  const [tasks, setTasks] = useState<CalendarTask[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedItem, setSelectedItem] = useState<{ post?: CalendarPost; task?: CalendarTask } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -47,12 +46,34 @@ export default function CalendarPage() {
   const [showAddPostModal, setShowAddPostModal] = useState(false);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
 
-  const { user, filterPostByRole, canCreateTask } = useUser();
-  const canAddPost = user && (user.admin_role || user.SMM_role);
+  const { user, filterPostByRole } = useUser();
 
   // Refs и состояние для дропдауна ролей в сайдбаре
   const [isSidebarRoleDropdownOpen, setIsSidebarRoleDropdownOpen] = useState(false);
   const sidebarRoleDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Загружаем данные через React Query
+  const { data: postsData, isLoading: postsLoading } = usePosts(1, 100);
+  const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 100);
+
+  // Преобразуем даты для совместимости
+  const posts = useMemo(() => {
+    return (postsData?.posts || []).map((p) => ({
+      ...p,
+      post_date: p.post_date ? new Date(p.post_date) : null,
+      post_deadline: new Date(p.post_deadline),
+      type: 'post' as const,
+    }));
+  }, [postsData]);
+
+  const tasks = useMemo(() => {
+    return (tasksData?.tasks || []).map((t) => ({
+      ...t,
+      type: 'task' as const,
+    }));
+  }, [tasksData]);
+
+  const loading = postsLoading || tasksLoading;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -63,45 +84,6 @@ export default function CalendarPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const fetchAllContent = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [postsRes, tasksRes] = await Promise.all([
-        fetch('/api/posts?limit=100'),
-        fetch('/api/tasks?limit=100')
-      ]);
-
-      const postsData = await postsRes.json();
-      const tasksData = await tasksRes.json();
-
-      setPosts((postsData.posts || []).map((p: any) => ({
-        ...p,
-        post_date: p.post_date ? new Date(p.post_date) : null,
-        post_deadline: new Date(p.post_deadline),
-        type: 'post',
-      })));
-
-      setTasks((tasksData.tasks || []).map((t: any) => ({
-        ...t,
-        type: 'task',
-      })));
-    } catch (error) {
-      console.error('Error fetching content:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAllContent();
-  }, [fetchAllContent]);
-
-  useEffect(() => {
-    const handleUpdate = () => fetchAllContent();
-    window.addEventListener('contentUpdated', handleUpdate);
-    return () => window.removeEventListener('contentUpdated', handleUpdate);
-  }, [fetchAllContent]);
 
   const currentMonth = new Date();
   const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
@@ -400,47 +382,46 @@ export default function CalendarPage() {
                   </button>
 
                   <div className={styles.roleDropdown} ref={sidebarRoleDropdownRef}>
-                  <button
-                    onClick={() => setIsSidebarRoleDropdownOpen(!isSidebarRoleDropdownOpen)}
-                    className={styles.roleDropdownButton}
-                  >
-                    <span className={styles.roleDropdownText}>
-                      <img
-                        src={isSidebarRoleDropdownOpen ? '/icons/filter_on.svg' : '/icons/filter.svg'}
-                        alt="filter"
-                        className={styles.filterIcon}
-                      />
-                    </span>
-                  </button>
-                  {isSidebarRoleDropdownOpen && (
-                    <div className={styles.roleDropdownMenu}>
-                      <button
-                        onClick={() => { setSidebarRoleFilter(null); setIsSidebarRoleDropdownOpen(false); }}
-                        className={`${styles.roleMenuItem} ${!sidebarRoleFilter ? styles.roleMenuItemActive : ''}`}
-                      >
-                        Все посты
-                      </button>
-                      <div className={styles.menuDivider}></div>
-                      {ROLE_FILTERS.map((role) => (
+                    <button
+                      onClick={() => setIsSidebarRoleDropdownOpen(!isSidebarRoleDropdownOpen)}
+                      className={styles.roleDropdownButton}
+                    >
+                      <span className={styles.roleDropdownText}>
+                        <img
+                          src={isSidebarRoleDropdownOpen ? '/icons/filter_on.svg' : '/icons/filter.svg'}
+                          alt="filter"
+                          className={styles.filterIcon}
+                        />
+                      </span>
+                    </button>
+                    {isSidebarRoleDropdownOpen && (
+                      <div className={styles.roleDropdownMenu}>
                         <button
-                          key={role.id}
-                          onClick={() => { setSidebarRoleFilter(role.id); setIsSidebarRoleDropdownOpen(false); }}
-                          className={`${styles.roleMenuItem} ${sidebarRoleFilter === role.id ? styles.roleMenuItemActive : ''}`}
+                          onClick={() => { setSidebarRoleFilter(null); setIsSidebarRoleDropdownOpen(false); }}
+                          className={`${styles.roleMenuItem} ${!sidebarRoleFilter ? styles.roleMenuItemActive : ''}`}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className={styles.roleIcon}>
-                              {role.id === 'smm' && '📹'}
-                              {role.id === 'photographer' && '📷'}
-                              {role.id === 'designer' && '✏️'}
-                            </span>
-                            <span>{role.label}</span>
-                          </div>
+                          Все посты
                         </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
+                        <div className={styles.menuDivider}></div>
+                        {ROLE_FILTERS.map((role) => (
+                          <button
+                            key={role.id}
+                            onClick={() => { setSidebarRoleFilter(role.id); setIsSidebarRoleDropdownOpen(false); }}
+                            className={`${styles.roleMenuItem} ${sidebarRoleFilter === role.id ? styles.roleMenuItemActive : ''}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={styles.roleIcon}>
+                                {role.id === 'smm' && '📹'}
+                                {role.id === 'photographer' && '📷'}
+                                {role.id === 'designer' && '✏️'}
+                              </span>
+                              <span>{role.label}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -462,34 +443,24 @@ export default function CalendarPage() {
         <PostDetailsWindow
           post={selectedItem.post}
           onClose={() => setSelectedItem(null)}
-          onSuccess={fetchAllContent}
         />
       )}
       {selectedItem?.task && (
         <TaskDetailsWindow
           task={selectedItem.task}
           onClose={() => setSelectedItem(null)}
-          onSuccess={fetchAllContent}
         />
       )}
 
       {showAddPostModal && (
         <PostAddWindow
           onClose={() => setShowAddPostModal(false)}
-          onPostAdded={async () => {
-            await fetchAllContent();
-            setShowAddPostModal(false);
-          }}
           initialDate={selectedDate}
         />
       )}
       {showAddTaskModal && (
         <TaskAddWindow
           onClose={() => setShowAddTaskModal(false)}
-          onTaskAdded={async () => {
-            await fetchAllContent();
-            setShowAddTaskModal(false);
-          }}
           initialDate={selectedDate}
         />
       )}

@@ -3,7 +3,7 @@ import { Task } from './task';
 export interface CalendarPost {
   post_id: number;
   post_title: string;
-  post_description: string;
+  post_description: string | null;
   post_status: string;
   is_published: boolean;
   post_deadline: Date;
@@ -65,7 +65,6 @@ export interface DayItems {
   tasks: CalendarTask[];
 }
 
-// Добавляем интерфейс для статистики дня
 export interface DayStats {
   total: number;
   completed: number;
@@ -75,7 +74,6 @@ export interface DayStats {
   tasksCompleted: number;
 }
 
-// Добавляем интерфейс для статистики месяца
 export interface MonthStats {
   postsTotal: number;
   tasksTotal: number;

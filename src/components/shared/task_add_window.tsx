@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/hooks/use-roles';
-import { X, Users } from 'lucide-react';
+import { X } from 'lucide-react';
 import { DatePicker } from '../ui/date_picker';
 import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
+import { useCreateTask } from '@/hooks/useTasks'; // <-- импорт мутации
 import styles from '../styles/TaskAddWindow.module.css';
 
 interface User {
@@ -25,7 +26,7 @@ interface Tag {
 
 interface TaskAddWindowProps {
   onClose: () => void;
-  onTaskAdded: () => Promise<void>;
+  // onTaskAdded больше не нужен, удаляем
   initialDate?: Date;
 }
 
@@ -206,7 +207,7 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
   );
 };
 
-export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWindowProps) => {
+export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -224,6 +225,8 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
     all_day: false,
     priority: '0', // Обычный по умолчанию
   });
+
+  const createTask = useCreateTask(); // мутация
 
   // Массив настроек приоритета для рендера кнопок
   const priorityOptions = [
@@ -302,30 +305,25 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
       setError('Заполните обязательные поля');
       return;
     }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/tasks/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description || null,
-          start_time: startDate.toISOString(),
-          end_time: endDate.toISOString(),
-          all_day: formData.all_day,
-          priority: parseInt(formData.priority),
-          assignee_ids: selectedAssignees.map(a => a.user_id),
-          tag_ids: selectedTags.map(t => t.tag_id),
-        }),
+      await createTask.mutateAsync({
+        title: formData.title,
+        description: formData.description || null,
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
+        all_day: formData.all_day,
+        priority: parseInt(formData.priority),
+        assignee_ids: selectedAssignees.map(a => a.user_id),
+        tag_ids: selectedTags.map(t => t.tag_id),
       });
-
-      if (!response.ok) throw new Error('Ошибка при создании задачи');
-      await onTaskAdded();
+      // После успешного создания просто закрываем окно
       onClose();
     } catch (error: any) {
-      setError(error.message);
+      setError(error.message || 'Ошибка при создании задачи');
       setIsSubmitting(false);
     }
   };

@@ -5,9 +5,10 @@ import { X } from 'lucide-react';
 import { useUser } from '../../hooks/use-roles';
 import { PostDetailsLeftPanel } from './post_details_left_panel';
 import { PostDetailsRightPanel } from './post_details_right_panel';
+import { useUpdatePost, usePatchPost, useDeletePost } from '@/hooks/usePosts';
+import { useAddComment, useUpdateCommentStatus } from '@/hooks/usePosts'; 
 import styles from '../styles/PostDetailsWindow.module.css';
 
-// Конфигурация задач (без изменений)
 export const TASK_CONFIG = [
   { id: 1, name: 'mini_video_smm', label: 'Мини-видео', needsKey: 'post_needs_mini_video_smm', linkKey: 'post_done_link_mini_video_smm', role: 'smm' },
   { id: 2, name: 'video', label: 'Видео', needsKey: 'post_needs_video', linkKey: 'post_done_link_video', role: 'photographer' },
@@ -97,7 +98,6 @@ export interface PostData {
 export interface PostDetailsWindowProps {
   onClose: () => void;
   post: PostData | null;
-  onSuccess: () => Promise<void>;
 }
 
 export const getCommentsForTask = (post: PostData | null, taskTypeId: number): CommentData[] => {
@@ -105,7 +105,7 @@ export const getCommentsForTask = (post: PostData | null, taskTypeId: number): C
   return post.comments.filter(c => c.task_type_id === taskTypeId);
 };
 
-export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindowProps) => {
+export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => {
   const { user, canEditPostTask, canApprove, canPublish } = useUser();
 
   const [tasks, setTasks] = useState<TaskWithComments[]>([]);
@@ -134,6 +134,13 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
   const canDelete = !!(user && (user.admin_role || user.SMM_role));
   const canManageSocial = !!(user && (user.admin_role || user.SMM_role));
 
+  // Мутации
+  const updatePost = useUpdatePost();
+  const patchPost = usePatchPost();
+  const deletePost = useDeletePost();
+  const addComment = useAddComment();      // нужно будет создать
+  const updateCommentStatus = useUpdateCommentStatus(); // нужно будет создать
+
   useEffect(() => {
     if (!post) return;
     const prev = document.body.style.overflow;
@@ -161,6 +168,7 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
     fetchTags();
   }, []);
 
+  // Инициализация состояния из пропса post
   useEffect(() => {
     if (!post) return;
     const tasksWithComments = TASK_CONFIG
@@ -238,6 +246,8 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       setSelectedTags(post.tags || []);
     }
   };
+
+  // Сохранение основных изменений (редактирование полей поста)
   const handleSave = async () => {
     if (!post) return;
     setIsSaving(true);
@@ -250,112 +260,20 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       };
       TASK_CONFIG.forEach(cfg => { updateData[cfg.needsKey] = selectedTasks[cfg.id - 1] || false; });
       updateData.tag_ids = selectedTags.map(t => t.tag_id);
-      const response = await fetch('/api/posts/update', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.post_id, data: updateData }),
-      });
-      if (response.ok) {
-        await refreshPostData();
-        await onSuccess();
-        onClose(); // <-- Закрываем модалку после сохранения
-        setIsEditing(false);
-      } else {
-        const err = await response.json().catch(() => null);
-        alert(err?.error || 'Ошибка сохранения');
-      }
-    } catch (error) { console.error('❌ Ошибка при сохранении:', error); } finally { setIsSaving(false); }
+
+      await updatePost.mutateAsync({ postId: post.post_id, data: updateData });
+      // после успеха закрываем окно
+      onClose();
+    } catch (error) {
+      console.error('❌ Ошибка при сохранении:', error);
+      alert(error instanceof Error ? error.message : 'Ошибка сохранения');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const refreshPostData = useCallback(async () => {
-    if (!post?.post_id) return;
-    try {
-      const response = await fetch(`/api/posts?id=${post.post_id}`);
-      if (response.ok) {
-        const data = await response.json();
-        const updatedPost = data.posts[0];
-        if (updatedPost) {
-          const updatedTasks = TASK_CONFIG
-            .filter(cfg => updatedPost[cfg.needsKey] as boolean)
-            .map(cfg => ({
-              id: cfg.id,
-              name: cfg.name,
-              label: cfg.label,
-              link: (updatedPost[cfg.linkKey] as string) || '',
-              required: true,
-              role: cfg.role,
-              linkKey: cfg.linkKey,
-              comments: getCommentsForTask(updatedPost, cfg.id),
-              newCommentText: '',
-            }));
-          setTasks(updatedTasks);
-          setOriginalTasks(updatedTasks.map(t => ({ ...t, comments: [...t.comments] })));
-          setSocialLinks({
-            telegram: updatedPost.telegram_published || '',
-            vkontakte: updatedPost.vkontakte_published || '',
-            max: updatedPost.MAX_published || '',
-          });
-          setOriginalSocialLinks({ ...socialLinks });
-          setEditedDeadline(updatedPost.post_deadline ? new Date(updatedPost.post_deadline) : null);
-        }
-      }
-    } catch (error) { console.error('Ошибка при обновлении данных:', error); }
-  }, [post?.post_id]);
-
-  const handleLinkChange = useCallback((id: number, value: string) => {
-    setTasks(prev => prev.map(t => (t.id === id ? { ...t, link: value } : t)));
-  }, []);
-  const handleNewCommentChange = useCallback((id: number, value: string) => {
-    setTasks(prev => prev.map(t => (t.id === id ? { ...t, newCommentText: value } : t)));
-  }, []);
-  const handleCommentStatusChange = useCallback((commentId: number, newStatus: string) => {
-    setTasks(prev => prev.map(t => ({
-      ...t,
-      comments: t.comments.map(c => (c.id === commentId ? { ...c, status: newStatus } : c)),
-    })));
-  }, []);
-
-  const handleAddComment = useCallback(async (taskId: number) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || !task.newCommentText.trim()) return;
-
-    try {
-      const response = await fetch('/api/posts/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          postId: post?.post_id,
-          taskTypeId: taskId,
-          text: task.newCommentText,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Ошибка при добавлении комментария');
-      }
-
-      const newComment = await response.json();
-
-      setTasks(prev => prev.map(t => {
-        if (t.id !== taskId) return t;
-        return {
-          ...t,
-          comments: [...t.comments, { ...newComment, id: newComment.id }],
-          newCommentText: '',
-        };
-      }));
-
-    } catch (error) {
-      console.error('Ошибка при добавлении комментария:', error);
-      alert('Не удалось добавить комментарий');
-    }
-  }, [tasks, post?.post_id]);
-
-  const handleSocialLinkChange = useCallback((social: string, value: string) => {
-    setSocialLinks(prev => ({ ...prev, [social]: value }));
-  }, []);
-
-  const handleSaveChanges = useCallback(async () => {
+  // Сохранение изменений ссылок и соцсетей (кнопка "Сохранить изменения")
+  const handleSaveChanges = async () => {
     if (!post) return;
     setIsSaving(true);
     try {
@@ -365,47 +283,87 @@ export const PostDetailsWindow = ({ onClose, post, onSuccess }: PostDetailsWindo
       data.vkontakte_published = socialLinks.vkontakte?.trim() || null;
       data.MAX_published = socialLinks.max?.trim() || null;
       if (editedDeadline) data.post_deadline = editedDeadline.toISOString();
-      const res = await fetch('/api/posts/update', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.post_id, data }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => null);
-        alert(err?.error || 'Ошибка сохранения');
-        return;
-      }
-      await refreshPostData();
-      await onSuccess();
-      onClose(); // <-- Закрываем модалку после сохранения
-    } catch (e) { console.error('Ошибка:', e); } finally { setIsSaving(false); }
-  }, [post, tasks, socialLinks, editedDeadline, refreshPostData, onSuccess, onClose]);
 
-  const handleAction = useCallback(async (action: string, confirmMsg?: string) => {
+      await updatePost.mutateAsync({ postId: post.post_id, data });
+      onClose();
+    } catch (e) {
+      console.error('Ошибка:', e);
+      alert(e instanceof Error ? e.message : 'Ошибка сохранения');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Обработка действий (approve, publish, unpublish)
+  const handleAction = async (action: string, confirmMsg?: string) => {
     if (!post) return;
     if (confirmMsg && !window.confirm(confirmMsg)) return;
     setIsActionLoading(true);
     try {
-      const isDelete = action === 'delete';
-      const response = await fetch(
-        isDelete ? `/api/posts/delete?id=${post.post_id}` : '/api/posts/update',
-        isDelete
-          ? { method: 'DELETE' }
-          : { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: post.post_id, action }) }
-      );
-      if (response.ok) {
-        if (action !== 'delete') {
-          await refreshPostData();
-          await onSuccess();
-        } else {
-          await onSuccess();
-          onClose();
-        }
+      if (action === 'delete') {
+        await deletePost.mutateAsync(post.post_id);
+        onClose();
       } else {
-        const error = await response.json();
-        alert(error.error || 'Ошибка');
+        await patchPost.mutateAsync({ postId: post.post_id, action });
+        onClose(); // закрываем после действия
       }
-    } catch (error) { console.error('Ошибка:', error); } finally { setIsActionLoading(false); }
-  }, [post, onSuccess, onClose, refreshPostData]);
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert(error instanceof Error ? error.message : 'Ошибка');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Обработчики для комментариев
+  const handleLinkChange = useCallback((id: number, value: string) => {
+    setTasks(prev => prev.map(t => (t.id === id ? { ...t, link: value } : t)));
+  }, []);
+
+  const handleNewCommentChange = useCallback((id: number, value: string) => {
+    setTasks(prev => prev.map(t => (t.id === id ? { ...t, newCommentText: value } : t)));
+  }, []);
+
+  const handleAddComment = useCallback(async (taskId: number) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || !task.newCommentText.trim() || !post) return;
+
+    try {
+      const newComment = await addComment.mutateAsync({
+        postId: post.post_id,
+        taskTypeId: taskId,
+        text: task.newCommentText,
+      });
+
+      setTasks(prev => prev.map(t => {
+        if (t.id !== taskId) return t;
+        return {
+          ...t,
+          comments: [...t.comments, newComment],
+          newCommentText: '',
+        };
+      }));
+    } catch (error) {
+      console.error('Ошибка при добавлении комментария:', error);
+      alert('Не удалось добавить комментарий');
+    }
+  }, [tasks, post, addComment]);
+
+  const handleCommentStatusChange = useCallback(async (commentId: number, newStatus: string) => {
+    try {
+      await updateCommentStatus.mutateAsync({ commentId, status: newStatus });
+      setTasks(prev => prev.map(t => ({
+        ...t,
+        comments: t.comments.map(c => (c.id === commentId ? { ...c, status: newStatus } : c)),
+      })));
+    } catch (error) {
+      console.error('Ошибка при обновлении статуса комментария:', error);
+    }
+  }, [updateCommentStatus]);
+
+  const handleSocialLinkChange = useCallback((social: string, value: string) => {
+    setSocialLinks(prev => ({ ...prev, [social]: value }));
+  }, []);
 
   if (!post) return null;
 

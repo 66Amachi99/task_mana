@@ -8,7 +8,7 @@ import styles from '../styles/PostList.module.css';
 interface PostData {
   post_id: number;
   post_title: string;
-  post_description: string;
+  post_description: string | null;
   post_status: string;
   is_published: boolean;
   telegram_published?: string | null;
@@ -72,10 +72,9 @@ interface PostData {
 
 interface PostDetailsButtonProps {
   post: PostData;
-  onPostUpdate: () => Promise<void>;
 }
 
-export const PostDetailsButton = ({ post, onPostUpdate }: PostDetailsButtonProps) => {
+export const PostDetailsButton = ({ post }: PostDetailsButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpen = () => {
@@ -84,11 +83,6 @@ export const PostDetailsButton = ({ post, onPostUpdate }: PostDetailsButtonProps
 
   const handleClose = () => {
     setIsOpen(false);
-  };
-
-  const handleSuccess = async () => {
-    await onPostUpdate();
-    handleClose();
   };
 
   return (
@@ -105,7 +99,6 @@ export const PostDetailsButton = ({ post, onPostUpdate }: PostDetailsButtonProps
         <PostDetailsWindow
           post={post}
           onClose={handleClose}
-          onSuccess={handleSuccess}
         />
       )}
     </>
