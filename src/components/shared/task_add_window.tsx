@@ -351,17 +351,19 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
             className={styles.input}
             placeholder="Что нужно сделать?"
             required
-          />
+          />  
 
           <div className={styles.fieldGroup}>
-            <AutoResizeTextarea
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Описание..."
-              disabled={isSubmitting}
-              className={styles.autoTextarea}
-            />
+            <TagSelector selectedTags={selectedTags} availableTags={tags} onChange={setSelectedTags} onCreate={handleCreateTag} disabled={isSubmitting} />
           </div>
+
+          <AutoResizeTextarea
+            value={formData.description}
+            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            placeholder="Описание..."
+            disabled={isSubmitting}
+            className={styles.autoTextarea}
+          />
 
           <div>
             <div className={styles.datesGrid}>
@@ -399,10 +401,6 @@ export const TaskAddWindow = ({ onClose, onTaskAdded, initialDate }: TaskAddWind
 
           <div className={styles.fieldGroup}>
             <AssigneesSelector selectedUsers={selectedAssignees} users={users} onChange={setSelectedAssignees} disabled={isSubmitting || loadingUsers} />
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <TagSelector selectedTags={selectedTags} availableTags={tags} onChange={setSelectedTags} onCreate={handleCreateTag} disabled={isSubmitting} />
           </div>
 
           <div className={styles.actions}>

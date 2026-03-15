@@ -78,6 +78,49 @@ const useOutsideClick = (callback: () => void) => {
   return ref;
 };
 
+// Компонент кастомного селекта
+const CustomSelect = ({ value, options, onChange, disabled }: {
+  value: string | number;
+  options: { value: string | number; label: string; className?: string }[];
+  onChange: (value: string | number) => void;
+  disabled?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useOutsideClick(() => setIsOpen(false));
+
+  const selectedOption = options.find(opt => opt.value === value);
+
+  return (
+    <div className={styles.customSelect} ref={ref}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={styles.customSelectButton}
+      >
+        {selectedOption?.label}
+        <svg className={`${styles.customSelectArrow} ${isOpen ? styles.open : ''}`} width="12" height="8" viewBox="0 0 12 8" fill="none">
+          <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      {isOpen && (
+        <div className={styles.customSelectDropdown}>
+          {options.map(opt => (
+            <button
+              key={String(opt.value)}
+              type="button"
+              onClick={() => { onChange(opt.value); setIsOpen(false); }}
+              className={`${styles.customSelectOption} ${opt.className || ''}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const isUrl = (str: string): boolean => {
   try {
     new URL(str);
@@ -146,7 +189,7 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
         />
       </div>
       {isOpen && (
-        <div className={styles.tagSelectorDropdown}>
+        <div className={`${styles.tagSelectorDropdown} no-scrollbar`}>
           {filtered.length > 0 ? (
             filtered.map(tag => (
               <div
@@ -181,8 +224,8 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   const [search, setSearch] = useState('');
   const ref = useOutsideClick(() => setIsOpen(false));
 
-  const filtered = users.filter(u => 
-    u.user_login.toLowerCase().includes(search.toLowerCase()) && 
+  const filtered = users.filter(u =>
+    u.user_login.toLowerCase().includes(search.toLowerCase()) &&
     !selectedUsers.some(selected => selected.user_id === u.user_id)
   );
 
@@ -197,34 +240,34 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
 
   return (
     <div className={styles.assigneesSelector} ref={ref}>
-      {selectedUsers.length > 0 && (
-        <div className={styles.selectedAssignees}>
-          {selectedUsers.map(user => (
-            <span key={user.user_id} className={styles.assigneeChip}>
-              {user.user_login}
-              <button
-                type="button"
-                onClick={() => handleRemove(user.user_id)}
-                disabled={disabled}
-                className={styles.assigneeChipRemove}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      
-      <input
-        type="text"
-        value={search}
-        onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
-        onFocus={() => setIsOpen(true)}
-        placeholder="Поиск исполнителей..."
-        disabled={disabled}
-        className={styles.assigneeSearchInput}
-      />
-      
+      <div className={styles.tagSelectorInputContainer}>
+        {selectedUsers.map(user => (
+          <span
+            key={user.user_id}
+            className={styles.assigneeChip}
+          >
+            {user.user_login}
+            <button
+              type="button"
+              onClick={() => handleRemove(user.user_id)}
+              disabled={disabled}
+              className={styles.assigneeChipRemove}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={search}
+          onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
+          onFocus={() => setIsOpen(true)}
+          placeholder="Поиск исполнителей..."
+          disabled={disabled}
+          className={styles.assigneeSearchInput}
+        />
+      </div>
+
       {isOpen && filtered.length > 0 && (
         <div className={styles.assigneeDropdown}>
           {filtered.map(user => (
@@ -477,7 +520,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContainer} onClick={e => e.stopPropagation()}>
+      <div className={`${styles.modalContainer} no-scrollbar`} onClick={e => e.stopPropagation()}>
         
         {/* ХЕДЕР */}
         <div className={styles.header}>
@@ -500,30 +543,30 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
         </div>
 
         {/* ОСНОВНОЙ КОНТЕНТ */}
-        <div className={styles.content}>
+        <div className={`${styles.content} no-scrollbar`}>
           <div className={styles.contentInner}>
             
-            {/* Статус и приоритет (без изменений) */}
+            {/* Статус и приоритет */}
             <div className={styles.statusPriority}>
               {isEditing ? (
                 <>
-                  <select
+                  <CustomSelect
                     value={formData.task_status}
-                    onChange={e => handleChange('task_status', e.target.value)}
-                    className={styles.select}
-                  >
-                    {Object.keys(STATUS_CLASSES).map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <select
+                    onChange={(val) => handleChange('task_status', val as string)}
+                    options={Object.keys(STATUS_CLASSES).map(s => ({ value: s, label: s }))}
+                    disabled={isLoading.action}
+                  />
+                  <CustomSelect
                     value={formData.priority}
-                    onChange={e => handleChange('priority', Number(e.target.value))}
-                    className={styles.select}
-                  >
-                    <option value="0">Обычный</option>
-                    <option value="1">Низкий</option>
-                    <option value="2">Средний</option>
-                    <option value="3">Высокий</option>
-                  </select>
+                    onChange={(val) => handleChange('priority', Number(val))}
+                    options={[
+                      { value: 0, label: 'Обычный' },
+                      { value: 1, label: 'Низкий' },
+                      { value: 2, label: 'Средний' },
+                      { value: 3, label: 'Высокий' }
+                    ]}
+                    disabled={isLoading.action}
+                  />
                 </>
               ) : (
                 <>
@@ -562,7 +605,6 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
 
             {/* Описание (без изменений) */}
             <div>
-              <h3 className={styles.sectionTitle}>Описание</h3>
               {isEditing ? (
                 <AutoResizeTextarea
                   value={formData.description}
@@ -585,7 +627,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
             {/* Даты с новым DatePicker */}
             <div className={styles.datesGrid}>
               <div className={styles.dateItem}>
-                <h4 className={styles.dateLabel}>Начало</h4>
+                {/* <h4 className={styles.dateLabel}>Начало</h4> */}
                 {isEditing ? (
                   <DatePicker
                     value={new Date(formData.start_time)}
@@ -602,7 +644,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
                 )}
               </div>
               <div className={styles.dateItem}>
-                <h4 className={styles.dateLabel}>Окончание</h4>
+                {/* <h4 className={styles.dateLabel}>Окончание</h4> */}
                 {isEditing ? (
                   <DatePicker
                     value={new Date(formData.end_time)}
@@ -666,7 +708,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
 
             {/* Результат выполнения (без изменений) */}
             <div className={styles.resultSection}>
-              <h4 className={styles.resultTitle}>Результат выполнения</h4>
+              {/* <h4 className={styles.resultTitle}>Результат выполнения</h4> */}
               
               <AutoResizeTextarea
                 value={completedTaskInput}
@@ -676,7 +718,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
                 className={styles.resultTextarea}
               />
               
-              {savedCompletedTask && (
+              {/* {savedCompletedTask && (
                 <div className={styles.savedResult}>
                   <div className={styles.savedResultContent}>
                     <div className={styles.savedResultText}>
@@ -696,7 +738,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
                     )}
                   </div>
                 </div>
-              )}
+              )} */}
               
               {hasCompletedChanges && (
                 <div className={styles.saveResultButtonContainer}>
@@ -744,7 +786,7 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
                   className={`${styles.button} ${hasChanges ? styles.buttonGreen : styles.buttonGray}`}
                 >
                   <Save className="w-4 h-4"/>
-                  {isLoading.action ? 'Сохранение...' : 'Сохранить изменения'}
+                  {isLoading.action ? 'Сохранение...' : 'Сохранить'}
                 </button>
                 <button
                   onClick={() => { 
@@ -759,11 +801,6 @@ export const TaskDetailsWindow = ({ onClose, task, onSuccess }: TaskDetailsWindo
               </>
             )}
           </div>
-          {isEditing && hasChanges && (
-            <span className={styles.changesIndicator}>
-              Есть несохраненные изменения
-            </span>
-          )}
         </div>
 
       </div>

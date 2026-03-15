@@ -33,7 +33,7 @@ export const AutoResizeTextarea = ({
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={`resize-none overflow-hidden ${className}`}
+      className={`resize-none outline-none overflow-hidden ${className}`}
       rows={1}
     />
   );
