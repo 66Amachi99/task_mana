@@ -6,7 +6,7 @@ import { useUser } from '../../hooks/use-roles';
 import { PostDetailsLeftPanel } from './post_details_left_panel';
 import { PostDetailsRightPanel } from './post_details_right_panel';
 import { useUpdatePost, usePatchPost, useDeletePost } from '@/hooks/usePosts';
-import { useAddComment, useUpdateCommentStatus } from '@/hooks/usePosts'; 
+import { useAddComment, useUpdateCommentStatus } from '@/hooks/usePosts';
 import styles from '../styles/PostDetailsWindow.module.css';
 
 export const TASK_CONFIG = [
@@ -138,8 +138,8 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
   const updatePost = useUpdatePost();
   const patchPost = usePatchPost();
   const deletePost = useDeletePost();
-  const addComment = useAddComment();      // нужно будет создать
-  const updateCommentStatus = useUpdateCommentStatus(); // нужно будет создать
+  const addComment = useAddComment();
+  const updateCommentStatus = useUpdateCommentStatus();
 
   useEffect(() => {
     if (!post) return;
@@ -262,8 +262,10 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
       updateData.tag_ids = selectedTags.map(t => t.tag_id);
 
       await updatePost.mutateAsync({ postId: post.post_id, data: updateData });
-      // после успеха закрываем окно
-      onClose();
+      
+      // После успешного сохранения синхронизируем originalTasks с текущими tasks
+      setOriginalTasks(tasks.map(t => ({ ...t, comments: [...t.comments] })));
+      setIsEditing(false);
     } catch (error) {
       console.error('❌ Ошибка при сохранении:', error);
       alert(error instanceof Error ? error.message : 'Ошибка сохранения');
@@ -285,7 +287,9 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
       if (editedDeadline) data.post_deadline = editedDeadline.toISOString();
 
       await updatePost.mutateAsync({ postId: post.post_id, data });
-      onClose();
+      
+      // После успешного сохранения синхронизируем originalTasks с текущими tasks
+      setOriginalTasks(tasks.map(t => ({ ...t, comments: [...t.comments] })));
     } catch (e) {
       console.error('Ошибка:', e);
       alert(e instanceof Error ? e.message : 'Ошибка сохранения');
@@ -302,10 +306,43 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
     try {
       if (action === 'delete') {
         await deletePost.mutateAsync(post.post_id);
-        onClose();
+        onClose(); // при удалении закрываем
       } else {
-        await patchPost.mutateAsync({ postId: post.post_id, action });
-        onClose(); // закрываем после действия
+        const result = await patchPost.mutateAsync({ postId: post.post_id, action });
+        if (result?.post) {
+          const updatedPost = result.post;
+          // Обновляем локальные стейты (аналогично handleSave)
+          setEditedDeadline(updatedPost.post_deadline ? new Date(updatedPost.post_deadline) : null);
+          setEditedTitle(updatedPost.post_title || '');
+          setEditedDescription(updatedPost.post_description || '');
+          setEditedTzLink(updatedPost.tz_link || '');
+          const taskSelection = TASK_CONFIG.map(cfg => (updatedPost[cfg.needsKey] as boolean) || false);
+          setSelectedTasks(taskSelection);
+          setSelectedTags(updatedPost.tags || []);
+          const updatedTasks = TASK_CONFIG
+            .filter(cfg => updatedPost[cfg.needsKey] as boolean)
+            .map(cfg => ({
+              id: cfg.id,
+              name: cfg.name,
+              label: cfg.label,
+              link: (updatedPost[cfg.linkKey] as string) || '',
+              required: true,
+              role: cfg.role,
+              linkKey: cfg.linkKey,
+              comments: getCommentsForTask(updatedPost, cfg.id),
+              newCommentText: '',
+            }));
+          setTasks(updatedTasks);
+          setOriginalTasks(updatedTasks.map(t => ({ ...t, comments: [...t.comments] })));
+
+          const social = {
+            telegram: updatedPost.telegram_published || '',
+            vkontakte: updatedPost.vkontakte_published || '',
+            max: updatedPost.MAX_published || '',
+          };
+          setSocialLinks(social);
+          setOriginalSocialLinks({ ...social });
+        }
       }
     } catch (error) {
       console.error('Ошибка:', error);

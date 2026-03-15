@@ -13,7 +13,6 @@ import styles from '../styles/TaskDetailsWindow.module.css';
 interface TaskDetailsWindowProps {
   onClose: () => void;
   task: Task | null;
-  // onSuccess удалён
 }
 
 interface Tag {
@@ -422,12 +421,16 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
     
     setIsSavingCompleted(true);
     try {
-      await patchTask.mutateAsync({
+      const result = await patchTask.mutateAsync({
         taskId: task.task_id,
         completed_task: completedTaskInput.trim() || undefined,
       });
-      setSavedCompletedTask(completedTaskInput);
-      onClose();
+      if (result?.task) {
+        const updatedTask = result.task;
+        setSavedCompletedTask(updatedTask.completed_task || '');
+        setCompletedTaskInput(updatedTask.completed_task || '');
+        // Обновить formData, если нужно
+      }
     } catch (error) {
       console.error('Ошибка сохранения результата:', error);
       alert('Не удалось сохранить результат выполнения');
@@ -448,7 +451,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
 
     setIsLoading(prev => ({ ...prev, action: true }));
     try {
-      await updateTask.mutateAsync({
+      const result = await updateTask.mutateAsync({
         taskId: task.task_id,
         data: {
           title: formData.title,
@@ -462,9 +465,27 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
           tag_ids: formData.tags.map(t => t.tag_id),
         },
       });
-      onClose();
-      setInitialData(formData);
-      setIsEditing(false);
+      if (result?.task) {
+        const updatedTask = result.task;
+        // Обновляем локальные стейты из updatedTask
+        const assignees = users.filter(u => updatedTask.assignees?.some((a: any) => a.user_id === u.user_id));
+        const newFormData: FormData = {
+          title: updatedTask.title,
+          description: updatedTask.description || '',
+          start_time: updatedTask.start_time,
+          end_time: updatedTask.end_time,
+          all_day: updatedTask.all_day,
+          priority: updatedTask.priority,
+          task_status: updatedTask.task_status,
+          assignees,
+          tags: updatedTask.tags || [],
+        };
+        setFormData(newFormData);
+        setInitialData(newFormData);
+        setSavedCompletedTask(updatedTask.completed_task || '');
+        setCompletedTaskInput(updatedTask.completed_task || '');
+        setIsEditing(false);
+      }
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Неизвестная ошибка');
     } finally {
@@ -478,7 +499,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
     setIsLoading(prev => ({ ...prev, action: true }));
     try {
       await deleteTask.mutateAsync(task.task_id);
-      onClose();
+      onClose(); // при удалении закрываем
     } catch (err) {
       console.error('Ошибка удаления:', err);
       setIsLoading(prev => ({ ...prev, action: false }));
