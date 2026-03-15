@@ -401,8 +401,9 @@
 }
 
 .socialInput:disabled {
-  background-color: #f3f4f6;
+  background-color: transparent;
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Соцсети просмотр */

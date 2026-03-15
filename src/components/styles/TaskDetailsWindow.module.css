@@ -278,6 +278,12 @@
   position: relative;
 }
 
+.tagSelectorInput:disabled {
+  background-color: transparent;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .tagSelectorInputContainer {
   display: flex;
   flex-wrap: wrap;
@@ -358,7 +364,6 @@
 /* AssigneesSelector */
 .assigneesSelector {
   position: relative;
-  height: 44px;
 }
 
 .assigneeChip {

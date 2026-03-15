@@ -339,3 +339,70 @@
 .loadingText {
   color: #6b7280;
 }
+
+/* Дропдаун для фильтра по ролям в сайдбаре */
+.roleDropdown {
+  position: relative;
+  margin-top: 0.5rem;
+}
+
+.roleDropdownButton {
+  display: flex;
+  align-items: center;
+  padding: 0.2rem 0.2rem;
+  border-radius: 999px;
+  border: 1px solid #ffffff10;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  width: fit-content;
+}
+
+.roleDropdownText {
+  max-width: 7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roleDropdownMenu {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.25rem;
+  right: 0; /* для сайдбара удобнее слева */
+  width: 14rem;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  backdrop-filter: blur(2px);
+  border: 1px solid #ffffff10;
+  border-radius: 20px;
+  padding: 0.25rem 0;
+  z-index: 60;
+  overflow: hidden;
+}
+
+.roleMenuItem {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  font-size: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #ffffff;
+}
+
+.roleMenuItem:hover {
+  background-color: #ffffff10;
+}
+
+.menuDivider {
+  height: 1px;
+  background-color: #ffffff10;
+  margin: 0.25rem 0;
+}
+
+.roleIcon {
+  color: #6b7280;
+  font-size: 1rem;
+}
