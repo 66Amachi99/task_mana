@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { Lock, ExternalLink, Circle, CheckCircle, MessageSquare } from 'lucide-react';
+import { Lock, ExternalLink, Circle, CheckCircle, MessageSquare, Trash2 } from 'lucide-react';
 import { TASK_CONFIG, COMMENT_STATUS, TaskWithComments, CommentData } from './post_details_window';
 import { useUser } from '../../hooks/use-roles';
 import styles from '../styles/PostDetailsRightPanel.module.css';
@@ -18,11 +18,11 @@ interface PostDetailsRightPanelProps {
   onNewCommentChange: (id: number, value: string) => void;
   onAddComment: (taskId: number) => Promise<void>;
   onCommentStatusChange: (commentId: number, newStatus: string) => void;
+  onDeleteComment: (commentId: number) => Promise<void>;
   isSaving: boolean;
   isActionLoading: boolean;
 }
 
-// Маленький textarea для комментариев
 const AutoResizeTextarea = ({ value, onChange, placeholder, disabled, className }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -50,7 +50,6 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, disabled, className 
   );
 };
 
-// Большой textarea для текстовой задачи
 const TaskTextarea = ({ value, onChange, placeholder, disabled }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -77,12 +76,14 @@ const TaskTextarea = ({ value, onChange, placeholder, disabled }: {
   );
 };
 
-const CommentItem = ({ comment, onStatusChange, userCanEdit }: {
+const CommentItem = ({ comment, onStatusChange, onDelete, userCanEdit }: {
   comment: CommentData;
   onStatusChange: (commentId: number, newStatus: string) => void;
+  onDelete: (commentId: number) => Promise<void>;
   userCanEdit: boolean;
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -116,13 +117,23 @@ const CommentItem = ({ comment, onStatusChange, userCanEdit }: {
     setIsUpdating(true);
     const newStatus = comment.status === COMMENT_STATUS.RED ? COMMENT_STATUS.YELLOW : COMMENT_STATUS.GREEN;
     try {
-      const response = await fetch('/api/posts/comments', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commentId: comment.id, status: newStatus }),
-      });
-      if (response.ok) onStatusChange(comment.id, newStatus);
-    } catch (error) { console.error('Ошибка:', error); } finally { setIsUpdating(false); }
+      await onStatusChange(comment.id, newStatus);
+    } catch (error) {
+      console.error('Ошибка:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteClick = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(comment.id);
+    } catch (error) {
+      console.error('Ошибка при удалении:', error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -133,25 +144,31 @@ const CommentItem = ({ comment, onStatusChange, userCanEdit }: {
           <p className={styles.commentText}>{comment.text}</p>
           <p className={styles.commentDate}>{formatCommentDate(comment.created_at)}</p>
         </div>
-        {canChangeStatus() && (
-          <button
-            onClick={handleStatusClick}
-            disabled={isUpdating}
-            className={styles.commentStatusButton}
-            title={comment.status === COMMENT_STATUS.RED ? "Отметить как выполненное" : "Подтвердить"}
-          >
-            {isUpdating ? '...' : (comment.status === COMMENT_STATUS.RED ? "✓ Выполнено" : "✓ Подтвердить")}
-          </button>
-        )}
+        <div className={styles.commentActions}>
+          {canChangeStatus() && (
+            <button
+              onClick={handleStatusClick}
+              disabled={isUpdating}
+              className={styles.commentStatusButton}
+              title={comment.status === COMMENT_STATUS.RED ? "Отметить как выполненное" : "Подтвердить"}
+            >
+              {isUpdating ? '...' : (comment.status === COMMENT_STATUS.RED ? "✓ Выполнено" : "✓ Подтвердить")}
+            </button>
+          )}
+          {userCanEdit && (
+            <button
+              onClick={handleDeleteClick}
+              disabled={isDeleting}
+              className={styles.commentDeleteButton}
+              title="Удалить комментарий"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
-};
-
-const pluralizeTasks = (count: number): string => {
-  if (count === 1) return 'задача';
-  if (count >= 2 && count <= 4) return 'задачи';
-  return 'задач';
 };
 
 const normalizeUrl = (url: string): string => {
@@ -168,6 +185,7 @@ export const PostDetailsRightPanel = ({
   onNewCommentChange,
   onAddComment,
   onCommentStatusChange,
+  onDeleteComment,
   isSaving,
   isActionLoading
 }: PostDetailsRightPanelProps) => {
@@ -253,19 +271,7 @@ export const PostDetailsRightPanel = ({
                   </div>
                 )}
 
-                {task.comments.length > 0 && (
-                  <div className={styles.commentsSection}>
-                    {task.comments.map(comment => (
-                      <CommentItem
-                        key={comment.id}
-                        comment={comment}
-                        onStatusChange={onCommentStatusChange}
-                        userCanEdit={userCanEdit}
-                      />
-                    ))}
-                  </div>
-                )}
-
+                {/* Блок добавления комментария - сверху */}
                 {userCanAddComment && (
                   <div className={styles.addCommentSection}>
                     <div className={styles.addCommentRow}>
@@ -290,6 +296,21 @@ export const PostDetailsRightPanel = ({
                         )}
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Комментарии - снизу */}
+                {task.comments.length > 0 && (
+                  <div className={styles.commentsSection}>
+                    {task.comments.map(comment => (
+                      <CommentItem
+                        key={comment.id}
+                        comment={comment}
+                        onStatusChange={onCommentStatusChange}
+                        onDelete={onDeleteComment}
+                        userCanEdit={userCanEdit}
+                      />
+                    ))}
                   </div>
                 )}
               </div>

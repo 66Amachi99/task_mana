@@ -408,3 +408,24 @@
 .emptyStateText {
   color: rgba(255, 255, 255, 0.5);
 }
+
+.commentActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.commentDeleteButton {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.commentDeleteButton:hover {
+  color: #f00;
+  background: rgba(255, 0, 0, 0.1);
+}

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useLayoutEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { useUser } from '../../hooks/use-roles';
 import { PostDetailsLeftPanel } from './post_details_left_panel';
 import { PostDetailsRightPanel } from './post_details_right_panel';
-import { useUpdatePost, usePatchPost, useDeletePost } from '@/hooks/usePosts';
-import { useAddComment, useUpdateCommentStatus } from '@/hooks/usePosts';
+import { usePost, useUpdatePost, usePatchPost, useDeletePost } from '@/hooks/usePosts';
+import { useAddComment, useUpdateCommentStatus, useDeleteComment } from '@/hooks/usePosts';
 import styles from '../styles/PostDetailsWindow.module.css';
 
 export const TASK_CONFIG = [
@@ -97,7 +97,7 @@ export interface PostData {
 
 export interface PostDetailsWindowProps {
   onClose: () => void;
-  post: PostData | null;
+  postId: number;
 }
 
 export const getCommentsForTask = (post: PostData | null, taskTypeId: number): CommentData[] => {
@@ -105,8 +105,19 @@ export const getCommentsForTask = (post: PostData | null, taskTypeId: number): C
   return post.comments.filter(c => c.task_type_id === taskTypeId);
 };
 
-export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => {
+export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) => {
   const { user, canEditPostTask, canApprove, canPublish } = useUser();
+  const { data: fetchedPost, isLoading } = usePost(postId);
+
+  // Стабилизируем post с помощью useMemo, чтобы не создавать новый объект при каждом рендере
+  const post = useMemo(() => {
+    if (!fetchedPost) return null;
+    return {
+      ...fetchedPost,
+      post_date: fetchedPost.post_date ? new Date(fetchedPost.post_date) : null,
+      post_deadline: new Date(fetchedPost.post_deadline),
+    };
+  }, [fetchedPost]);
 
   const [tasks, setTasks] = useState<TaskWithComments[]>([]);
   const [originalTasks, setOriginalTasks] = useState<TaskWithComments[]>([]);
@@ -129,6 +140,16 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isClosingDetails, setIsClosingDetails] = useState(false);
+  const [isOpening, setIsOpening] = useState(true); // начальное состояние true
+
+  // Локальные состояния для полей, которые меняются действиями
+  const [localIsPublished, setLocalIsPublished] = useState(post?.is_published || false);
+  const [localApprovedBy, setLocalApprovedBy] = useState(post?.approved_by || null);
+  const [localSocialLinks, setLocalSocialLinks] = useState<SocialLinks>({
+    telegram: post?.telegram_published || '',
+    vkontakte: post?.vkontakte_published || '',
+    max: post?.MAX_published || '',
+  });
 
   const canEditPost = !!(user && (user.admin_role || user.SMM_role));
   const canDelete = !!(user && (user.admin_role || user.SMM_role));
@@ -140,14 +161,18 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
   const deletePost = useDeletePost();
   const addComment = useAddComment();
   const updateCommentStatus = useUpdateCommentStatus();
+  const deleteComment = useDeleteComment();
 
-  useEffect(() => {
+  // Блокировка скролла страницы при монтировании
+  useLayoutEffect(() => {
     if (!post) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    // setIsOpening уже true, не меняем его
     return () => { document.body.style.overflow = prev; };
-  }, [post]);
+  }, [post]); // зависимость от post, чтобы сработало при загрузке данных
 
+  // Закрытие дропдаунов по клику вне
   useEffect(() => {
     const onDocMouseDown = (e: MouseEvent) => {
       if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node)) setIsTagDropdownOpen(false);
@@ -157,6 +182,7 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
     return () => document.removeEventListener('mousedown', onDocMouseDown);
   }, []);
 
+  // Загрузка тегов
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -169,8 +195,9 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
   }, []);
 
   // Инициализация состояния из пропса post
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!post) return;
+
     const tasksWithComments = TASK_CONFIG
       .filter(cfg => post[cfg.needsKey] as boolean)
       .map(cfg => ({
@@ -181,28 +208,63 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
         required: true,
         role: cfg.role,
         linkKey: cfg.linkKey,
-        comments: getCommentsForTask(post, cfg.id),
+        comments: [...getCommentsForTask(post, cfg.id)].sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ),
         newCommentText: '',
       }));
-    setTasks(tasksWithComments);
-    setOriginalTasks(tasksWithComments.map(t => ({ ...t, comments: [...t.comments] })));
 
     const social = {
       telegram: post.telegram_published || '',
       vkontakte: post.vkontakte_published || '',
       max: post.MAX_published || '',
     };
+
+    const taskSelection = TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false);
+
+    setTasks(tasksWithComments);
+    setOriginalTasks(tasksWithComments.map(t => ({ ...t, comments: [...t.comments] })));
     setSocialLinks(social);
     setOriginalSocialLinks({ ...social });
-
     setEditedDeadline(post.post_deadline ? new Date(post.post_deadline) : null);
     setEditedTitle(post.post_title || '');
     setEditedDescription(post.post_description || '');
     setEditedTzLink(post.tz_link || '');
-    const taskSelection = TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false);
     setSelectedTasks(taskSelection);
     setSelectedTags(post.tags || []);
+    setLocalIsPublished(post.is_published);
+    setLocalApprovedBy(post.approved_by || null);
+    setLocalSocialLinks(social);
   }, [post]);
+
+  // Эффект для синхронизации правой панели с выбранными задачами в режиме редактирования
+  useEffect(() => {
+    if (!isEditing || !post) return;
+
+    setTasks(prevTasks => {
+      const newTasks = TASK_CONFIG
+        .filter(cfg => selectedTasks[cfg.id - 1])
+        .map(cfg => {
+          const existing = prevTasks.find(t => t.id === cfg.id);
+          if (existing) {
+            return existing;
+          } else {
+            return {
+              id: cfg.id,
+              name: cfg.name,
+              label: cfg.label,
+              link: '',
+              required: true,
+              role: cfg.role,
+              linkKey: cfg.linkKey,
+              comments: [],
+              newCommentText: '',
+            };
+          }
+        });
+      return newTasks;
+    });
+  }, [selectedTasks, isEditing, post]);
 
   const filteredTags = availableTags.filter(tag =>
     tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
@@ -237,17 +299,16 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
   const handleEditStart = () => setIsEditing(true);
   const handleEditCancel = () => {
     setIsEditing(false);
-    if (post) {
-      setEditedTitle(post.post_title || '');
-      setEditedDescription(post.post_description || '');
-      setEditedTzLink(post.tz_link || '');
-      setEditedDeadline(post.post_deadline ? new Date(post.post_deadline) : null);
-      setSelectedTasks(TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false));
-      setSelectedTags(post.tags || []);
-    }
+    // Восстанавливаем исходное состояние задач и выбранных задач
+    setTasks(originalTasks.map(t => ({ ...t, comments: [...t.comments] })));
+    setSelectedTasks(TASK_CONFIG.map(cfg => (post?.[cfg.needsKey] as boolean) || false));
+    setSelectedTags(post?.tags || []);
+    setEditedTitle(post?.post_title || '');
+    setEditedDescription(post?.post_description || '');
+    setEditedTzLink(post?.tz_link || '');
+    setEditedDeadline(post?.post_deadline ? new Date(post.post_deadline) : null);
   };
 
-  // Сохранение основных изменений (редактирование полей поста)
   const handleSave = async () => {
     if (!post) return;
     setIsSaving(true);
@@ -263,7 +324,6 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
 
       await updatePost.mutateAsync({ postId: post.post_id, data: updateData });
       
-      // После успешного сохранения синхронизируем originalTasks с текущими tasks
       setOriginalTasks(tasks.map(t => ({ ...t, comments: [...t.comments] })));
       setIsEditing(false);
     } catch (error) {
@@ -288,8 +348,8 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
 
       await updatePost.mutateAsync({ postId: post.post_id, data });
       
-      // После успешного сохранения синхронизируем originalTasks с текущими tasks
       setOriginalTasks(tasks.map(t => ({ ...t, comments: [...t.comments] })));
+      setOriginalSocialLinks({ ...socialLinks });
     } catch (e) {
       console.error('Ошибка:', e);
       alert(e instanceof Error ? e.message : 'Ошибка сохранения');
@@ -298,7 +358,7 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
     }
   };
 
-  // Обработка действий (approve, publish, unpublish)
+  // Обработка действий (approve, unapprove, publish, unpublish)
   const handleAction = async (action: string, confirmMsg?: string) => {
     if (!post) return;
     if (confirmMsg && !window.confirm(confirmMsg)) return;
@@ -306,42 +366,23 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
     try {
       if (action === 'delete') {
         await deletePost.mutateAsync(post.post_id);
-        onClose(); // при удалении закрываем
+        onClose();
       } else {
         const result = await patchPost.mutateAsync({ postId: post.post_id, action });
         if (result?.post) {
           const updatedPost = result.post;
-          // Обновляем локальные стейты (аналогично handleSave)
-          setEditedDeadline(updatedPost.post_deadline ? new Date(updatedPost.post_deadline) : null);
-          setEditedTitle(updatedPost.post_title || '');
-          setEditedDescription(updatedPost.post_description || '');
-          setEditedTzLink(updatedPost.tz_link || '');
-          const taskSelection = TASK_CONFIG.map(cfg => (updatedPost[cfg.needsKey] as boolean) || false);
-          setSelectedTasks(taskSelection);
-          setSelectedTags(updatedPost.tags || []);
-          const updatedTasks = TASK_CONFIG
-            .filter(cfg => updatedPost[cfg.needsKey] as boolean)
-            .map(cfg => ({
-              id: cfg.id,
-              name: cfg.name,
-              label: cfg.label,
-              link: (updatedPost[cfg.linkKey] as string) || '',
-              required: true,
-              role: cfg.role,
-              linkKey: cfg.linkKey,
-              comments: getCommentsForTask(updatedPost, cfg.id),
-              newCommentText: '',
-            }));
-          setTasks(updatedTasks);
-          setOriginalTasks(updatedTasks.map(t => ({ ...t, comments: [...t.comments] })));
-
-          const social = {
+          setLocalIsPublished(updatedPost.is_published);
+          setLocalApprovedBy(updatedPost.approved_by || null);
+          setLocalSocialLinks({
             telegram: updatedPost.telegram_published || '',
             vkontakte: updatedPost.vkontakte_published || '',
             max: updatedPost.MAX_published || '',
-          };
-          setSocialLinks(social);
-          setOriginalSocialLinks({ ...social });
+          });
+          setSocialLinks({
+            telegram: updatedPost.telegram_published || '',
+            vkontakte: updatedPost.vkontakte_published || '',
+            max: updatedPost.MAX_published || '',
+          });
         }
       }
     } catch (error) {
@@ -352,7 +393,10 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
     }
   };
 
-  // Обработчики для комментариев
+  const handleApprove = () => handleAction('approve');
+  const handleUnapprove = () => handleAction('unapprove');
+  const handlePublishToggle = () => handleAction(localIsPublished ? 'unpublish' : 'publish');
+
   const handleLinkChange = useCallback((id: number, value: string) => {
     setTasks(prev => prev.map(t => (t.id === id ? { ...t, link: value } : t)));
   }, []);
@@ -376,7 +420,7 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
         if (t.id !== taskId) return t;
         return {
           ...t,
-          comments: [...t.comments, newComment],
+          comments: [newComment, ...t.comments],
           newCommentText: '',
         };
       }));
@@ -389,6 +433,7 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
   const handleCommentStatusChange = useCallback(async (commentId: number, newStatus: string) => {
     try {
       await updateCommentStatus.mutateAsync({ commentId, status: newStatus });
+      
       setTasks(prev => prev.map(t => ({
         ...t,
         comments: t.comments.map(c => (c.id === commentId ? { ...c, status: newStatus } : c)),
@@ -398,36 +443,55 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
     }
   }, [updateCommentStatus]);
 
+  const handleDeleteComment = useCallback(async (commentId: number) => {
+    try {
+      await deleteComment.mutateAsync(commentId);
+      
+      setTasks(prev => prev.map(task => ({
+        ...task,
+        comments: task.comments.filter(c => c.id !== commentId),
+      })));
+    } catch (error) {
+      console.error('Ошибка при удалении комментария:', error);
+      alert('Не удалось удалить комментарий');
+    }
+  }, [deleteComment]);
+
   const handleSocialLinkChange = useCallback((social: string, value: string) => {
     setSocialLinks(prev => ({ ...prev, [social]: value }));
   }, []);
 
-  if (!post) return null;
+  const handleClose = useCallback(() => {
+    setIsClosingDetails(true);
+    setTimeout(() => {
+      onClose();
+      setIsClosingDetails(false);
+      setIsOpening(true);
+    }, 200);
+  }, [onClose]);
+
+  if (!post || isLoading) return null;
 
   const hasChanges =
     tasks.some((task, i) => {
       const original = originalTasks[i];
       if (!original) return true;
       if (task.link !== original.link) return true;
-      if (task.comments.length !== original.comments.length) return true;
-      for (let j = 0; j < task.comments.length; j++) {
-        if (task.comments[j].status !== original.comments[j]?.status) return true;
-      }
       return false;
     }) ||
     (Object.keys(socialLinks) as SocialKey[]).some(key => socialLinks[key] !== originalSocialLinks[key]) ||
     (!!editedDeadline && new Date(post.post_deadline).getTime() !== editedDeadline.getTime());
 
-  const canShowApprove = !!(canApprove && !post.approved_by && TASK_CONFIG.every(cfg => !post[cfg.needsKey] || (post[cfg.linkKey] as string)?.trim()));
+  const canShowApprove = !!(canApprove && !localApprovedBy && TASK_CONFIG.every(cfg => !post[cfg.needsKey] || (post[cfg.linkKey] as string)?.trim()));
 
   return (
     <>
       {!showEditModal && !isClosingDetails && (
-        <div className={styles.overlay} onClick={onClose}>
-          <div className={styles.container} onClick={e => e.stopPropagation()}>
+        <div className={`${styles.overlay} ${styles.overlayVisible}`} onClick={handleClose}>
+          <div className={`${styles.container} ${isOpening ? styles.containerOpening : styles.containerClosing}`} onClick={e => e.stopPropagation()}>
             <div className={styles.header}>
               <div className={styles.headerSpacer} />
-              <button onClick={onClose} className={styles.closeButton}>
+              <button onClick={handleClose} className={styles.closeButton}>
                 <X size={24} />
               </button>
             </div>
@@ -468,15 +532,20 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
                   showDatePicker={showDatePicker}
                   setShowDatePicker={setShowDatePicker}
                   datePickerRef={datePickerRef}
-                  onApprove={() => handleAction('approve')}
-                  onPublishToggle={() => handleAction(post.is_published ? 'unpublish' : 'publish')}
+                  onApprove={handleApprove}
+                  onUnapprove={handleUnapprove}
+                  onPublishToggle={handlePublishToggle}
                   onDelete={() => handleAction('delete', 'Вы уверены, что хотите удалить этот пост? Это действие нельзя отменить.')}
-                  canApprove={!!(canApprove && !post.approved_by) && canShowApprove}
+                  canApprove={!!(canApprove && !localApprovedBy) && canShowApprove}
+                  canUnapprove={!!(canApprove && localApprovedBy)}
                   canPublish={!!canPublish}
                   canDelete={canDelete}
                   canEditPost={canEditPost}
                   onSaveChanges={handleSaveChanges}
                   hasChanges={hasChanges}
+                  isPublished={localIsPublished}
+                  approvedBy={localApprovedBy}
+                  localSocialLinks={localSocialLinks}
                 />
               </div>
               <div className={`${styles.rightPanel} no-scrollbar`}>
@@ -488,6 +557,7 @@ export const PostDetailsWindow = ({ onClose, post }: PostDetailsWindowProps) => 
                   onNewCommentChange={handleNewCommentChange}
                   onAddComment={handleAddComment}
                   onCommentStatusChange={handleCommentStatusChange}
+                  onDeleteComment={handleDeleteComment}
                   isSaving={isSaving}
                   isActionLoading={isActionLoading}
                 />

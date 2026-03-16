@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ExternalLink, CheckCircle, Globe, Link, Edit2, X, Save, Trash2 } from 'lucide-react';
+import { ExternalLink, CheckCircle, Globe, Edit2, X, Save, Trash2 } from 'lucide-react';
 import { SOCIAL_CONFIG, TASK_CONFIG, SocialLinks } from './post_details_window';
 import { DatePicker } from '../ui/date_picker';
 import styles from '../styles/PostDetailsLeftPanel.module.css';
@@ -80,18 +80,24 @@ interface PostDetailsLeftPanelProps {
   datePickerRef: React.RefObject<HTMLDivElement | null>;
 
   onApprove?: () => void;
+  onUnapprove?: () => void;
   onPublishToggle?: () => void;
   onDelete?: () => void;
   canApprove: boolean;
+  canUnapprove: boolean;
   canPublish: boolean;
   canDelete: boolean;
   canEditPost: boolean;
 
   onSaveChanges: () => void;
   hasChanges?: boolean;
+
+  // Актуальные состояния после действий
+  isPublished: boolean;
+  approvedBy: { user_login: string } | null;
+  localSocialLinks: SocialLinks; // для отображения соцсетей
 }
 
-// Функция форматирования даты в нужный формат: "05 Февраля Четверг 12:00"
 const formatDeadline = (date: Date | null): string => {
   if (!date) return 'Не указана';
 
@@ -240,16 +246,21 @@ export const PostDetailsLeftPanel = ({
   setShowDatePicker,
   datePickerRef,
   onApprove,
+  onUnapprove,
   onPublishToggle,
   onDelete,
   canApprove,
+  canUnapprove,
   canPublish,
   canDelete,
   canEditPost,
   onSaveChanges,
   hasChanges,
+  isPublished,
+  approvedBy,
+  localSocialLinks,
 }: PostDetailsLeftPanelProps) => {
-  const hasSavedSocialLinks = SOCIAL_CONFIG.some(s => post[s.publishedKey]);
+  const hasSavedSocialLinks = SOCIAL_CONFIG.some(s => localSocialLinks[s.key]?.trim() !== '');
 
   const taskButtons = TASK_CONFIG.map(cfg => ({
     id: cfg.id,
@@ -258,7 +269,6 @@ export const PostDetailsLeftPanel = ({
   }));
 
   const deadlineButtonClass = isEditing ? styles.deadlineButtonEditing : styles.deadlineButtonDefault;
-  const deadlineLabelClass = isEditing ? styles.deadlineLabelEditing : styles.deadlineLabelDefault;
   const deadlineValueClass = isEditing ? styles.deadlineValueEditing : styles.deadlineValueDefault;
 
   return (
@@ -287,13 +297,12 @@ export const PostDetailsLeftPanel = ({
             placeholder="Название поста"
           />
         ) : (
-          <h2 className={styles.titleDisplay}>{post.post_title}</h2>
+          <h2 className={styles.titleDisplay}>{editedTitle}</h2>
         )}
       </div>
 
       {/* Теги */}
       <div>
-        {/* Теги */}
         {isEditing ? (
           <TagSelector
             selectedTags={selectedTags}
@@ -309,9 +318,9 @@ export const PostDetailsLeftPanel = ({
             disabled={isSaving || isActionLoading}
           />
         ) : (
-          post.tags && post.tags.length > 0 && (
+          selectedTags.length > 0 && (
             <div className={styles.tagsView}>
-              {post.tags.map(tag => (
+              {selectedTags.map(tag => (
                 <span
                   key={tag.tag_id}
                   className={styles.tagChip}
@@ -339,7 +348,7 @@ export const PostDetailsLeftPanel = ({
           <div className={styles.descriptionBox}>
             <div className={styles.descriptionPreview}>
               <p className={styles.descriptionPreviewText}>
-                {post.post_description || 'Нет описания'}
+                {editedDescription || 'Нет описания'}
               </p>
             </div>
           </div>
@@ -357,9 +366,9 @@ export const PostDetailsLeftPanel = ({
             placeholder="https://example.com/document"
           />
         ) : (
-          post.tz_link && (
+          editedTzLink && (
             <a
-              href={post.tz_link}
+              href={editedTzLink}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.tzLink}
@@ -389,7 +398,7 @@ export const PostDetailsLeftPanel = ({
       )}
 
       {/* Соцсети (редактирование ссылок публикации) */}
-      {post.is_published && canManageSocial && (
+      {isPublished && canManageSocial && (
         <div className={styles.socialSection}>
           <div className={styles.socialList}>
             {SOCIAL_CONFIG.map(social => (
@@ -415,12 +424,12 @@ export const PostDetailsLeftPanel = ({
       )}
 
       {/* Соцсети — только просмотр */}
-      {post.is_published && hasSavedSocialLinks && !canManageSocial && (
+      {isPublished && hasSavedSocialLinks && !canManageSocial && (
         <div className={styles.socialViewSection}>
           <h3 className={styles.socialViewTitle}>Опубликовано в:</h3>
           <div className={styles.socialLinksRow}>
             {SOCIAL_CONFIG.map(social => {
-              const url = post[social.publishedKey] as string | undefined;
+              const url = localSocialLinks[social.key];
               if (!url) return null;
               return (
                 <a
@@ -439,21 +448,30 @@ export const PostDetailsLeftPanel = ({
         </div>
       )}
 
-      {post.approved_by && (
-        <div>
+      {/* Согласование */}
+      {approvedBy && (
+        <div className={styles.approvedContainer}>
           <div className={styles.approvedBox}>
             <p className={styles.approvedName}>
               <CheckCircle className="w-4 h-4" />
               <span>Согласовано: </span>
-              {post.approved_by.user_login}
+              {approvedBy.user_login}
             </p>
           </div>
+          {canUnapprove && !isEditing && (
+            <button
+              onClick={onUnapprove}
+              className={`${styles.button} ${styles.buttonGray}`}
+              disabled={isActionLoading}
+            >
+              Снять согласование
+            </button>
+          )}
         </div>
       )}
 
       {/* Кнопки действий */}
       <div className={styles.actions}>
-        {/* ЕДИНАЯ кнопка сохранения - только когда НЕ в режиме редактирования */}
         {!isEditing && (
           <button
             onClick={onSaveChanges}
@@ -495,7 +513,7 @@ export const PostDetailsLeftPanel = ({
           </>
         )}
 
-        {canApprove && !post.approved_by && !isEditing && (
+        {canApprove && !approvedBy && !isEditing && (
           <button
             onClick={onApprove}
             className={`${styles.button} ${styles.buttonGreen}`}
@@ -509,11 +527,11 @@ export const PostDetailsLeftPanel = ({
           <button
             onClick={onPublishToggle}
             className={`${styles.button} ${
-              post.is_published ? styles.publishButtonPublished : styles.publishButtonUnpublished
+              isPublished ? styles.publishButtonPublished : styles.publishButtonUnpublished
             }`}
           >
             <Globe className="w-4 h-4" />
-            {post.is_published ? 'Снять с публикации' : 'Опубликовать'}
+            {isPublished ? 'Снять с публикации' : 'Опубликовать'}
           </button>
         )}
 

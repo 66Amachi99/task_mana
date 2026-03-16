@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 
-// Тип для поста (расширенный, соответствует тому, что возвращает API)
 export interface Post {
   post_id: number;
   post_title: string;
@@ -26,8 +26,8 @@ export interface Post {
   post_done_link_photogallery?: string | null;
   post_done_link_mini_gallery?: string | null;
   post_done_link_text?: string | null;
-  post_date: string | null; // в API приходит строка
-  post_deadline: string; // строка
+  post_date: string | null;
+  post_deadline: string;
   responsible_person_id: number | null;
   approved_by_id?: number | null;
   user?: { user_login: string } | null;
@@ -43,20 +43,20 @@ export interface Post {
   [key: string]: unknown;
 }
 
-// Базовый URL для API постов
 const API_URL = '/api/posts';
 
 // ---- Запросы (queries) ----
 
-// Получить все посты (с пагинацией)
 export const usePosts = (page = 1, limit = 100) => {
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
+
   return useQuery({
     queryKey: ['posts', { page, limit }],
     queryFn: async () => {
       const res = await fetch(`${API_URL}?page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error('Ошибка загрузки постов');
       const data = await res.json();
-      // API возвращает { posts, currentPage, totalPages, totalPosts }
       return {
         posts: data.posts as Post[],
         currentPage: data.currentPage,
@@ -64,11 +64,14 @@ export const usePosts = (page = 1, limit = 100) => {
         totalPosts: data.totalPosts,
       };
     },
+    enabled: isAuthenticated,
   });
 };
 
-// Получить один пост по ID
 export const usePost = (id: number | null) => {
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
+
   return useQuery({
     queryKey: ['post', id],
     queryFn: async () => {
@@ -76,16 +79,14 @@ export const usePost = (id: number | null) => {
       const res = await fetch(`${API_URL}?id=${id}`);
       if (!res.ok) throw new Error('Ошибка загрузки поста');
       const data = await res.json();
-      // API возвращает { posts: [post] }
       return data.posts[0] as Post;
     },
-    enabled: !!id, // запрос выполняется только если id есть
+    enabled: !!id && isAuthenticated,
   });
 };
 
 // ---- Мутации (mutations) ----
 
-// Создать пост
 export const useCreatePost = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -99,16 +100,14 @@ export const useCreatePost = () => {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка создания поста');
       }
-      return res.json(); // возвращает { success: true, post }
+      return res.json();
     },
     onSuccess: () => {
-      // Инвалидируем список постов, чтобы он перезапросился
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 };
 
-// Обновить пост (полное обновление через PUT)
 export const useUpdatePost = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -122,17 +121,15 @@ export const useUpdatePost = () => {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка обновления поста');
       }
-      return res.json(); // возвращает { success: true, post }
+      return res.json();
     },
     onSuccess: (_, variables) => {
-      // Инвалидируем список и конкретный пост
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['post', variables.postId] });
     },
   });
 };
 
-// Частичное обновление (например, approve/publish)
 export const usePatchPost = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -155,7 +152,6 @@ export const usePatchPost = () => {
   });
 };
 
-// Удалить пост
 export const useDeletePost = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -177,7 +173,6 @@ export const useDeletePost = () => {
 
 // ---- Комментарии ----
 
-// Добавить комментарий
 export const useAddComment = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -191,18 +186,15 @@ export const useAddComment = () => {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка добавления комментария');
       }
-      return res.json(); // возвращает созданный комментарий
+      return res.json();
     },
     onSuccess: (data, variables) => {
-      // Инвалидируем конкретный пост, чтобы обновить комментарии
       queryClient.invalidateQueries({ queryKey: ['post', variables.postId] });
-      // Также инвалидируем список постов
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 };
 
-// Обновить статус комментария
 export const useUpdateCommentStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -216,16 +208,33 @@ export const useUpdateCommentStatus = () => {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка обновления статуса комментария');
       }
-      return res.json(); // ожидается, что API вернёт обновлённый комментарий с post_id
+      return res.json();
     },
     onSuccess: (data) => {
-      // Если API вернул комментарий с полем post_id, инвалидируем этот пост
       if (data && data.post_id) {
         queryClient.invalidateQueries({ queryKey: ['post', data.post_id] });
       } else {
-        // иначе инвалидируем все посты
         queryClient.invalidateQueries({ queryKey: ['posts'] });
       }
+    },
+  });
+};
+
+export const useDeleteComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (commentId: number) => {
+      const res = await fetch(`/api/posts/comments?id=${commentId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Ошибка удаления комментария');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 };

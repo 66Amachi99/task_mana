@@ -441,7 +441,7 @@ export default function CalendarPage() {
 
       {selectedItem?.post && (
         <PostDetailsWindow
-          post={selectedItem.post}
+          postId={selectedItem.post.post_id}
           onClose={() => setSelectedItem(null)}
         />
       )}

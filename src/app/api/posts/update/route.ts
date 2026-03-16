@@ -16,7 +16,7 @@ const checkAllTasksCompleted = (post: any): boolean => {
   );
 };
 
-// Константы для типов задач (нужно синхронизировать с TASK_CONFIG)
+// Константы для типов задач
 const TASK_TYPE_IDS = {
   mini_video_smm: 1,
   video: 2,
@@ -74,7 +74,18 @@ export async function PATCH(request: NextRequest) {
       }
 
       updateData.approved_by_id = userId;
-    } 
+    }
+    else if (action === 'unapprove') {
+      // Проверка прав: только админ или координатор могут снять согласование
+      const canUnapprove = userData.admin_role || userData.coordinator_role;
+      if (!canUnapprove) {
+        return NextResponse.json(
+          { error: 'Недостаточно прав для снятия согласования' },
+          { status: 403 }
+        );
+      }
+      updateData.approved_by_id = null;
+    }
     else if (action === 'publish') {
       updateData.is_published = true;
     }
