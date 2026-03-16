@@ -97,7 +97,7 @@ export const PostDetailsButton = ({ post }: PostDetailsButtonProps) => {
 
       {isOpen && (
         <PostDetailsWindow
-          post={post}
+          postId={post.post_id}
           onClose={handleClose}
         />
       )}
