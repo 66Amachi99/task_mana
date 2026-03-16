@@ -4,9 +4,11 @@ import { useRef, useEffect, useState } from 'react';
 import { Lock, ExternalLink, Circle, CheckCircle, MessageSquare, Trash2 } from 'lucide-react';
 import { TASK_CONFIG, COMMENT_STATUS, TaskWithComments, CommentData } from './post_details_window';
 import { useUser } from '../../hooks/use-roles';
+import { FileUploader } from './file_uploader';
 import styles from '../styles/PostDetailsRightPanel.module.css';
 
 interface PostData {
+  post_id: number;
   [key: string]: unknown;
 }
 
@@ -19,9 +21,17 @@ interface PostDetailsRightPanelProps {
   onAddComment: (taskId: number) => Promise<void>;
   onCommentStatusChange: (commentId: number, newStatus: string) => void;
   onDeleteComment: (commentId: number) => Promise<void>;
+  onFilesSelected: (taskId: number, files: File[]) => void;
+  onFilesCleared: (taskId: number) => void;
+  onRemovePendingFile: (taskId: number, fileName: string) => void;
+  onDeleteFile?: (taskId: number, filePath: string) => Promise<void>;
+  pendingFiles: Record<number, File[]>;
+  existingFilesMap: Record<number, Array<{ fileName: string; path: string; sizes?: any }>>;
   isSaving: boolean;
   isActionLoading: boolean;
 }
+
+const fileSupportTaskIds = [5, 6, 7]; // cover_photo, photo_cards, mini_gallery
 
 const AutoResizeTextarea = ({ value, onChange, placeholder, disabled, className }: {
   value: string;
@@ -186,6 +196,12 @@ export const PostDetailsRightPanel = ({
   onAddComment,
   onCommentStatusChange,
   onDeleteComment,
+  onFilesSelected,
+  onFilesCleared,
+  onRemovePendingFile,
+  onDeleteFile,
+  pendingFiles,
+  existingFilesMap,
   isSaving,
   isActionLoading
 }: PostDetailsRightPanelProps) => {
@@ -214,64 +230,83 @@ export const PostDetailsRightPanel = ({
             const hasLink = originalLink.trim() !== '';
             const userCanEdit = canEditPostTask(task.role);
             const userCanAddComment = canAddComment ? canAddComment(task.role) : userCanEdit;
-
+            const supportsFiles = fileSupportTaskIds.includes(task.id);
             const rowClass = task.role === 'text' ? styles.taskRowTop : styles.taskRowCenter;
 
             return (
               <div key={task.id} className={styles.taskCard}>
-                <div className={rowClass}>
-                  <div className={styles.taskLabelCol}>
-                    <h4 className={styles.taskLabel}>
-                      {task.label}
-                      {!userCanEdit && <Lock className={styles.lockIcon} />}
-                    </h4>
-                  </div>
-                  <div className={styles.taskInputCol}>
-                    {userCanEdit ? (
-                      task.role === 'text' ? (
-                        <TaskTextarea
-                          value={task.link}
-                          onChange={e => onLinkChange(task.id, e.target.value)}
-                          placeholder="Введите текст задачи..."
-                          disabled={isSaving || isActionLoading}
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={task.link}
-                          onChange={e => onLinkChange(task.id, e.target.value)}
-                          placeholder="Вставьте ссылку..."
-                          className={styles.inputLink}
-                          disabled={isSaving || isActionLoading}
-                        />
-                      )
-                    ) : (
-                      <div className={styles.viewOnlyField}>
-                        {task.link || 'Нет доступа к редактированию'}
-                      </div>
-                    )}
-                  </div>
+                <div className={styles.taskHeader}>
+                  <h4 className={styles.taskLabel}>
+                    {task.label}
+                    {!userCanEdit && <Lock className={styles.lockIcon} />}
+                  </h4>
                 </div>
 
-                {hasLink && task.role !== 'text' && (
-                  <div className={styles.linkBlock}>
-                    <div className={styles.linkContainer}>
-                      <div className={styles.linkInfo}>
-                        <span className={styles.linkLabel}>Ссылка:</span>
-                        <p className={styles.linkUrl} title={originalLink}>{originalLink}</p>
+                {supportsFiles ? (
+                  <FileUploader
+                    postId={post.post_id}
+                    taskId={task.id}
+                    taskName={task.name}
+                    currentPath={task.link || null}
+                    onFilesSelected={userCanEdit ? onFilesSelected : undefined}
+                    onFilesCleared={userCanEdit ? onFilesCleared : undefined}
+                    onRemovePendingFile={userCanEdit ? onRemovePendingFile : undefined}
+                    onDeleteFile={userCanEdit ? onDeleteFile : undefined}
+                    multiple={task.id !== 5}
+                    existingFiles={existingFilesMap[task.id] || []}
+                    pendingFiles={pendingFiles[task.id] || []}
+                    readOnly={!userCanEdit}
+                  />
+                ) : (
+                  <>
+                    <div className={rowClass}>
+                      <div className={styles.taskInputCol}>
+                        {userCanEdit ? (
+                          task.role === 'text' ? (
+                            <TaskTextarea
+                              value={task.link}
+                              onChange={e => onLinkChange(task.id, e.target.value)}
+                              placeholder="Введите текст задачи..."
+                              disabled={isSaving || isActionLoading}
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={task.link}
+                              onChange={e => onLinkChange(task.id, e.target.value)}
+                              placeholder="Вставьте ссылку..."
+                              className={styles.inputLink}
+                              disabled={isSaving || isActionLoading}
+                            />
+                          )
+                        ) : (
+                          <div className={styles.viewOnlyField}>
+                            {task.link || 'Нет доступа к редактированию'}
+                          </div>
+                        )}
                       </div>
-                      <button
-                        onClick={e => handleLinkClick(originalLink, e)}
-                        className={styles.linkButton}
-                        title="Открыть в новой вкладке"
-                      >
-                        <ExternalLink className="w-4 h-4" /> Открыть
-                      </button>
                     </div>
-                  </div>
+
+                    {hasLink && task.role !== 'text' && (
+                      <div className={styles.linkBlock}>
+                        <div className={styles.linkContainer}>
+                          <div className={styles.linkInfo}>
+                            <span className={styles.linkLabel}>Ссылка:</span>
+                            <p className={styles.linkUrl} title={originalLink}>{originalLink}</p>
+                          </div>
+                          <button
+                            onClick={e => handleLinkClick(originalLink, e)}
+                            className={styles.linkButton}
+                            title="Открыть в новой вкладке"
+                          >
+                            <ExternalLink className="w-4 h-4" /> Открыть
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
-                {/* Блок добавления комментария - сверху */}
                 {userCanAddComment && (
                   <div className={styles.addCommentSection}>
                     <div className={styles.addCommentRow}>
@@ -299,7 +334,6 @@ export const PostDetailsRightPanel = ({
                   </div>
                 )}
 
-                {/* Комментарии - снизу */}
                 {task.comments.length > 0 && (
                   <div className={styles.commentsSection}>
                     {task.comments.map(comment => (

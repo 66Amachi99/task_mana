@@ -7,6 +7,8 @@ import { PostDetailsLeftPanel } from './post_details_left_panel';
 import { PostDetailsRightPanel } from './post_details_right_panel';
 import { usePost, useUpdatePost, usePatchPost, useDeletePost } from '@/hooks/usePosts';
 import { useAddComment, useUpdateCommentStatus, useDeleteComment } from '@/hooks/usePosts';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 import styles from '../styles/PostDetailsWindow.module.css';
 
 export const TASK_CONFIG = [
@@ -105,11 +107,67 @@ export const getCommentsForTask = (post: PostData | null, taskTypeId: number): C
   return post.comments.filter(c => c.task_type_id === taskTypeId);
 };
 
+// Функция транслитерации кириллицы в латиницу
+function transliterate(text: string): string {
+  const map: Record<string, string> = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e', 'ж': 'zh',
+    'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+    'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts',
+    'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'E', 'Ж': 'Zh',
+    'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O',
+    'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'H', 'Ц': 'Ts',
+    'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch', 'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+  };
+  return text.split('').map(char => map[char] || char).join('');
+}
+
+// Функция для создания безопасного имени папки из названия поста
+function slugifyPostTitle(title: string): string {
+  return transliterate(title)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/-+/g, '_');
+}
+
+// Вспомогательная функция для загрузки файлов на Яндекс.Диск – возвращает информацию о загруженных файлах
+async function uploadFilesToYandexDisk(files: File[], folderPath: string): Promise<Array<{ fileName: string; path: string }>> {
+  const urlRes = await fetch('/api/disk/get-upload-urls', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fileNames: files.map(f => f.name),
+      pathSuffix: folderPath,
+    }),
+  });
+  if (!urlRes.ok) throw new Error('Не удалось получить URL для загрузки');
+  const urlData = await urlRes.json();
+  const uploadItems = urlData.results;
+
+  const uploadPromises = files.map(async (file) => {
+    const target = uploadItems.find((item: any) => item.fileName === file.name);
+    if (!target) throw new Error(`Не найден URL для ${file.name}`);
+
+    const uploadRes = await fetch(target.uploadUrl, {
+      method: 'PUT',
+      body: file,
+    });
+    if (!uploadRes.ok) throw new Error(`Ошибка загрузки ${file.name}`);
+  });
+
+  await Promise.all(uploadPromises);
+
+  return files.map(file => ({
+    fileName: file.name,
+    path: `/taskmanager/${folderPath}/${file.name}`,
+  }));
+}
+
 export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) => {
   const { user, canEditPostTask, canApprove, canPublish } = useUser();
   const { data: fetchedPost, isLoading } = usePost(postId);
 
-  // Стабилизируем post с помощью useMemo, чтобы не создавать новый объект при каждом рендере
   const post = useMemo(() => {
     if (!fetchedPost) return null;
     return {
@@ -140,9 +198,11 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isClosingDetails, setIsClosingDetails] = useState(false);
-  const [isOpening, setIsOpening] = useState(true); // начальное состояние true
+  const [isOpening, setIsOpening] = useState(true);
 
-  // Локальные состояния для полей, которые меняются действиями
+  const [pendingFiles, setPendingFiles] = useState<Record<number, File[]>>({});
+  const [existingFilesMap, setExistingFilesMap] = useState<Record<number, any[]>>({});
+
   const [localIsPublished, setLocalIsPublished] = useState(post?.is_published || false);
   const [localApprovedBy, setLocalApprovedBy] = useState(post?.approved_by || null);
   const [localSocialLinks, setLocalSocialLinks] = useState<SocialLinks>({
@@ -155,7 +215,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const canDelete = !!(user && (user.admin_role || user.SMM_role));
   const canManageSocial = !!(user && (user.admin_role || user.SMM_role));
 
-  // Мутации
   const updatePost = useUpdatePost();
   const patchPost = usePatchPost();
   const deletePost = useDeletePost();
@@ -163,16 +222,13 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const updateCommentStatus = useUpdateCommentStatus();
   const deleteComment = useDeleteComment();
 
-  // Блокировка скролла страницы при монтировании
   useLayoutEffect(() => {
     if (!post) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    // setIsOpening уже true, не меняем его
     return () => { document.body.style.overflow = prev; };
-  }, [post]); // зависимость от post, чтобы сработало при загрузке данных
+  }, [post]);
 
-  // Закрытие дропдаунов по клику вне
   useEffect(() => {
     const onDocMouseDown = (e: MouseEvent) => {
       if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node)) setIsTagDropdownOpen(false);
@@ -182,7 +238,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     return () => document.removeEventListener('mousedown', onDocMouseDown);
   }, []);
 
-  // Загрузка тегов
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -194,7 +249,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     fetchTags();
   }, []);
 
-  // Инициализация состояния из пропса post
   useLayoutEffect(() => {
     if (!post) return;
 
@@ -237,7 +291,40 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     setLocalSocialLinks(social);
   }, [post]);
 
-  // Эффект для синхронизации правой панели с выбранными задачами в режиме редактирования
+  useEffect(() => {
+    if (!post) return;
+
+    const fileSupportTaskIds = [5, 6, 7];
+    const fileTasks = tasks.filter(t => fileSupportTaskIds.includes(t.id) && t.link);
+    if (fileTasks.length === 0) return;
+
+    const fetchExistingFiles = async () => {
+      const newMap: Record<number, any[]> = {};
+      for (const task of fileTasks) {
+        if (!task.link) continue;
+        const pathMatch = task.link.match(/\/taskmanager\/(.+)/);
+        if (!pathMatch) continue;
+        const folderPath = pathMatch[1];
+        try {
+          const res = await fetch('/api/disk/list', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: folderPath }),
+          });
+          const data = await res.json();
+          if (data.files) {
+            newMap[task.id] = data.files;
+          }
+        } catch (error) {
+          console.error(`Ошибка загрузки файлов для задачи ${task.id}:`, error);
+        }
+      }
+      setExistingFilesMap(prev => ({ ...prev, ...newMap }));
+    };
+
+    fetchExistingFiles();
+  }, [tasks, post]);
+
   useEffect(() => {
     if (!isEditing || !post) return;
 
@@ -265,6 +352,65 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       return newTasks;
     });
   }, [selectedTasks, isEditing, post]);
+
+  const handleFilesSelected = useCallback((taskId: number, files: File[]) => {
+    setPendingFiles(prev => {
+      const isMultiple = taskId !== 5;
+      if (!isMultiple) {
+        return { ...prev, [taskId]: files };
+      } else {
+        const current = prev[taskId] || [];
+        return { ...prev, [taskId]: [...current, ...files] };
+      }
+    });
+  }, []);
+
+  const handleFilesCleared = useCallback((taskId: number) => {
+    setPendingFiles(prev => {
+      const newState = { ...prev };
+      delete newState[taskId];
+      return newState;
+    });
+  }, []);
+
+  const handleRemovePendingFile = useCallback((taskId: number, fileName: string) => {
+    setPendingFiles(prev => {
+      const current = prev[taskId] || [];
+      const filtered = current.filter(f => f.name !== fileName);
+      if (filtered.length === 0) {
+        const newState = { ...prev };
+        delete newState[taskId];
+        return newState;
+      }
+      return { ...prev, [taskId]: filtered };
+    });
+  }, []);
+
+  const handleDeleteFile = useCallback(async (taskId: number, filePath: string) => {
+    if (!post) return;
+    try {
+      const res = await fetch('/api/disk/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: filePath }),
+      });
+      if (!res.ok) throw new Error('Ошибка удаления');
+
+      setExistingFilesMap(prev => {
+        const taskFiles = prev[taskId] || [];
+        const updatedFiles = taskFiles.filter(f => f.path !== filePath);
+        if (updatedFiles.length === 0) {
+          const newMap = { ...prev };
+          delete newMap[taskId];
+          return newMap;
+        }
+        return { ...prev, [taskId]: updatedFiles };
+      });
+    } catch (error) {
+      console.error('Ошибка удаления файла:', error);
+      alert('Не удалось удалить файл');
+    }
+  }, [post]);
 
   const filteredTags = availableTags.filter(tag =>
     tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
@@ -299,7 +445,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const handleEditStart = () => setIsEditing(true);
   const handleEditCancel = () => {
     setIsEditing(false);
-    // Восстанавливаем исходное состояние задач и выбранных задач
     setTasks(originalTasks.map(t => ({ ...t, comments: [...t.comments] })));
     setSelectedTasks(TASK_CONFIG.map(cfg => (post?.[cfg.needsKey] as boolean) || false));
     setSelectedTags(post?.tags || []);
@@ -334,21 +479,74 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     }
   };
 
-  // Сохранение изменений ссылок и соцсетей (кнопка "Сохранить изменения")
+  const getPostFolderPath = (): string => {
+    if (!post) return '';
+    const dateStr = format(post.post_deadline, 'dd.MM.yyyy', { locale: ru });
+    const slug = slugifyPostTitle(post.post_title);
+    return `posts/${dateStr}_${slug}_${post.post_id}`;
+  };
+
+  const uploadPendingFiles = async (): Promise<Record<number, Array<{ fileName: string; path: string }>>> => {
+    const results: Record<number, Array<{ fileName: string; path: string }>> = {};
+    const fileSupportTaskIds = [5, 6, 7];
+
+    for (const [taskIdStr, files] of Object.entries(pendingFiles)) {
+      const taskId = Number(taskIdStr);
+      if (!fileSupportTaskIds.includes(taskId)) continue;
+
+      const task = TASK_CONFIG.find(t => t.id === taskId);
+      if (!task) continue;
+
+      const baseFolder = getPostFolderPath();
+      const folderPath = `${baseFolder}/${task.name}`;
+      try {
+        const uploadedFiles = await uploadFilesToYandexDisk(files, folderPath);
+        results[taskId] = uploadedFiles;
+      } catch (error) {
+        console.error(`Ошибка загрузки файлов для задачи ${taskId}:`, error);
+        throw error;
+      }
+    }
+    return results;
+  };
+
   const handleSaveChanges = async () => {
     if (!post) return;
     setIsSaving(true);
     try {
+      const uploadedFilesMap = await uploadPendingFiles();
+
+      setExistingFilesMap(prev => {
+        const newMap = { ...prev };
+        for (const [taskIdStr, files] of Object.entries(uploadedFilesMap)) {
+          const taskId = Number(taskIdStr);
+          const taskFiles = prev[taskId] || [];
+          const newFiles = files.map(f => ({ fileName: f.fileName, path: f.path, sizes: [] }));
+          newMap[taskId] = [...taskFiles, ...newFiles];
+        }
+        return newMap;
+      });
+
+      const baseFolder = getPostFolderPath();
+      const updatedTasks = tasks.map(task => {
+        if (uploadedFilesMap[task.id]) {
+          return { ...task, link: `/taskmanager/${baseFolder}/${task.name}` };
+        }
+        return task;
+      });
+      setTasks(updatedTasks);
+
       const data: Record<string, any> = {};
-      for (const t of tasks) data[t.linkKey] = t.link?.trim() ? t.link.trim() : null;
+      for (const t of updatedTasks) data[t.linkKey] = t.link?.trim() ? t.link.trim() : null;
       data.telegram_published = socialLinks.telegram?.trim() || null;
       data.vkontakte_published = socialLinks.vkontakte?.trim() || null;
       data.MAX_published = socialLinks.max?.trim() || null;
       if (editedDeadline) data.post_deadline = editedDeadline.toISOString();
 
       await updatePost.mutateAsync({ postId: post.post_id, data });
-      
-      setOriginalTasks(tasks.map(t => ({ ...t, comments: [...t.comments] })));
+
+      setPendingFiles({});
+      setOriginalTasks(updatedTasks.map(t => ({ ...t, comments: [...t.comments] })));
       setOriginalSocialLinks({ ...socialLinks });
     } catch (e) {
       console.error('Ошибка:', e);
@@ -358,7 +556,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     }
   };
 
-  // Обработка действий (approve, unapprove, publish, unpublish)
   const handleAction = async (action: string, confirmMsg?: string) => {
     if (!post) return;
     if (confirmMsg && !window.confirm(confirmMsg)) return;
@@ -480,7 +677,8 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       return false;
     }) ||
     (Object.keys(socialLinks) as SocialKey[]).some(key => socialLinks[key] !== originalSocialLinks[key]) ||
-    (!!editedDeadline && new Date(post.post_deadline).getTime() !== editedDeadline.getTime());
+    (!!editedDeadline && new Date(post.post_deadline).getTime() !== editedDeadline.getTime()) ||
+    Object.keys(pendingFiles).length > 0;
 
   const canShowApprove = !!(canApprove && !localApprovedBy && TASK_CONFIG.every(cfg => !post[cfg.needsKey] || (post[cfg.linkKey] as string)?.trim()));
 
@@ -558,6 +756,12 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
                   onAddComment={handleAddComment}
                   onCommentStatusChange={handleCommentStatusChange}
                   onDeleteComment={handleDeleteComment}
+                  onFilesSelected={handleFilesSelected}
+                  onFilesCleared={handleFilesCleared}
+                  onRemovePendingFile={handleRemovePendingFile}
+                  onDeleteFile={handleDeleteFile}
+                  pendingFiles={pendingFiles}
+                  existingFilesMap={existingFilesMap}
                   isSaving={isSaving}
                   isActionLoading={isActionLoading}
                 />
