@@ -202,6 +202,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
 
   const [pendingFiles, setPendingFiles] = useState<Record<number, File[]>>({});
   const [existingFilesMap, setExistingFilesMap] = useState<Record<number, any[]>>({});
+  const [uploadingTasks, setUploadingTasks] = useState<Record<number, boolean>>({}); // состояние загрузки
 
   const [localIsPublished, setLocalIsPublished] = useState(post?.is_published || false);
   const [localApprovedBy, setLocalApprovedBy] = useState(post?.approved_by || null);
@@ -490,22 +491,39 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     const results: Record<number, Array<{ fileName: string; path: string }>> = {};
     const fileSupportTaskIds = [5, 6, 7];
 
-    for (const [taskIdStr, files] of Object.entries(pendingFiles)) {
-      const taskId = Number(taskIdStr);
-      if (!fileSupportTaskIds.includes(taskId)) continue;
+    // Помечаем задачи как загружающиеся
+    const uploading = Object.keys(pendingFiles).reduce((acc, taskIdStr) => {
+      acc[Number(taskIdStr)] = true;
+      return acc;
+    }, {} as Record<number, boolean>);
+    setUploadingTasks(uploading);
 
-      const task = TASK_CONFIG.find(t => t.id === taskId);
-      if (!task) continue;
+    try {
+      for (const [taskIdStr, files] of Object.entries(pendingFiles)) {
+        const taskId = Number(taskIdStr);
+        if (!fileSupportTaskIds.includes(taskId)) continue;
 
-      const baseFolder = getPostFolderPath();
-      const folderPath = `${baseFolder}/${task.name}`;
-      try {
-        const uploadedFiles = await uploadFilesToYandexDisk(files, folderPath);
-        results[taskId] = uploadedFiles;
-      } catch (error) {
-        console.error(`Ошибка загрузки файлов для задачи ${taskId}:`, error);
-        throw error;
+        const task = TASK_CONFIG.find(t => t.id === taskId);
+        if (!task) continue;
+
+        const baseFolder = getPostFolderPath();
+        const folderPath = `${baseFolder}/${task.name}`;
+        try {
+          const uploadedFiles = await uploadFilesToYandexDisk(files, folderPath);
+          results[taskId] = uploadedFiles;
+        } catch (error) {
+          console.error(`Ошибка загрузки файлов для задачи ${taskId}:`, error);
+          throw error;
+        } finally {
+          setUploadingTasks(prev => {
+            const newState = { ...prev };
+            delete newState[taskId];
+            return newState;
+          });
+        }
       }
+    } finally {
+      setUploadingTasks({});
     }
     return results;
   };
@@ -762,6 +780,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
                   onDeleteFile={handleDeleteFile}
                   pendingFiles={pendingFiles}
                   existingFilesMap={existingFilesMap}
+                  uploadingTasks={uploadingTasks} // новый проп
                   isSaving={isSaving}
                   isActionLoading={isActionLoading}
                 />

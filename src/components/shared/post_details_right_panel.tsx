@@ -27,6 +27,7 @@ interface PostDetailsRightPanelProps {
   onDeleteFile?: (taskId: number, filePath: string) => Promise<void>;
   pendingFiles: Record<number, File[]>;
   existingFilesMap: Record<number, Array<{ fileName: string; path: string; sizes?: any }>>;
+  uploadingTasks: Record<number, boolean>; // новый проп
   isSaving: boolean;
   isActionLoading: boolean;
 }
@@ -202,6 +203,7 @@ export const PostDetailsRightPanel = ({
   onDeleteFile,
   pendingFiles,
   existingFilesMap,
+  uploadingTasks,
   isSaving,
   isActionLoading
 }: PostDetailsRightPanelProps) => {
@@ -256,6 +258,7 @@ export const PostDetailsRightPanel = ({
                     existingFiles={existingFilesMap[task.id] || []}
                     pendingFiles={pendingFiles[task.id] || []}
                     readOnly={!userCanEdit}
+                    isUploading={uploadingTasks[task.id]}
                   />
                 ) : (
                   <>
