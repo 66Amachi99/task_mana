@@ -1,14 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { PostList } from '../components/posts/PostList';
+import { useMemo, useState, useEffect } from 'react';
+import { PostCard } from '../components/posts/post-card';
 import { TaskCard } from '../components/tasks/task_card';
 import { Pagination } from '../components/ui/pagination';
-import { useUser } from '../hooks/use-roles';
-import { Task } from '../../types/task';
 import { Header } from '../components/layout/Header/Header';
+import { useUser } from '../hooks/use-roles';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
+import { Task } from '../../types/task';
 import styles from '../components/styles/HomePage.module.css';
 
 interface PostWithRelations {
@@ -58,6 +58,11 @@ export default function HomePage() {
   const { data: postsData, isLoading: postsLoading } = usePosts(1, 100);
   const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 100);
 
+  // Сброс страницы на 1-ю при изменении фильтров
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [viewMode, selectedRoleFilter]);
+
   const allPosts = useMemo(() => {
     return (postsData?.posts || []).map((post) => ({
       ...post,
@@ -92,13 +97,14 @@ export default function HomePage() {
       });
     }
 
+    // Безопасная сортировка от новых к старым (с защитой от NaN)
     filtered.sort((a, b) => {
       const dateA = a.type === 'post'
         ? (a.post_date?.getTime() || 0)
-        : new Date(a.created_at).getTime();
+        : (new Date(a.created_at).getTime() || 0);
       const dateB = b.type === 'post'
         ? (b.post_date?.getTime() || 0)
-        : new Date(b.created_at).getTime();
+        : (new Date(b.created_at).getTime() || 0);
       return dateB - dateA;
     });
 
@@ -142,9 +148,9 @@ export default function HomePage() {
             {currentItems.map((item) => {
               if (item.type === 'post') {
                 return (
-                  <PostList
+                  <PostCard
                     key={`post-${item.post_id}`}
-                    posts={[item]}
+                    post={item}
                   />
                 );
               } else {
@@ -156,7 +162,8 @@ export default function HomePage() {
                 );
               }
             })}
-            {currentItems.length === 0 && (
+            
+            {currentItems.length === 0 && !loading && (
               <div className={styles.emptyMessage}>
                 <p>
                   {viewMode === 'posts' && 'Нет постов для отображения'}
@@ -166,6 +173,7 @@ export default function HomePage() {
               </div>
             )}
           </div>
+          
           {filteredContent.length > itemsPerPage && (
             <div className={styles.pagination}>
               <Pagination

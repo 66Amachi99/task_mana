@@ -202,7 +202,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
 
   const [pendingFiles, setPendingFiles] = useState<Record<number, File[]>>({});
   const [existingFilesMap, setExistingFilesMap] = useState<Record<number, any[]>>({});
-  const [uploadingTasks, setUploadingTasks] = useState<Record<number, boolean>>({}); // состояние загрузки
+  const [uploadingTasks, setUploadingTasks] = useState<Record<number, boolean>>({});
 
   const [localIsPublished, setLocalIsPublished] = useState(post?.is_published || false);
   const [localApprovedBy, setLocalApprovedBy] = useState(post?.approved_by || null);
@@ -222,6 +222,9 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const addComment = useAddComment();
   const updateCommentStatus = useUpdateCommentStatus();
   const deleteComment = useDeleteComment();
+
+  // useRef для отслеживания предыдущих ссылок файловых задач
+  const prevFileLinksRef = useRef<Record<number, string>>({});
 
   useLayoutEffect(() => {
     if (!post) return;
@@ -292,38 +295,59 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     setLocalSocialLinks(social);
   }, [post]);
 
+  // Оптимизированный эффект для загрузки существующих файлов (один запрос)
   useEffect(() => {
     if (!post) return;
 
     const fileSupportTaskIds = [5, 6, 7];
     const fileTasks = tasks.filter(t => fileSupportTaskIds.includes(t.id) && t.link);
+
+    // Сохраняем текущие ссылки для файловых задач
+    const currentLinks: Record<number, string> = {};
+    fileTasks.forEach(t => { currentLinks[t.id] = t.link; });
+
+    // Проверяем, изменилась ли ссылка для какой-либо задачи
+    let needFetch = false;
+    for (const [id, link] of Object.entries(currentLinks)) {
+      if (prevFileLinksRef.current[Number(id)] !== link) {
+        needFetch = true;
+        break;
+      }
+    }
+
+    // Если изменений нет, не делаем запрос
+    if (!needFetch) return;
+
+    // Обновляем предыдущие значения
+    prevFileLinksRef.current = currentLinks;
+
     if (fileTasks.length === 0) return;
 
-    const fetchExistingFiles = async () => {
-      const newMap: Record<number, any[]> = {};
-      for (const task of fileTasks) {
-        if (!task.link) continue;
-        const pathMatch = task.link.match(/\/taskmanager\/(.+)/);
-        if (!pathMatch) continue;
-        const folderPath = pathMatch[1];
-        try {
-          const res = await fetch('/api/disk/list', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ path: folderPath }),
-          });
-          const data = await res.json();
-          if (data.files) {
-            newMap[task.id] = data.files;
-          }
-        } catch (error) {
-          console.error(`Ошибка загрузки файлов для задачи ${task.id}:`, error);
+    const fetchAllFiles = async () => {
+      try {
+        const items = fileTasks.map(task => {
+          const pathMatch = task.link.match(/\/taskmanager\/(.+)/);
+          if (!pathMatch) return null;
+          return { taskId: task.id, folderPath: pathMatch[1] };
+        }).filter(Boolean) as { taskId: number; folderPath: string }[];
+
+        if (items.length === 0) return;
+
+        const res = await fetch('/api/disk/list-multiple', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items }),
+        });
+        const data = await res.json();
+        if (data.filesMap) {
+          setExistingFilesMap(prev => ({ ...prev, ...data.filesMap }));
         }
+      } catch (error) {
+        console.error('Ошибка загрузки файлов:', error);
       }
-      setExistingFilesMap(prev => ({ ...prev, ...newMap }));
     };
 
-    fetchExistingFiles();
+    fetchAllFiles();
   }, [tasks, post]);
 
   useEffect(() => {
@@ -491,7 +515,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     const results: Record<number, Array<{ fileName: string; path: string }>> = {};
     const fileSupportTaskIds = [5, 6, 7];
 
-    // Помечаем задачи как загружающиеся
     const uploading = Object.keys(pendingFiles).reduce((acc, taskIdStr) => {
       acc[Number(taskIdStr)] = true;
       return acc;
@@ -780,7 +803,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
                   onDeleteFile={handleDeleteFile}
                   pendingFiles={pendingFiles}
                   existingFilesMap={existingFilesMap}
-                  uploadingTasks={uploadingTasks} // новый проп
+                  uploadingTasks={uploadingTasks}
                   isSaving={isSaving}
                   isActionLoading={isActionLoading}
                 />

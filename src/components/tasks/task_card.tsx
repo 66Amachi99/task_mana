@@ -9,22 +9,10 @@ interface TaskCardProps {
   task: Task;
 }
 
-const getPriorityClass = (priority: number): string => {
-  switch (priority) {
-    case 1: return styles.priorityLow;
-    case 2: return styles.priorityMedium;
-    case 3: return styles.priorityHigh;
-    default: return styles.priorityDefault;
-  }
-};
-
-const getPriorityLabel = (priority: number) => {
-  switch (priority) {
-    case 1: return 'Низкий';
-    case 2: return 'Средний';
-    case 3: return 'Высокий';
-    default: return 'Обычный';
-  }
+const PRIORITY_MAP: Record<number, { class: string; label: string }> = {
+  1: { class: styles.priorityLow, label: 'Низкий' },
+  2: { class: styles.priorityMedium, label: 'Средний' },
+  3: { class: styles.priorityHigh, label: 'Высокий' },
 };
 
 const getStatusClass = (status: string): string => {
@@ -36,8 +24,16 @@ const getStatusClass = (status: string): string => {
   }
 };
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString?: string) => {
+  if (!dateString) return 'Нет даты';
+  
   const date = new Date(dateString);
+  
+  // Проверка на некорректную дату ("Invalid Date")
+  if (isNaN(date.getTime())) {
+    return 'Некорректная дата';
+  }
+
   return date.toLocaleDateString('ru-RU', {
     day: '2-digit',
     month: '2-digit',
@@ -48,7 +44,7 @@ const formatDate = (dateString: string) => {
 };
 
 export const TaskCard = ({ task }: TaskCardProps) => {
-  const priorityClass = getPriorityClass(task.priority);
+  const priorityInfo = PRIORITY_MAP[task.priority] || { class: styles.priorityDefault, label: 'Обычный' };
   const statusClass = getStatusClass(task.task_status);
 
   return (
@@ -60,8 +56,8 @@ export const TaskCard = ({ task }: TaskCardProps) => {
               {task.title}
             </h2>
             
-            <span className={`${styles.priorityBadge} ${priorityClass}`}>
-              {getPriorityLabel(task.priority)}
+            <span className={`${styles.priorityBadge} ${priorityInfo.class}`}>
+              {priorityInfo.label}
             </span>
           </div>
 

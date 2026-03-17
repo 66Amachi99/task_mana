@@ -22,7 +22,7 @@ interface FileUploaderProps {
   existingFiles?: Array<{ fileName: string; path: string; sizes?: Array<{ url: string; name: string }> }>;
   pendingFiles?: File[];
   readOnly?: boolean;
-  isUploading?: boolean; // новый проп
+  isUploading?: boolean;
 }
 
 export const FileUploader = ({
