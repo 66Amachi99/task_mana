@@ -7,9 +7,7 @@ const API_URL = '/api/tasks';
 // ---- Запросы (queries) ----
 
 export const useTasks = (page = 1, limit = 100, filter?: string) => {
-  const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
-
+  // Убрана проверка авторизации
   const params = new URLSearchParams();
   params.append('page', page.toString());
   params.append('limit', limit.toString());
@@ -28,14 +26,11 @@ export const useTasks = (page = 1, limit = 100, filter?: string) => {
         totalTasks: data.totalTasks,
       };
     },
-    enabled: isAuthenticated,
   });
 };
 
 export const useTask = (id: number | null) => {
-  const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
-
+  // Убрана проверка авторизации
   return useQuery({
     queryKey: ['task', id],
     queryFn: async () => {
@@ -45,11 +40,12 @@ export const useTask = (id: number | null) => {
       const data = await res.json();
       return data.tasks[0] as Task;
     },
-    enabled: !!id && isAuthenticated,
+    enabled: !!id,
   });
 };
 
 // ---- Мутации (mutations) ----
+// (остаются без изменений)
 
 export const useCreateTask = () => {
   const queryClient = useQueryClient();

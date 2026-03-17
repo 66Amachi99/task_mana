@@ -29,10 +29,8 @@ interface CalendarProps {
   showTasks: boolean;
   selectedRoleFilter: string | null;
   onRoleFilterChange: (filter: string | null) => void;
-  totalPostsCount: number;
-  totalTasksCount: number;
-  handlePostsClick: () => void;
-  handleTasksClick: () => void;
+  handlePostsClick: () => void;  // восстановлено
+  handleTasksClick: () => void;  // восстановлено
 }
 
 const getDayOfWeekShort = (date: Date): string => {
@@ -65,8 +63,6 @@ export const Calendar: React.FC<CalendarProps> = ({
   showTasks,
   selectedRoleFilter,
   onRoleFilterChange,
-  totalPostsCount,
-  totalTasksCount,
   handlePostsClick,
   handleTasksClick,
 }) => {
@@ -99,6 +95,24 @@ export const Calendar: React.FC<CalendarProps> = ({
 
   // Массив всех дней для отображения
   const displayDays = eachDayOfInterval({ start: firstDisplayDate, end: lastDisplayDate });
+
+  // Вычисляем количество постов и задач в текущем месяце
+  const { postsInMonth, tasksInMonth } = useMemo(() => {
+    let postsCount = 0;
+    let tasksCount = 0;
+
+    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    daysInMonth.forEach(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      const items = itemsByDate.get(dateStr) || [];
+      items.forEach(item => {
+        if (item.type === 'post') postsCount++;
+        else tasksCount++;
+      });
+    });
+
+    return { postsInMonth: postsCount, tasksInMonth: tasksCount };
+  }, [itemsByDate, monthStart, monthEnd]);
 
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -155,13 +169,13 @@ export const Calendar: React.FC<CalendarProps> = ({
               onClick={handlePostsClick}
               className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : styles.filterButtonInactive}`}
             >
-              Постов {totalPostsCount}
+              Постов {postsInMonth}
             </button>
             <button
               onClick={handleTasksClick}
               className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : styles.filterButtonInactive}`}
             >
-              Задач {totalTasksCount}
+              Задач {tasksInMonth}
             </button>
           </div>
 

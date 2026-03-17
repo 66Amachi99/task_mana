@@ -48,9 +48,7 @@ const API_URL = '/api/posts';
 // ---- Запросы (queries) ----
 
 export const usePosts = (page = 1, limit = 100) => {
-  const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
-
+  // Убрана проверка авторизации – данные загружаются всегда
   return useQuery({
     queryKey: ['posts', { page, limit }],
     queryFn: async () => {
@@ -64,14 +62,11 @@ export const usePosts = (page = 1, limit = 100) => {
         totalPosts: data.totalPosts,
       };
     },
-    enabled: isAuthenticated,
   });
 };
 
 export const usePost = (id: number | null) => {
-  const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
-
+  // Убрана проверка авторизации
   return useQuery({
     queryKey: ['post', id],
     queryFn: async () => {
@@ -81,11 +76,12 @@ export const usePost = (id: number | null) => {
       const data = await res.json();
       return data.posts[0] as Post;
     },
-    enabled: !!id && isAuthenticated,
+    enabled: !!id,
   });
 };
 
 // ---- Мутации (mutations) ----
+// (остаются без изменений, так как они требуют авторизации на сервере)
 
 export const useCreatePost = () => {
   const queryClient = useQueryClient();
@@ -172,6 +168,7 @@ export const useDeletePost = () => {
 };
 
 // ---- Комментарии ----
+// (остаются без изменений)
 
 export const useAddComment = () => {
   const queryClient = useQueryClient();

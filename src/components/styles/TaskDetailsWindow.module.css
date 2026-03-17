@@ -437,24 +437,21 @@
 }
 
 .descriptionBox {
-  border: 1px solid #ffffff10;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  word-wrap: break-word;
+  min-height: 44px;
 }
 
 .descriptionPreview {
-  height: 44px;
-  overflow-y: auto;
-  padding-inline: 10px;
-  padding-top: 9px;
+  overflow: visible;
+  padding: 0;
 }
 
 .descriptionPreviewText {
   font-size: 16px;
+  font-weight: 400;
   color: #ffffff60;
   white-space: pre-wrap;
   word-wrap: break-word;
+  overflow-wrap: break-word;
   line-height: 1.5;
   margin: 0;
   width: 100%;
@@ -475,7 +472,7 @@
   line-height: 1.5;
   word-wrap: break-word;
   white-space: pre-wrap;
-  height: 44px;
+  min-height: 44px;
 }
 
 .descriptionTextarea:focus {
