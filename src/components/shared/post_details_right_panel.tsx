@@ -5,6 +5,7 @@ import { Lock, ExternalLink, Circle, CheckCircle, MessageSquare, Trash2 } from '
 import { TASK_CONFIG, COMMENT_STATUS, TaskWithComments, CommentData } from './post_details_window';
 import { useUser } from '../../hooks/use-roles';
 import { FileUploader } from './file_uploader';
+import { Gallery } from './gallery';
 import styles from '../styles/PostDetailsRightPanel.module.css';
 
 interface PostData {
@@ -24,10 +25,9 @@ interface PostDetailsRightPanelProps {
   onFilesSelected: (taskId: number, files: File[]) => void;
   onFilesCleared: (taskId: number) => void;
   onRemovePendingFile: (taskId: number, fileName: string) => void;
-  onDeleteFile?: (taskId: number, filePath: string) => Promise<void>;
+  onDeleteFile: (taskId: number, folderPath: string, filePath: string) => Promise<void>;
   pendingFiles: Record<number, File[]>;
-  existingFilesMap: Record<number, Array<{ fileName: string; path: string; sizes?: any }>>;
-  uploadingTasks: Record<number, boolean>; // новый проп
+  uploadingTasks: Record<number, boolean>;
   isSaving: boolean;
   isActionLoading: boolean;
 }
@@ -202,7 +202,6 @@ export const PostDetailsRightPanel = ({
   onRemovePendingFile,
   onDeleteFile,
   pendingFiles,
-  existingFilesMap,
   uploadingTasks,
   isSaving,
   isActionLoading
@@ -235,33 +234,33 @@ export const PostDetailsRightPanel = ({
             const supportsFiles = fileSupportTaskIds.includes(task.id);
             const rowClass = task.role === 'text' ? styles.taskRowTop : styles.taskRowCenter;
 
+            const folderPath = (() => {
+              if (!task.link) return null;
+              const match = task.link.match(/\/taskmanager\/(.+)/);
+              return match ? match[1] : null;
+            })();
+
             return (
               <div key={task.id} className={styles.taskCard}>
-                <div className={styles.taskHeader}>
-                  <h4 className={styles.taskLabel}>
-                    {task.label}
-                    {!userCanEdit && <Lock className={styles.lockIcon} />}
-                  </h4>
-                </div>
-
                 {supportsFiles ? (
-                  <FileUploader
-                    postId={post.post_id}
-                    taskId={task.id}
-                    taskName={task.name}
-                    currentPath={task.link || null}
-                    onFilesSelected={userCanEdit ? onFilesSelected : undefined}
-                    onFilesCleared={userCanEdit ? onFilesCleared : undefined}
-                    onRemovePendingFile={userCanEdit ? onRemovePendingFile : undefined}
-                    onDeleteFile={userCanEdit ? onDeleteFile : undefined}
+                  <Gallery
+                    folderPath={folderPath}
+                    canEdit={userCanEdit}
                     multiple={task.id !== 5}
-                    existingFiles={existingFilesMap[task.id] || []}
+                    taskId={task.id}
+                    onFilesSelected={onFilesSelected}
+                    onDelete={(taskId, filePath) => onDeleteFile(taskId, folderPath!, filePath)}
+                    uploading={uploadingTasks[task.id]}
                     pendingFiles={pendingFiles[task.id] || []}
-                    readOnly={!userCanEdit}
-                    isUploading={uploadingTasks[task.id]}
                   />
                 ) : (
                   <>
+                    <div className={styles.taskHeader}>
+                      <h4 className={styles.taskLabel}>
+                        {task.label}
+                        {!userCanEdit && <Lock className={styles.lockIcon} />}
+                      </h4>
+                    </div>
                     <div className={rowClass}>
                       <div className={styles.taskInputCol}>
                         {userCanEdit ? (

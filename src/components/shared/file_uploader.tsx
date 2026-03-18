@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
+import { ImageItem } from '@/store/useGalleryStore';
 import styles from '../styles/FileUploader.module.css';
 
 export interface PendingFile {
@@ -17,9 +18,9 @@ interface FileUploaderProps {
   onFilesSelected?: (taskId: number, files: File[]) => void;
   onFilesCleared?: (taskId: number) => void;
   onRemovePendingFile?: (taskId: number, fileName: string) => void;
-  onDeleteFile?: (taskId: number, filePath: string) => Promise<void>;
+  onDeleteFile?: (filePath: string) => Promise<void>; // <--- Только filePath
   multiple?: boolean;
-  existingFiles?: Array<{ fileName: string; path: string; sizes?: Array<{ url: string; name: string }> }>;
+  existingFiles?: ImageItem[];
   pendingFiles?: File[];
   readOnly?: boolean;
   isUploading?: boolean;
@@ -68,16 +69,14 @@ export const FileUploader = ({
     onFilesCleared(taskId);
   };
 
-  // Горизонтальная прокрутка с интеллектуальным возвратом к вертикальной
   const handleWheel = useCallback((e: React.WheelEvent) => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       const atLeftEdge = scrollLeft <= 0;
       const atRightEdge = scrollLeft + clientWidth >= scrollWidth;
 
-      // Если пытаемся прокрутить влево, но уже у левого края, или вправо, но у правого края – не перехватываем
       if ((e.deltaY < 0 && atLeftEdge) || (e.deltaY > 0 && atRightEdge)) {
-        return; // разрешаем вертикальную прокрутку страницы
+        return;
       }
 
       e.preventDefault();
@@ -127,17 +126,17 @@ export const FileUploader = ({
           </div>
         ) : (
           <div className={styles.imagesRow}>
-            {/* Загруженные файлы */}
+            {/* Загруженные файлы (из кеша) */}
             {existingFiles.map((file) => (
               <div key={file.path} className={styles.imageCard}>
-                {file.sizes && file.sizes[0] ? (
-                  <img src={file.sizes[0].url} alt={file.fileName} className={styles.image} />
+                {file.href ? (
+                  <img src={file.href} alt={file.fileName} className={styles.image} />
                 ) : (
                   <div className={styles.placeholder}>Нет превью</div>
                 )}
                 {!readOnly && onDeleteFile && (
                   <button
-                    onClick={() => onDeleteFile(taskId, file.path)}
+                    onClick={() => onDeleteFile(file.path)} // <--- только filePath
                     className={styles.deleteButton}
                     title="Удалить"
                   >

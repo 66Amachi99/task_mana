@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
 
-    const { path } = await req.json(); // path без /taskmanager/
+    const { path } = await req.json();
     const TOKEN = process.env.DISK_TOKEN;
 
     if (!TOKEN) {
@@ -28,8 +28,7 @@ export async function POST(req: Request) {
     const list = await getList.json();
 
     if (list.error) {
-      // Папка не существует
-      return NextResponse.json({ files: [] });
+      return NextResponse.json({ result: [] });
     }
 
     const items = list._embedded?.items || [];
@@ -38,12 +37,13 @@ export async function POST(req: Request) {
       .map((item: any) => ({
         fileName: item.name,
         path: item.path,
-        sizes: item.sizes || [], // массив размеров с URL превью
+        href: item.file,
       }));
 
-    return NextResponse.json({ files });
+    return NextResponse.json({ result: files });
   } catch (error) {
     const err = error as Error;
+    console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

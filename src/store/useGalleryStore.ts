@@ -1,0 +1,36 @@
+import { create } from 'zustand';
+
+export interface ImageItem {
+  fileName: string;
+  path: string;
+  href: string;
+}
+
+type ImagesOrUpdater = ImageItem[] | ((prev: ImageItem[]) => ImageItem[]);
+
+interface GalleryState {
+  cache: Record<string, ImageItem[]>;
+  setImagesToCache: (folderPath: string, images: ImagesOrUpdater) => void;
+  removeImageFromCache: (folderPath: string, imagePath: string) => void;
+  clearCache: () => void;
+}
+
+export const useGalleryStore = create<GalleryState>((set) => ({
+  cache: {},
+  setImagesToCache: (folderPath, images) =>
+    set((state) => {
+      const currentImages = state.cache[folderPath] || [];
+      const nextImages = typeof images === 'function' ? images(currentImages) : images;
+      return {
+        cache: { ...state.cache, [folderPath]: nextImages },
+      };
+    }),
+  removeImageFromCache: (folderPath, imagePath) =>
+    set((state) => ({
+      cache: {
+        ...state.cache,
+        [folderPath]: state.cache[folderPath]?.filter((img) => img.path !== imagePath) || [],
+      },
+    })),
+  clearCache: () => set({ cache: {} }),
+}));

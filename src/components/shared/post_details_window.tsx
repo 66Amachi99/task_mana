@@ -9,6 +9,7 @@ import { usePost, useUpdatePost, usePatchPost, useDeletePost } from '@/hooks/use
 import { useAddComment, useUpdateCommentStatus, useDeleteComment } from '@/hooks/usePosts';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { useGalleryStore } from '@/store/useGalleryStore';
 import styles from '../styles/PostDetailsWindow.module.css';
 
 export const TASK_CONFIG = [
@@ -201,7 +202,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const [isOpening, setIsOpening] = useState(true);
 
   const [pendingFiles, setPendingFiles] = useState<Record<number, File[]>>({});
-  const [existingFilesMap, setExistingFilesMap] = useState<Record<number, any[]>>({});
   const [uploadingTasks, setUploadingTasks] = useState<Record<number, boolean>>({});
 
   const [localIsPublished, setLocalIsPublished] = useState(post?.is_published || false);
@@ -223,8 +223,9 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const updateCommentStatus = useUpdateCommentStatus();
   const deleteComment = useDeleteComment();
 
-  // useRef для отслеживания предыдущих ссылок файловых задач
-  const prevFileLinksRef = useRef<Record<number, string>>({});
+  // Zustand
+  const removeImageFromCache = useGalleryStore((state) => state.removeImageFromCache);
+  const setImagesToCache = useGalleryStore((state) => state.setImagesToCache);
 
   useLayoutEffect(() => {
     if (!post) return;
@@ -295,61 +296,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     setLocalSocialLinks(social);
   }, [post]);
 
-  // Оптимизированный эффект для загрузки существующих файлов (один запрос)
-  useEffect(() => {
-    if (!post) return;
-
-    const fileSupportTaskIds = [5, 6, 7];
-    const fileTasks = tasks.filter(t => fileSupportTaskIds.includes(t.id) && t.link);
-
-    // Сохраняем текущие ссылки для файловых задач
-    const currentLinks: Record<number, string> = {};
-    fileTasks.forEach(t => { currentLinks[t.id] = t.link; });
-
-    // Проверяем, изменилась ли ссылка для какой-либо задачи
-    let needFetch = false;
-    for (const [id, link] of Object.entries(currentLinks)) {
-      if (prevFileLinksRef.current[Number(id)] !== link) {
-        needFetch = true;
-        break;
-      }
-    }
-
-    // Если изменений нет, не делаем запрос
-    if (!needFetch) return;
-
-    // Обновляем предыдущие значения
-    prevFileLinksRef.current = currentLinks;
-
-    if (fileTasks.length === 0) return;
-
-    const fetchAllFiles = async () => {
-      try {
-        const items = fileTasks.map(task => {
-          const pathMatch = task.link.match(/\/taskmanager\/(.+)/);
-          if (!pathMatch) return null;
-          return { taskId: task.id, folderPath: pathMatch[1] };
-        }).filter(Boolean) as { taskId: number; folderPath: string }[];
-
-        if (items.length === 0) return;
-
-        const res = await fetch('/api/disk/list-multiple', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items }),
-        });
-        const data = await res.json();
-        if (data.filesMap) {
-          setExistingFilesMap(prev => ({ ...prev, ...data.filesMap }));
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки файлов:', error);
-      }
-    };
-
-    fetchAllFiles();
-  }, [tasks, post]);
-
   useEffect(() => {
     if (!isEditing || !post) return;
 
@@ -411,7 +357,8 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     });
   }, []);
 
-  const handleDeleteFile = useCallback(async (taskId: number, filePath: string) => {
+  // Обновлённый handleDeleteFile: принимает folderPath и filePath, удаляет на сервере и из стора
+  const handleDeleteFile = useCallback(async (taskId: number, folderPath: string, filePath: string) => {
     if (!post) return;
     try {
       const res = await fetch('/api/disk/delete', {
@@ -421,21 +368,12 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       });
       if (!res.ok) throw new Error('Ошибка удаления');
 
-      setExistingFilesMap(prev => {
-        const taskFiles = prev[taskId] || [];
-        const updatedFiles = taskFiles.filter(f => f.path !== filePath);
-        if (updatedFiles.length === 0) {
-          const newMap = { ...prev };
-          delete newMap[taskId];
-          return newMap;
-        }
-        return { ...prev, [taskId]: updatedFiles };
-      });
+      removeImageFromCache(folderPath, filePath);
     } catch (error) {
       console.error('Ошибка удаления файла:', error);
       alert('Не удалось удалить файл');
     }
-  }, [post]);
+  }, [post, removeImageFromCache]);
 
   const filteredTags = availableTags.filter(tag =>
     tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
@@ -557,18 +495,29 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     try {
       const uploadedFilesMap = await uploadPendingFiles();
 
-      setExistingFilesMap(prev => {
-        const newMap = { ...prev };
-        for (const [taskIdStr, files] of Object.entries(uploadedFilesMap)) {
-          const taskId = Number(taskIdStr);
-          const taskFiles = prev[taskId] || [];
-          const newFiles = files.map(f => ({ fileName: f.fileName, path: f.path, sizes: [] }));
-          newMap[taskId] = [...taskFiles, ...newFiles];
-        }
-        return newMap;
-      });
-
+      // После загрузки обновляем кеш для каждой папки
       const baseFolder = getPostFolderPath();
+      const tasksToUpdate = Object.keys(uploadedFilesMap).map(Number);
+      await Promise.all(tasksToUpdate.map(async (taskId) => {
+        const task = TASK_CONFIG.find(t => t.id === taskId);
+        if (!task) return;
+        const folderPath = `${baseFolder}/${task.name}`;
+        try {
+          const res = await fetch('/api/disk/list', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: folderPath }),
+          });
+          const data = await res.json();
+          if (data.result) {
+            setImagesToCache(folderPath, data.result);
+          }
+        } catch (error) {
+          console.error(`Ошибка обновления кеша для папки ${folderPath}:`, error);
+        }
+      }));
+
+      // Обновляем tasks (пути к папкам)
       const updatedTasks = tasks.map(task => {
         if (uploadedFilesMap[task.id]) {
           return { ...task, link: `/taskmanager/${baseFolder}/${task.name}` };
@@ -802,7 +751,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
                   onRemovePendingFile={handleRemovePendingFile}
                   onDeleteFile={handleDeleteFile}
                   pendingFiles={pendingFiles}
-                  existingFilesMap={existingFilesMap}
                   uploadingTasks={uploadingTasks}
                   isSaving={isSaving}
                   isActionLoading={isActionLoading}
