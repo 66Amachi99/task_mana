@@ -62,7 +62,8 @@
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 12px;
+  margin-top: 12px;
 }
 
 @media (min-width: 640px) {
@@ -119,12 +120,6 @@
   width: 100%;
 }
 
-@media (min-width: 640px) {
-  .taskInputCol {
-    width: 75%;
-  }
-}
-
 /* Общий стиль для инпута (ссылки) – есть обводка */
 .inputLink {
   width: 100%;
@@ -152,10 +147,9 @@
 /* Текстовая область для задачи (большая) – есть обводка */
 .taskTextarea {
   width: 100%;
-  padding-inline: 1rem;
-  padding-top: 8px;
+  padding: 0.5rem 1rem; 
   border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 10px;
+  border-radius: 10px; 
   overflow: hidden;
   outline: none;
   resize: none;
@@ -368,11 +362,16 @@
   font-size: 16px;
   height: 27px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
 }
 
 .panelButton:hover:not(:disabled) {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.20) 100%);
+}
+
+.panelButton:active:not(:disabled) {
+  transform: scale(0.96);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.3) 100%);
 }
 
 .panelButton:disabled {
@@ -428,4 +427,35 @@
 .commentDeleteButton:hover {
   color: #f00;
   background: rgba(255, 0, 0, 0.1);
+}
+
+/* Заголовок задачи с кнопкой */
+.taskHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+/* Кнопки копирования и скачивания в заголовке */
+.copyButton,
+.downloadButton {
+  composes: panelButton;
+  gap: 4px;
+  height: 27px;
+  padding: 0 12px;
+  font-size: 14px;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.copyButton span,
+.downloadButton span {
+  margin-left: 2px;
+}
+
+/* Контейнер для галереи */
+.galleryContainer {
+  width: 100%;
 }

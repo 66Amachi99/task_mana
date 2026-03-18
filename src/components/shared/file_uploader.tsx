@@ -18,7 +18,7 @@ interface FileUploaderProps {
   onFilesSelected?: (taskId: number, files: File[]) => void;
   onFilesCleared?: (taskId: number) => void;
   onRemovePendingFile?: (taskId: number, fileName: string) => void;
-  onDeleteFile?: (filePath: string) => Promise<void>; // <--- Только filePath
+  onDeleteFile?: (filePath: string) => Promise<void>;
   multiple?: boolean;
   existingFiles?: ImageItem[];
   pendingFiles?: File[];
@@ -42,6 +42,8 @@ export const FileUploader = ({
   isUploading = false,
 }: FileUploaderProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const [deletingPaths, setDeletingPaths] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -101,6 +103,27 @@ export const FileUploader = ({
     };
   }, [pendingFiles]);
 
+  const handleImageLoad = (key: string) => {
+    setLoadedImages(prev => ({ ...prev, [key]: true }));
+  };
+
+  const handleDeleteClick = async (filePath: string) => {
+    if (!onDeleteFile) return;
+    setDeletingPaths(prev => new Set(prev).add(filePath));
+    try {
+      await onDeleteFile(filePath);
+      // после успешного удаления карточка будет удалена из списка (управляется родителем)
+    } catch (error) {
+      console.error('Ошибка удаления:', error);
+    } finally {
+      setDeletingPaths(prev => {
+        const next = new Set(prev);
+        next.delete(filePath);
+        return next;
+      });
+    }
+  };
+
   return (
     <div
       className={`${styles.container} ${isDragOver ? styles.dragOver : ''}`}
@@ -127,42 +150,73 @@ export const FileUploader = ({
         ) : (
           <div className={styles.imagesRow}>
             {/* Загруженные файлы (из кеша) */}
-            {existingFiles.map((file) => (
-              <div key={file.path} className={styles.imageCard}>
-                {file.href ? (
-                  <img src={file.href} alt={file.fileName} className={styles.image} />
-                ) : (
-                  <div className={styles.placeholder}>Нет превью</div>
-                )}
-                {!readOnly && onDeleteFile && (
-                  <button
-                    onClick={() => onDeleteFile(file.path)} // <--- только filePath
-                    className={styles.deleteButton}
-                    title="Удалить"
-                  >
-                    <X size={16} />
-                    <span className={styles.deleteText}>Удалить</span>
-                  </button>
-                )}
-              </div>
-            ))}
+            {existingFiles.map((file) => {
+              const isLoaded = loadedImages[file.path];
+              const isDeleting = deletingPaths.has(file.path);
+              return (
+                <div 
+                  key={file.path} 
+                  className={`${styles.imageCard} ${isDeleting ? styles.imageCardDeleting : ''}`}
+                >
+                  {!isLoaded && !isDeleting && <div className={styles.imageSkeleton} />}
+                  {file.href && (
+                    <img
+                      src={file.href}
+                      alt={file.fileName}
+                      className={`${styles.image} ${isLoaded ? styles.imageLoaded : styles.imageLoading}`}
+                      onLoad={() => handleImageLoad(file.path)}
+                      onError={() => handleImageLoad(file.path)} // если ошибка, тоже скрываем скелетон
+                    />
+                  )}
+                  {!file.href && <div className={styles.placeholder}>Нет превью</div>}
+                  {!readOnly && onDeleteFile && !isDeleting && (
+                    <button
+                      onClick={() => handleDeleteClick(file.path)}
+                      className={styles.deleteButton}
+                      title="Удалить"
+                    >
+                      <X size={16} />
+                      <span className={styles.deleteText}>Удалить</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
 
             {/* Ожидающие загрузки файлы */}
-            {!readOnly && pendingFiles.map((file) => (
-              <div key={file.name} className={styles.imageCard}>
-                {file.type.startsWith('image/') && (
-                  <img src={URL.createObjectURL(file)} alt={file.name} className={styles.image} />
-                )}
-                <button
-                  onClick={() => handleRemovePending(file.name)}
-                  className={styles.deleteButton}
-                  title="Удалить из списка"
+            {!readOnly && pendingFiles.map((file) => {
+              const objectUrl = URL.createObjectURL(file);
+              const key = `pending-${file.name}`;
+              const isLoaded = loadedImages[key];
+              const isDeleting = deletingPaths.has(key);
+              return (
+                <div 
+                  key={file.name} 
+                  className={`${styles.imageCard} ${isDeleting ? styles.imageCardDeleting : ''}`}
                 >
-                  <X size={16} />
-                  <span className={styles.deleteText}>Удалить</span>
-                </button>
-              </div>
-            ))}
+                  {!isLoaded && !isDeleting && <div className={styles.imageSkeleton} />}
+                  {file.type.startsWith('image/') && (
+                    <img
+                      src={objectUrl}
+                      alt={file.name}
+                      className={`${styles.image} ${isLoaded ? styles.imageLoaded : styles.imageLoading}`}
+                      onLoad={() => handleImageLoad(key)}
+                      onError={() => handleImageLoad(key)}
+                    />
+                  )}
+                  {!isDeleting && (
+                    <button
+                      onClick={() => handleRemovePending(file.name)}
+                      className={styles.deleteButton}
+                      title="Удалить из списка"
+                    >
+                      <X size={16} />
+                      <span className={styles.deleteText}>Удалить</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
 
             {/* Блок загрузки */}
             {showUploadArea && (

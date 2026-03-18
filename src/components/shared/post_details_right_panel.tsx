@@ -1,7 +1,10 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { Lock, ExternalLink, Circle, CheckCircle, MessageSquare, Trash2 } from 'lucide-react';
+import { 
+  Lock, ExternalLink, Circle, CheckCircle, MessageSquare, Trash2, 
+  Copy, Download 
+} from 'lucide-react';
 import { TASK_CONFIG, COMMENT_STATUS, TaskWithComments, CommentData } from './post_details_window';
 import { useUser } from '../../hooks/use-roles';
 import { FileUploader } from './file_uploader';
@@ -248,63 +251,95 @@ export const PostDetailsRightPanel = ({
                     canEdit={userCanEdit}
                     multiple={task.id !== 5}
                     taskId={task.id}
+                    taskLabel={task.label}
                     onFilesSelected={onFilesSelected}
                     onDelete={(taskId, filePath) => onDeleteFile(taskId, folderPath!, filePath)}
+                    onRemovePendingFile={onRemovePendingFile}
                     uploading={uploadingTasks[task.id]}
                     pendingFiles={pendingFiles[task.id] || []}
                   />
                 ) : (
                   <>
-                    <div className={styles.taskHeader}>
-                      <h4 className={styles.taskLabel}>
-                        {task.label}
-                        {!userCanEdit && <Lock className={styles.lockIcon} />}
-                      </h4>
-                    </div>
-                    <div className={rowClass}>
-                      <div className={styles.taskInputCol}>
-                        {userCanEdit ? (
-                          task.role === 'text' ? (
-                            <TaskTextarea
-                              value={task.link}
-                              onChange={e => onLinkChange(task.id, e.target.value)}
-                              placeholder="Введите текст задачи..."
-                              disabled={isSaving || isActionLoading}
-                            />
-                          ) : (
-                            <input
-                              type="text"
-                              value={task.link}
-                              onChange={e => onLinkChange(task.id, e.target.value)}
-                              placeholder="Вставьте ссылку..."
-                              className={styles.inputLink}
-                              disabled={isSaving || isActionLoading}
-                            />
-                          )
-                        ) : (
-                          <div className={styles.viewOnlyField}>
-                            {task.link || 'Нет доступа к редактированию'}
+                    {task.role === 'text' ? (
+                      <>
+                        <div className={styles.taskHeader}>
+                          <h4 className={styles.taskLabel}>
+                            {task.label}
+                            {!userCanEdit && <Lock className={styles.lockIcon} />}
+                          </h4>
+                          {task.link && (
+                            <button
+                              onClick={() => navigator.clipboard.writeText(task.link)}
+                              className={styles.copyButton}
+                              title="Копировать текст"
+                            >
+                              <Copy className="w-4 h-4" />
+                              <span>Скопировать</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className={rowClass}>
+                          <div className={styles.taskInputCol}>
+                            {userCanEdit ? (
+                              <TaskTextarea
+                                value={task.link}
+                                onChange={e => onLinkChange(task.id, e.target.value)}
+                                placeholder="Введите текст задачи..."
+                                disabled={isSaving || isActionLoading}
+                              />
+                            ) : (
+                              <div className={styles.viewOnlyField}>
+                                {task.link || 'Нет доступа к редактированию'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className={styles.taskHeader}>
+                          <h4 className={styles.taskLabel}>
+                            {task.label}
+                            {!userCanEdit && <Lock className={styles.lockIcon} />}
+                          </h4>
+                        </div>
+                        <div className={rowClass}>
+                          <div className={styles.taskInputCol}>
+                            {userCanEdit ? (
+                              <input
+                                type="text"
+                                value={task.link}
+                                onChange={e => onLinkChange(task.id, e.target.value)}
+                                placeholder="Вставьте ссылку..."
+                                className={styles.inputLink}
+                                disabled={isSaving || isActionLoading}
+                              />
+                            ) : (
+                              <div className={styles.viewOnlyField}>
+                                {task.link || 'Нет доступа к редактированию'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {hasLink && (
+                          <div className={styles.linkBlock}>
+                            <div className={styles.linkContainer}>
+                              <div className={styles.linkInfo}>
+                                <span className={styles.linkLabel}>Ссылка:</span>
+                                <p className={styles.linkUrl} title={originalLink}>{originalLink}</p>
+                              </div>
+                              <button
+                                onClick={e => handleLinkClick(originalLink, e)}
+                                className={styles.linkButton}
+                                title="Открыть в новой вкладке"
+                              >
+                                <ExternalLink className="w-4 h-4" /> Открыть
+                              </button>
+                            </div>
                           </div>
                         )}
-                      </div>
-                    </div>
-
-                    {hasLink && task.role !== 'text' && (
-                      <div className={styles.linkBlock}>
-                        <div className={styles.linkContainer}>
-                          <div className={styles.linkInfo}>
-                            <span className={styles.linkLabel}>Ссылка:</span>
-                            <p className={styles.linkUrl} title={originalLink}>{originalLink}</p>
-                          </div>
-                          <button
-                            onClick={e => handleLinkClick(originalLink, e)}
-                            className={styles.linkButton}
-                            title="Открыть в новой вкладке"
-                          >
-                            <ExternalLink className="w-4 h-4" /> Открыть
-                          </button>
-                        </div>
-                      </div>
+                      </>
                     )}
                   </>
                 )}

@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
-    }
-
     const { path } = await req.json();
     const TOKEN = process.env.DISK_TOKEN;
 
