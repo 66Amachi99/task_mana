@@ -3,6 +3,8 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  height: fit-content;
+  margin: auto 0;
 }
 
 /* Дедлайн */

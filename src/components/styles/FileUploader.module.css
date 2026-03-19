@@ -20,6 +20,7 @@
   overflow-y: hidden;
   overscroll-behavior: contain;
   padding: 12px;
+  height: 224px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
   /* scroll-behavior: smooth; удалено */

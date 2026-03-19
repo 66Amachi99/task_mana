@@ -754,6 +754,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
                   uploadingTasks={uploadingTasks}
                   isSaving={isSaving}
                   isActionLoading={isActionLoading}
+                  isEditing={isEditing}
                 />
               </div>
             </div>

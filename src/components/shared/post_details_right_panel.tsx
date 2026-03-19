@@ -33,6 +33,7 @@ interface PostDetailsRightPanelProps {
   uploadingTasks: Record<number, boolean>;
   isSaving: boolean;
   isActionLoading: boolean;
+  isEditing: boolean;
 }
 
 const fileSupportTaskIds = [5, 6, 7]; // cover_photo, photo_cards, mini_gallery
@@ -207,6 +208,7 @@ export const PostDetailsRightPanel = ({
   pendingFiles,
   uploadingTasks,
   isSaving,
+  isEditing,
   isActionLoading
 }: PostDetailsRightPanelProps) => {
   const { user, canAddComment } = useUser();
@@ -248,7 +250,7 @@ export const PostDetailsRightPanel = ({
                 {supportsFiles ? (
                   <Gallery
                     folderPath={folderPath}
-                    canEdit={userCanEdit}
+                    canEdit={userCanEdit && !isEditing}
                     multiple={task.id !== 5}
                     taskId={task.id}
                     taskLabel={task.label}

@@ -138,6 +138,7 @@
   border: 1px solid #ffffff10;
   border-radius: 10px;
   cursor: pointer;
+  white-space: nowrap;  
 }
 
 .statsRowPosts.active,
@@ -175,7 +176,6 @@
   align-items: center;
   justify-content: center;
   padding-inline: 0.5rem;
-  min-width: 94px;
   color: #ffffff;
   padding: 0.2rem 0.75rem;
   font-size: 16px;
@@ -183,6 +183,7 @@
   border: 1px solid #ffffff10;
   border-radius: 10px;
   cursor: pointer;
+  white-space: nowrap;  
 }
 
 .filterButtonActive {
@@ -343,7 +344,8 @@
 /* Дропдаун для фильтра по ролям в сайдбаре */
 .roleDropdown {
   position: relative;
-  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
 }
 
 .roleDropdownButton {
