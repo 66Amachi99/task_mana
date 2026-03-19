@@ -1,14 +1,16 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { PostCard } from '../components/posts/post-card';
 import { TaskCard } from '../components/tasks/task_card';
-import { Pagination } from '../components/ui/pagination';
 import { Header } from '../components/layout/Header/Header';
 import { useUser } from '../hooks/use-roles';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
 import { Task } from '../../types/task';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
+import { ROLE_FILTERS } from '@/hooks/use-roles';
 import styles from '../components/styles/HomePage.module.css';
 
 interface PostWithRelations {
@@ -45,23 +47,40 @@ interface PostWithRelations {
 }
 
 type ContentItem = PostWithRelations | Task;
-type ViewMode = 'all' | 'posts' | 'tasks';
+
+const ITEMS_PER_BATCH = 10;
 
 export default function HomePage() {
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  // Фильтры
+  const [showPosts, setShowPosts] = useState(true);
+  const [showTasks, setShowTasks] = useState(true);
+  const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<string | null>(null);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_BATCH);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   const { filterPostByRole } = useUser();
 
   const { data: postsData, isLoading: postsLoading } = usePosts(1, 100);
   const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 100);
 
-  // Сброс страницы на 1-ю при изменении фильтров
   useEffect(() => {
-    setCurrentPage(1);
-  }, [viewMode, selectedRoleFilter]);
+    setDisplayedCount(ITEMS_PER_BATCH);
+  }, [showPosts, showTasks, showIncompleteOnly, roleFilter]);
+
+  // Закрытие дропдауна при клике вне
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const allPosts = useMemo(() => {
     return (postsData?.posts || []).map((post) => ({
@@ -81,48 +100,104 @@ export default function HomePage() {
 
   const loading = postsLoading || tasksLoading;
 
-  const filteredContent = useMemo(() => {
-    let filtered: ContentItem[] = [];
+  // Логика кнопок
+  const handlePostsClick = () => {
+    if (showPosts) {
+      if (showTasks) {
+        setShowPosts(false);
+      } else {
+        setShowPosts(false);
+        setShowTasks(true);
+      }
+    } else {
+      setShowPosts(true);
+    }
+  };
 
-    if (viewMode === 'posts') filtered = [...allPosts];
-    else if (viewMode === 'tasks') filtered = [...allTasks];
-    else filtered = [...allPosts, ...allTasks];
+  const handleTasksClick = () => {
+    if (showTasks) {
+      if (showPosts) {
+        setShowTasks(false);
+      } else {
+        setShowTasks(false);
+        setShowPosts(true);
+      }
+    } else {
+      setShowTasks(true);
+    }
+  };
 
-    if (selectedRoleFilter && viewMode !== 'tasks') {
-      filtered = filtered.filter(item => {
-        if (item.type === 'post') {
-          return filterPostByRole(item, selectedRoleFilter);
-        }
+  // Полный отсортированный список отфильтрованных элементов
+  const allFilteredItems = useMemo(() => {
+    let items: ContentItem[] = [];
+    if (showPosts) items.push(...allPosts);
+    if (showTasks) items.push(...allTasks);
+
+    if (showIncompleteOnly) {
+      items = items.filter(item => {
+        if (item.type === 'post') return item.post_status !== 'Завершен';
+        return item.task_status !== 'Выполнена';
+      });
+    }
+
+    if (roleFilter) {
+      items = items.filter(item => {
+        if (item.type === 'post') return filterPostByRole(item, roleFilter);
         return true;
       });
     }
 
-    // Безопасная сортировка от новых к старым (с защитой от NaN)
-    filtered.sort((a, b) => {
-      const dateA = a.type === 'post'
-        ? (a.post_date?.getTime() || 0)
-        : (new Date(a.created_at).getTime() || 0);
-      const dateB = b.type === 'post'
-        ? (b.post_date?.getTime() || 0)
-        : (new Date(b.created_at).getTime() || 0);
-      return dateB - dateA;
+    items.sort((a, b) => {
+      const dateA = a.type === 'post' ? a.post_deadline.getTime() : new Date(a.end_time).getTime();
+      const dateB = b.type === 'post' ? b.post_deadline.getTime() : new Date(b.end_time).getTime();
+      return dateA - dateB;
     });
 
-    return filtered;
-  }, [viewMode, selectedRoleFilter, allPosts, allTasks, filterPostByRole]);
+    return items;
+  }, [allPosts, allTasks, showPosts, showTasks, showIncompleteOnly, roleFilter, filterPostByRole]);
 
-  const totalPages = Math.ceil(filteredContent.length / itemsPerPage) || 1;
+  // Видимые элементы (первые displayedCount)
+  const visibleItems = useMemo(() => {
+    return allFilteredItems.slice(0, displayedCount);
+  }, [allFilteredItems, displayedCount]);
 
-  const currentItems = useMemo(() => {
-    return filteredContent.slice(
-      (currentPage - 1) * itemsPerPage,
-      currentPage * itemsPerPage
+  // Группируем видимые элементы по дням
+  const visibleGroups = useMemo(() => {
+    const groupsMap = new Map<string, { dateKey: string; displayDate: string; items: ContentItem[] }>();
+
+    for (const item of visibleItems) {
+      const date = item.type === 'post' ? item.post_deadline : new Date(item.end_time);
+      const dateKey = format(date, 'yyyy-MM-dd');
+      const displayDate = format(date, 'dd EEEE', { locale: ru });
+
+      if (!groupsMap.has(dateKey)) {
+        groupsMap.set(dateKey, { dateKey, displayDate, items: [] });
+      }
+      groupsMap.get(dateKey)!.items.push(item);
+    }
+
+    return Array.from(groupsMap.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+  }, [visibleItems]);
+
+  const hasMore = displayedCount < allFilteredItems.length;
+
+  useEffect(() => {
+    if (!loaderRef.current || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setDisplayedCount((prev) => prev + ITEMS_PER_BATCH);
+        }
+      },
+      { threshold: 1.0 }
     );
-  }, [filteredContent, currentPage]);
+    observer.observe(loaderRef.current);
+    return () => observer.disconnect();
+  }, [hasMore]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleRoleSelect = (role: string | null) => {
+    setRoleFilter(role);
+    setIsRoleDropdownOpen(false);
   };
 
   if (loading && allPosts.length === 0 && allTasks.length === 0) {
@@ -143,46 +218,97 @@ export default function HomePage() {
   return (
     <div className={styles.page}>
       <div className={styles.contentWrapper}>
-        <div className={styles.container}>
-          <div className={styles.list}>
-            {currentItems.map((item) => {
-              if (item.type === 'post') {
-                return (
-                  <PostCard
-                    key={`post-${item.post_id}`}
-                    post={item}
-                  />
-                );
-              } else {
-                return (
-                  <TaskCard
-                    key={`task-${item.task_id}`}
-                    task={item}
-                  />
-                );
-              }
-            })}
-            
-            {currentItems.length === 0 && !loading && (
-              <div className={styles.emptyMessage}>
-                <p>
-                  {viewMode === 'posts' && 'Нет постов для отображения'}
-                  {viewMode === 'tasks' && 'Нет задач для отображения'}
-                  {viewMode === 'all' && 'Нет элементов для отображения'}
-                </p>
+        {/* Фильтры */}
+        <div className={styles.filterWrapper}>
+          <button
+            onClick={handlePostsClick}
+            className={`${styles.statsRowPosts} ${showPosts ? styles.active : ''}`}
+          >
+            Посты
+          </button>
+          <button
+            onClick={handleTasksClick}
+            className={`${styles.statsRowTasks} ${showTasks ? styles.active : ''}`}
+          >
+            Задачи
+          </button>
+          <button
+            onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
+            className={`${styles.filterButton} ${
+              showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
+            }`}
+          >
+            Не готовые
+          </button>
+          <div className={styles.roleDropdown} ref={roleDropdownRef}>
+            <button
+              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+              className={styles.roleDropdownButton}
+            >
+              <img
+                src={isRoleDropdownOpen ? '/icons/filter_on.svg' : '/icons/filter.svg'}
+                alt="filter"
+                className={styles.filterIcon}
+              />
+            </button>
+            {isRoleDropdownOpen && (
+              <div className={styles.roleDropdownMenu}>
+                <button
+                  onClick={() => handleRoleSelect(null)}
+                  className={`${styles.roleMenuItem} ${!roleFilter ? styles.active : ''}`}
+                >
+                  Все посты
+                </button>
+                <div className={styles.menuDivider}></div>
+                {ROLE_FILTERS.map((role) => (
+                  <button
+                    key={role.id}
+                    onClick={() => handleRoleSelect(role.id)}
+                    className={`${styles.roleMenuItem} ${roleFilter === role.id ? styles.active : ''}`}
+                  >
+                    <span className={styles.roleIcon}>
+                      {role.id === 'smm' && '📹'}
+                      {role.id === 'photographer' && '📷'}
+                      {role.id === 'designer' && '✏️'}
+                    </span>
+                    {role.label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
-          
-          {filteredContent.length > itemsPerPage && (
-            <div className={styles.pagination}>
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </div>
-          )}
+        </div>
+
+        <div className={styles.container}>
+          <div className={styles.list}>
+            {visibleGroups.map((group) => (
+              <div key={group.dateKey} className={styles.dayGroup}>
+                <div className={styles.dayHeader}>{group.displayDate}</div>
+                {group.items.map((item) => {
+                  if (item.type === 'post') {
+                    return <PostCard key={`post-${item.post_id}`} post={item} />;
+                  } else {
+                    return <TaskCard key={`task-${item.task_id}`} task={item} />;
+                  }
+                })}
+              </div>
+            ))}
+
+            {visibleGroups.length === 0 && !loading && (
+              <div className={styles.emptyMessage}>
+                <p>
+                  {!showPosts && !showTasks && 'Выберите хотя бы один тип элементов'}
+                  {(showPosts || showTasks) && 'Нет элементов для отображения'}
+                </p>
+              </div>
+            )}
+
+            {hasMore && (
+              <div ref={loaderRef} className={styles.loader}>
+                Загрузка...
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

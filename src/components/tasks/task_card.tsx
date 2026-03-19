@@ -44,11 +44,22 @@ const formatDate = (dateString?: string) => {
 };
 
 export const TaskCard = ({ task }: TaskCardProps) => {
+  // Получаем первый тег для градиента
+  const firstTag = task.tags && task.tags.length > 0 ? task.tags[0] : null;
+  
+  // Градиент точно как в сайдбаре
+  const bgGradient = firstTag
+    ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
+    : undefined;
+
   const priorityInfo = PRIORITY_MAP[task.priority] || { class: styles.priorityDefault, label: 'Обычный' };
   const statusClass = getStatusClass(task.task_status);
 
   return (
-    <div className={styles.card}>
+    <div 
+      className={styles.card}
+      style={bgGradient ? { backgroundImage: bgGradient } : undefined}
+    >
       <div className={styles.cardHeader}>
         <div className={styles.titleBlock}>
           <div className={styles.titleRow}>

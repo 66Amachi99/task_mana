@@ -88,6 +88,14 @@ const TASK_DEFINITIONS = [
 export function PostCard({ post }: PostCardProps) {
   if (!post) return null;
 
+  // Получаем первый тег для градиента
+  const firstTag = post.tags && post.tags.length > 0 ? post.tags[0] : null;
+  
+  // Градиент точно как в сайдбаре
+  const bgGradient = firstTag
+    ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
+    : undefined;
+
   const handleTzLinkClick = (url: string | null | undefined, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -127,7 +135,10 @@ export function PostCard({ post }: PostCardProps) {
   const statusColor = getStatusColor(postStatus);
 
   return (
-    <div className={styles.card}>
+    <div 
+      className={styles.card}
+      style={bgGradient ? { backgroundImage: bgGradient } : undefined}
+    >
       <div className={styles.cardHeader}>
         <div className={styles.cardTitleBlock}>
           <div className={styles.titleRow}>

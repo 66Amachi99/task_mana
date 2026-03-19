@@ -1,0 +1,99 @@
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filterButtons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.filterButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  height: 36px;
+}
+
+.filterButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.filterButton.active {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.3) 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.count {
+  margin-left: 4px;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.roleDropdown {
+  position: relative;
+}
+
+.roleDropdownButton {
+  composes: filterButton;
+  min-width: 40px;
+}
+
+.roleDropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.5rem 0;
+  min-width: 150px;
+  z-index: 200;
+}
+
+.roleMenuItem {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.roleMenuItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.roleMenuItem.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.menuDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+}
+
+.filterIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.roleIcon {
+  margin-right: 0.5rem;
+}

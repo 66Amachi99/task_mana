@@ -158,6 +158,7 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
             className={styles.tag}
             style={{ backgroundColor: tag.color }}
           >
+            <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>
             {tag.name}
             <button
               type="button"
@@ -591,7 +592,8 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                     className={styles.tag}
                     style={{ backgroundColor: t.color }}
                   >
-                    #{t.name}
+                  <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>  
+                    {t.name}
                   </span>
                 ))}
               </div>

@@ -155,6 +155,7 @@ const TagSelector = ({
             className={styles.tagChipEditable}
             style={{ backgroundColor: tag.color }}
           >
+            <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>
             {tag.name}
             <button
               type="button"
@@ -326,7 +327,8 @@ export const PostDetailsLeftPanel = ({
                   className={styles.tagChip}
                   style={{ backgroundColor: tag.color }}
                 >
-                  #{tag.name}
+                <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>
+                  {tag.name}
                 </span>
               ))}
             </div>

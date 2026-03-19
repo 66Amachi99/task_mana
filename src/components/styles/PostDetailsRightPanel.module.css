@@ -435,6 +435,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  min-height: 27px;
 }
 
 /* Кнопки копирования и скачивания в заголовке */
