@@ -203,6 +203,7 @@ export function PostCard({ post }: PostCardProps) {
                     className={styles.tag}
                     style={{ backgroundColor: tag.color }}
                   >
+                    <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>
                     {tag.name}
                   </span>
                 ))}

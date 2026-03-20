@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
 
-    const { path } = await req.json(); // полный путь, включая /taskmanager/...
+    const { path } = await req.json();
     const TOKEN = process.env.DISK_TOKEN;
 
     if (!TOKEN) {

@@ -51,7 +51,6 @@ type ContentItem = PostWithRelations | Task;
 const ITEMS_PER_BATCH = 10;
 
 export default function HomePage() {
-  // Фильтры
   const [showPosts, setShowPosts] = useState(true);
   const [showTasks, setShowTasks] = useState(true);
   const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
@@ -214,67 +213,65 @@ export default function HomePage() {
   return (
     <div className={styles.page}>
       <div className={styles.contentWrapper}>
-        <div className={styles.filterWrapper}>
-          <button
-            onClick={handlePostsClick}
-            className={`${styles.statsRowPosts} ${showPosts ? styles.active : ''}`}
-          >
-            Посты
-          </button>
-          <button
-            onClick={handleTasksClick}
-            className={`${styles.statsRowTasks} ${showTasks ? styles.active : ''}`}
-          >
-            Задачи
-          </button>
-          <button
-            onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
-            className={`${styles.filterButton} ${
-              showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
-            }`}
-          >
-            Не готовые
-          </button>
-          <div className={styles.roleDropdown} ref={roleDropdownRef}>
-            <button
-              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-              className={styles.roleDropdownButton}
-            >
-              <img
-                src={isRoleDropdownOpen ? '/icons/filter_on.svg' : '/icons/filter.svg'}
-                alt="filter"
-                className={styles.filterIcon}
-              />
-            </button>
-            {isRoleDropdownOpen && (
-              <div className={styles.roleDropdownMenu}>
-                <button
-                  onClick={() => handleRoleSelect(null)}
-                  className={`${styles.roleMenuItem} ${!roleFilter ? styles.active : ''}`}
-                >
-                  Все посты
-                </button>
-                <div className={styles.menuDivider}></div>
-                {ROLE_FILTERS.map((role) => (
-                  <button
-                    key={role.id}
-                    onClick={() => handleRoleSelect(role.id)}
-                    className={`${styles.roleMenuItem} ${roleFilter === role.id ? styles.active : ''}`}
-                  >
-                    <span className={styles.roleIcon}>
-                      {role.id === 'smm' && '📹'}
-                      {role.id === 'photographer' && '📷'}
-                      {role.id === 'designer' && '✏️'}
-                    </span>
-                    {role.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
         <div className={styles.container}>
+          <div className={styles.filterWrapper}>
+            <button
+              onClick={handlePostsClick}
+              className={`${styles.statsRowPosts} ${showPosts ? styles.active : ''}`}
+            >
+              Посты
+            </button>
+            <button
+              onClick={handleTasksClick}
+              className={`${styles.statsRowTasks} ${showTasks ? styles.active : ''}`}
+            >
+              Задачи
+            </button>
+            <button
+              onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
+              className={`${styles.filterButton} ${showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
+                }`}
+            >
+              Не готовые
+            </button>
+            <div className={styles.roleDropdown} ref={roleDropdownRef}>
+              <button
+                onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                className={styles.roleDropdownButton}
+              >
+                <img
+                  src={isRoleDropdownOpen ? '/icons/filter_on.svg' : '/icons/filter.svg'}
+                  alt="filter"
+                  className={styles.filterIcon}
+                />
+              </button>
+              {isRoleDropdownOpen && (
+                <div className={styles.roleDropdownMenu}>
+                  <button
+                    onClick={() => handleRoleSelect(null)}
+                    className={`${styles.roleMenuItem} ${!roleFilter ? styles.active : ''}`}
+                  >
+                    Все посты
+                  </button>
+                  <div className={styles.menuDivider}></div>
+                  {ROLE_FILTERS.map((role) => (
+                    <button
+                      key={role.id}
+                      onClick={() => handleRoleSelect(role.id)}
+                      className={`${styles.roleMenuItem} ${roleFilter === role.id ? styles.active : ''}`}
+                    >
+                      <span className={styles.roleIcon}>
+                        {role.id === 'smm' && '📹'}
+                        {role.id === 'photographer' && '📷'}
+                        {role.id === 'designer' && '✏️'}
+                      </span>
+                      {role.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <div className={styles.list}>
             {visibleGroups.map((group) => (
               <div key={group.dateKey} className={styles.dayGroup}>

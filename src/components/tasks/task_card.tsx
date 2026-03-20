@@ -24,27 +24,33 @@ const getStatusClass = (status: string): string => {
   }
 };
 
-const formatDate = (dateString?: string) => {
+// Обновлённая функция форматирования даты
+const formatDate = (dateString?: string, allDay?: boolean): string => {
   if (!dateString) return 'Нет даты';
-  
+
   const date = new Date(dateString);
-  
   if (isNaN(date.getTime())) {
     return 'Некорректная дата';
   }
 
-  return date.toLocaleDateString('ru-RU', {
+  const options: Intl.DateTimeFormatOptions = {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  };
+
+  // Если задача не на весь день, добавляем время
+  if (!allDay) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+  }
+
+  return date.toLocaleDateString('ru-RU', options);
 };
 
 export const TaskCard = ({ task }: TaskCardProps) => {
   const firstTag = task.tags && task.tags.length > 0 ? task.tags[0] : null;
-  
+
   const bgGradient = firstTag
     ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
     : undefined;
@@ -53,7 +59,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
   const statusClass = getStatusClass(task.task_status);
 
   return (
-    <div 
+    <div
       className={styles.card}
       style={bgGradient ? { backgroundImage: bgGradient } : undefined}
     >
@@ -63,7 +69,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
             <h2 className={styles.title} title={task.title}>
               {task.title}
             </h2>
-            
+
             <span className={`${styles.priorityBadge} ${priorityInfo.class}`}>
               {priorityInfo.label}
             </span>
@@ -86,6 +92,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                     className={styles.tag}
                     style={{ backgroundColor: tag.color }}
                   >
+                    <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>
                     {tag.name}
                   </span>
                 ))}
@@ -97,11 +104,11 @@ export const TaskCard = ({ task }: TaskCardProps) => {
         <div className={styles.dateColumn}>
           <div className={styles.dateRow}>
             <Calendar className={styles.dateIcon} />
-            <span>Начало: {formatDate(task.start_time)}</span>
+            <span>Начало: {formatDate(task.start_time, task.all_day)}</span>
           </div>
           <div className={styles.dateRow}>
             <Calendar className={styles.dateIcon} />
-            <span>Окончание: {formatDate(task.end_time)}</span>
+            <span>Окончание: {formatDate(task.end_time, task.all_day)}</span>
           </div>
         </div>
       </div>
