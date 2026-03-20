@@ -202,7 +202,6 @@
 }
 
 .tagRemoveButton:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -222,7 +221,6 @@
 }
 
 .tagSearchInput:disabled {
-  background-color: transparent;
   cursor: not-allowed;
 }
 
@@ -403,9 +401,7 @@
 }
 
 .socialInput:disabled {
-  background-color: transparent;
   cursor: not-allowed;
-  opacity: 0.5;
 }
 
 /* Соцсети просмотр */
@@ -440,6 +436,7 @@
 .approvedBox {
   display: inline-block;
   padding: 8px 10px;
+  margin-bottom: 10px;
   border-radius: 10px;
   border: 1px solid #ffffff10;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.10) 100%);
@@ -485,7 +482,6 @@
 } */
 
 .panelButton:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 

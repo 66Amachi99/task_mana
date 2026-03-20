@@ -156,7 +156,6 @@
 }
 
 .dayCell {
-
   border: 1px solid #ffffff15;
   border-radius: 20px;
   cursor: pointer;
@@ -242,7 +241,9 @@
 .itemsContainer {
   flex: 1;
   overflow-y: auto;
-  padding-right: 0.125rem;
+  margin: 5px;
+  margin-bottom: 10px;
+  width: 100%;
 }
 
 .itemsContainer > * + * {
@@ -268,18 +269,20 @@
 }
 
 .item {
-  font-size: 0.625rem;
-  padding-inline: 0.35rem;
-  padding-bottom: 0.1rem;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.35rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
-  transition: filter 0.2s;
-  border: none;
+  transition: background-color 0.2s;
+  border-radius: 5px;
   color: white;
   background-color: transparent;
-  transition: margin 0.2s;
+  margin-bottom: 2px;
+  line-height: 1.2;
+  max-width: 96%;
+  display: block;
 }
 
 .item:hover {

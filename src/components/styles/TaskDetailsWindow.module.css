@@ -192,7 +192,6 @@
 }
 
 .customSelectButton:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -279,9 +278,7 @@
 }
 
 .tagSelectorInput:disabled {
-  background-color: transparent;
   cursor: not-allowed;
-  opacity: 0.5;
 }
 
 .tagSelectorInputContainer {
@@ -307,11 +304,6 @@
   background: transparent;
   border: none;
   color: #ffffff;
-}
-
-.tagSelectorInput:disabled {
-  background-color: #f3f4f6;
-  cursor: not-allowed;
 }
 
 .tagSelectorDropdown {
@@ -585,7 +577,6 @@
 }
 
 .checkbox:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 

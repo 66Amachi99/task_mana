@@ -220,9 +220,38 @@ export default function CalendarPage() {
     }
   };
 
+  const handleCalendarPostsClick = () => {
+    setCalendarViewMode(prev => {
+      if (prev === 'all') return 'tasks';
+      if (prev === 'posts') return 'tasks';
+      return 'all';
+    });
+  };
+
+  const handleCalendarTasksClick = () => {
+    setCalendarViewMode(prev => {
+      if (prev === 'all') return 'posts';
+      if (prev === 'tasks') return 'posts';
+      return 'all';
+    });
+  };
+
+  const getTaskIconsForPost = (post: CalendarPost): string[] => {
+    const icons: string[] = [];
+    if (post.post_needs_mini_video_smm) icons.push('mini_video_icon.svg');
+    if (post.post_needs_video) icons.push('video_icon.svg');
+    if (post.post_needs_photogallery) icons.push('photogallery_icon.svg');
+    if (post.post_needs_cover_photo) icons.push('coverphoto_icon.svg');
+    if (post.post_needs_photo_cards) icons.push('photocards_icon.svg');
+    if (post.post_needs_mini_gallery) icons.push('mini_photogallery.svg');
+    if (post.post_needs_text) icons.push('text_icon.svg');
+    return icons;
+  };
+
   const renderCard = (item: CalendarItem) => {
     const isPost = item.type === 'post';
     const firstTag = item.tags && item.tags.length > 0 ? item.tags[0] : null;
+    const taskIcons = isPost ? getTaskIconsForPost(item as CalendarPost) : [];
 
     let timeDisplay: string;
     if (isPost) {
@@ -256,11 +285,25 @@ export default function CalendarPage() {
         style={{ backgroundImage: bgGradient }}
       >
         <div className={styles.sidebarCardHeader}>
-          <span className={styles.sidebarCardTime}>{timeDisplay}</span>
-          <span
-            className={styles.sidebarCardStatus}
-            style={{ backgroundColor: dotColor }}
-          />
+          <div className={styles.leftGroup}>
+            <span className={styles.sidebarCardTime}>{timeDisplay}</span>
+            <span
+              className={styles.sidebarCardStatus}
+              style={{ backgroundColor: dotColor }}
+            />
+          </div>
+          {taskIcons.length > 0 && (
+            <div className={styles.taskIcons}>
+              {taskIcons.map(icon => (
+                <img
+                  key={icon}
+                  src={`/icons/${icon}`}
+                  alt=""
+                  className={styles.taskIcon}
+                />
+              ))}
+            </div>
+          )}
         </div>
         <h3 className={styles.sidebarCardTitle}>
           {isPost ? item.post_title : item.title}
@@ -319,8 +362,10 @@ export default function CalendarPage() {
                 showTasks={calendarViewMode === 'all' || calendarViewMode === 'tasks'}
                 selectedRoleFilter={calendarRoleFilter}
                 onRoleFilterChange={setCalendarRoleFilter}
-                handlePostsClick={() => setCalendarViewMode(prev => prev === 'posts' ? 'all' : 'posts')}
-                handleTasksClick={() => setCalendarViewMode(prev => prev === 'tasks' ? 'all' : 'tasks')}
+                handlePostsClick={handleCalendarPostsClick}
+                handleTasksClick={handleCalendarTasksClick}
+                postsCount={postsInMonth}
+                tasksCount={tasksInMonth}
               />
             </div>
             <div className={styles.calendarFilterBar}>

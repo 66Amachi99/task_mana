@@ -242,28 +242,6 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
-/* Верхняя строка карточки */
-.sidebarCardHeader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.sidebarCardTime {
-  font-family: 'RF Dewi Extended', sans-serif;
-  font-size: 16px;
-  padding-top: 2px;
-  color: rgba(255, 255, 255, 0.8);
-  letter-spacing: -0.02em;
-}
-
-.sidebarCardStatus {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 9999px;
-  display: inline-block;
-}
-
 /* Заголовок */
 .sidebarCardTitle {
   font-family: 'RF Dewi', sans-serif;
@@ -418,4 +396,52 @@
   margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+}
+
+/* Верхняя строка карточки */
+
+.sidebarCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.leftGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebarCardTime {
+  font-family: 'RF Dewi Extended', sans-serif;
+  font-size: 16px;
+  padding-top: 2px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: -0.02em;
+}
+
+.sidebarCardStatus {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+.sidebarCardStatus {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.taskIcons {
+  display: flex;
+  gap: 4px;
+}
+
+.taskIcon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
 }

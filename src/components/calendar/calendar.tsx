@@ -31,6 +31,8 @@ interface CalendarProps {
   onRoleFilterChange: (filter: string | null) => void;
   handlePostsClick: () => void;
   handleTasksClick: () => void;
+  postsCount: number;   // добавлено
+  tasksCount: number;   // добавлено
 }
 
 const getDayOfWeekShort = (date: Date): string => {
@@ -65,6 +67,8 @@ export const Calendar: React.FC<CalendarProps> = ({
   onRoleFilterChange,
   handlePostsClick,
   handleTasksClick,
+  postsCount,
+  tasksCount,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -92,23 +96,6 @@ export const Calendar: React.FC<CalendarProps> = ({
   const lastDisplayDate = addDays(monthEnd, daysAfter);
 
   const displayDays = eachDayOfInterval({ start: firstDisplayDate, end: lastDisplayDate });
-
-  const { postsInMonth, tasksInMonth } = useMemo(() => {
-    let postsCount = 0;
-    let tasksCount = 0;
-
-    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-    daysInMonth.forEach(day => {
-      const dateStr = format(day, 'yyyy-MM-dd');
-      const items = itemsByDate.get(dateStr) || [];
-      items.forEach(item => {
-        if (item.type === 'post') postsCount++;
-        else tasksCount++;
-      });
-    });
-
-    return { postsInMonth: postsCount, tasksInMonth: tasksCount };
-  }, [itemsByDate, monthStart, monthEnd]);
 
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -165,13 +152,13 @@ export const Calendar: React.FC<CalendarProps> = ({
               onClick={handlePostsClick}
               className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : styles.filterButtonInactive}`}
             >
-              Постов {postsInMonth}
+              Постов {postsCount}
             </button>
             <button
               onClick={handleTasksClick}
               className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : styles.filterButtonInactive}`}
             >
-              Задач {tasksInMonth}
+              Задач {tasksCount}
             </button>
           </div>
 
@@ -278,22 +265,22 @@ export const Calendar: React.FC<CalendarProps> = ({
                   const postIcon = isPost ? getFirstTaskIcon(item as CalendarPost) : null;
                   return (
                     <div
-                      key={`${item.type}-${isPost ? item.post_id : item.task_id}-${idx}`}
-                      className={styles.item}
-                      style={{ backgroundColor: bgColor }}
-                      title={isPost ? item.post_title : item.title}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        isPost ? onPostClick?.(item as CalendarPost) : onTaskClick?.(item as CalendarTask);
-                      }}
-                    >
-                      {postIcon ? (
-                        <img src={postIcon} alt="" className={styles.itemIcon} />
-                      ) : (
-                        <span className={styles.itemIcon}>{isPost ? '📄' : '✓'}</span>
-                      )}
-                      {truncateText(isPost ? item.post_title : item.title, 14)}
-                    </div>
+                    key={`${item.type}-${isPost ? item.post_id : item.task_id}-${idx}`}
+                    className={styles.item}
+                    style={{ backgroundColor: bgColor }}
+                    title={isPost ? item.post_title : item.title}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      isPost ? onPostClick?.(item as CalendarPost) : onTaskClick?.(item as CalendarTask);
+                    }}
+                  >
+                    {postIcon ? (
+                      <img src={postIcon} alt="" className={styles.itemIcon} />
+                    ) : (
+                      <span className={styles.itemIcon}>{isPost ? '📄' : '✓'}</span>
+                    )}
+                    {isPost ? item.post_title : item.title}
+                  </div>
                   );
                 })}
               </div>

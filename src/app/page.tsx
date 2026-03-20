@@ -130,6 +130,7 @@ export default function HomePage() {
     if (showPosts) items.push(...allPosts);
     if (showTasks) items.push(...allTasks);
 
+    // Фильтр "Не готовые"
     if (showIncompleteOnly) {
       items = items.filter(item => {
         if (item.type === 'post') return item.post_status !== 'Завершен';
@@ -137,6 +138,7 @@ export default function HomePage() {
       });
     }
 
+    // Фильтр по роли (только для постов)
     if (roleFilter) {
       items = items.filter(item => {
         if (item.type === 'post') return filterPostByRole(item, roleFilter);
@@ -144,6 +146,15 @@ export default function HomePage() {
       });
     }
 
+    // Фильтр: только текущие и будущие (начиная с сегодня)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    items = items.filter(item => {
+      const date = item.type === 'post' ? item.post_deadline : new Date(item.end_time);
+      return date >= todayStart;
+    });
+
+    // Сортировка по дате (от ближайших к дальним)
     items.sort((a, b) => {
       const dateA = a.type === 'post' ? a.post_deadline.getTime() : new Date(a.end_time).getTime();
       const dateB = b.type === 'post' ? b.post_deadline.getTime() : new Date(b.end_time).getTime();
@@ -163,7 +174,7 @@ export default function HomePage() {
     for (const item of visibleItems) {
       const date = item.type === 'post' ? item.post_deadline : new Date(item.end_time);
       const dateKey = format(date, 'yyyy-MM-dd');
-      const displayDate = format(date, 'LLLL dd EEEE', { locale: ru });
+      const displayDate = format(date, 'dd MMMM', { locale: ru });
 
       if (!groupsMap.has(dateKey)) {
         groupsMap.set(dateKey, { dateKey, displayDate, items: [] });
