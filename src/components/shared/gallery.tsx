@@ -32,13 +32,11 @@ export const Gallery = ({
   uploading = false,
   pendingFiles = [],
 }: GalleryProps) => {
-  // Подписываемся на кеш с мемоизацией
   const cachedFiles = useGalleryStore(
     useShallow((state) => (folderPath ? state.cache[folderPath] || [] : []))
   );
   const setImagesToCache = useGalleryStore((state) => state.setImagesToCache);
 
-  // Загружаем файлы, если их нет в кеше
   useEffect(() => {
     if (!folderPath || cachedFiles.length > 0) return;
 
@@ -60,7 +58,6 @@ export const Gallery = ({
     loadFiles();
   }, [folderPath, cachedFiles.length, setImagesToCache]);
 
-  // Обработчик удаления – принимает filePath, вызывает onDelete с taskId и filePath
   const handleDelete = useCallback((filePath: string) => {
     if (onDelete) {
       return onDelete(taskId, filePath);
@@ -68,7 +65,6 @@ export const Gallery = ({
     return Promise.resolve();
   }, [onDelete, taskId]);
 
-  // Функция для скачивания всех файлов
   const handleDownloadAll = useCallback(async () => {
     if (cachedFiles.length === 0) return;
 
@@ -113,7 +109,6 @@ export const Gallery = ({
         readOnly={!canEdit}
         multiple={multiple}
         isUploading={uploading}
-        // Заглушки для обязательных пропсов FileUploader
         postId={0}
         taskId={taskId}
         taskName=""

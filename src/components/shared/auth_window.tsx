@@ -30,7 +30,6 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
       if (result?.error) {
         setError('Неверный логин или пароль');
       } else {
-        // Сбрасываем весь кэш React Query, чтобы данные перезагрузились с новой сессией
         queryClient.clear();
         onClose();
       }

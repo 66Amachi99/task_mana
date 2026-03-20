@@ -27,7 +27,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Получаем задачу для проверки прав
     const existingTask = await prisma.task.findUnique({
       where: { task_id: Number(taskId) }
     });
@@ -39,7 +38,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Проверяем права на удаление (только создатель или админ)
     const isCreator = existingTask.created_by_id === userId;
     const canDelete = isAdmin || isCreator;
 
@@ -50,7 +48,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Сначала удаляем связанные записи
     await prisma.taskAssignee.deleteMany({
       where: { task_id: Number(taskId) }
     });
@@ -59,7 +56,6 @@ export async function DELETE(request: NextRequest) {
       where: { task_id: Number(taskId) }
     });
 
-    // Затем удаляем саму задачу
     await prisma.task.delete({
       where: { task_id: Number(taskId) }
     });

@@ -9,7 +9,6 @@ import { DatePicker } from '../ui/date_picker';
 import { useUpdateTask, usePatchTask, useDeleteTask } from '@/hooks/useTasks';
 import styles from '../styles/TaskDetailsWindow.module.css';
 
-// --- ИНТЕРФЕЙСЫ ---
 interface TaskDetailsWindowProps {
   onClose: () => void;
   task: Task | null;
@@ -31,7 +30,6 @@ interface UserType {
   photographer_role: boolean;
 }
 
-// Единый стейт для формы редактирования
 interface FormData {
   title: string;
   description: string;
@@ -44,7 +42,6 @@ interface FormData {
   tags: Tag[];
 }
 
-// --- КОНСТАНТЫ И УТИЛИТЫ ---
 const PRIORITIES: Record<number, { label: string; className: string }> = {
   1: { label: 'Низкий', className: styles.priorityLow },
   2: { label: 'Средний', className: styles.priorityMedium },
@@ -65,7 +62,6 @@ const formatDisplayDate = (dateStr: string, allDay = false) => {
   return new Date(dateStr).toLocaleString('ru-RU', options);
 };
 
-// Хук для закрытия дропдаунов по клику вне
 const useOutsideClick = (callback: () => void) => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -78,7 +74,6 @@ const useOutsideClick = (callback: () => void) => {
   return ref;
 };
 
-// Компонент кастомного селекта
 const CustomSelect = ({ value, options, onChange, disabled }: {
   value: string | number;
   options: { value: string | number; label: string; className?: string }[];
@@ -121,7 +116,6 @@ const CustomSelect = ({ value, options, onChange, disabled }: {
   );
 };
 
-// --- КОМПОНЕНТЫ-ПОМОЩНИКИ ---
 const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
   selectedTags: Tag[];
   availableTags: Tag[];
@@ -286,7 +280,6 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   );
 };
 
-// --- ГЛАВНЫЙ КОМПОНЕНТ ---
 export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => {
   const { user } = useUser();
   
@@ -430,7 +423,6 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
         const updatedTask = result.task;
         setSavedCompletedTask(updatedTask.completed_task || '');
         setCompletedTaskInput(updatedTask.completed_task || '');
-        // Обновить formData, если нужно
       }
     } catch (error) {
       console.error('Ошибка сохранения результата:', error);
@@ -468,7 +460,6 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
       });
       if (result?.task) {
         const updatedTask = result.task;
-        // Обновляем локальные стейты из updatedTask
         const assignees = users.filter(u => updatedTask.assignees?.some((a: any) => a.user_id === u.user_id));
         const newFormData: FormData = {
           title: updatedTask.title,
@@ -500,7 +491,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
     setIsLoading(prev => ({ ...prev, action: true }));
     try {
       await deleteTask.mutateAsync(task.task_id);
-      onClose(); // при удалении закрываем
+      onClose();
     } catch (err) {
       console.error('Ошибка удаления:', err);
       setIsLoading(prev => ({ ...prev, action: false }));

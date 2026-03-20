@@ -29,8 +29,8 @@ interface CalendarProps {
   showTasks: boolean;
   selectedRoleFilter: string | null;
   onRoleFilterChange: (filter: string | null) => void;
-  handlePostsClick: () => void;  // восстановлено
-  handleTasksClick: () => void;  // восстановлено
+  handlePostsClick: () => void;
+  handleTasksClick: () => void;
 }
 
 const getDayOfWeekShort = (date: Date): string => {
@@ -83,20 +83,16 @@ export const Calendar: React.FC<CalendarProps> = ({
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
-  // Первый отображаемый день (понедельник перед началом месяца)
   const startDayOfWeek = monthStart.getDay();
   const daysBefore = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
   const firstDisplayDate = subDays(monthStart, daysBefore);
 
-  // Последний отображаемый день (воскресенье после конца месяца)
   const endDayOfWeek = monthEnd.getDay();
   const daysAfter = endDayOfWeek === 0 ? 0 : 7 - endDayOfWeek;
   const lastDisplayDate = addDays(monthEnd, daysAfter);
 
-  // Массив всех дней для отображения
   const displayDays = eachDayOfInterval({ start: firstDisplayDate, end: lastDisplayDate });
 
-  // Вычисляем количество постов и задач в текущем месяце
   const { postsInMonth, tasksInMonth } = useMemo(() => {
     let postsCount = 0;
     let tasksCount = 0;
@@ -237,7 +233,6 @@ export const Calendar: React.FC<CalendarProps> = ({
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const itemsForDay = getItemsForDay(day);
           
-          // Фильтруем элементы согласно состоянию кнопок
           const filteredItems = itemsForDay.filter(item => 
             (showPosts && item.type === 'post') || (showTasks && item.type === 'task')
           );

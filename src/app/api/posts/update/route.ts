@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-// Функция для проверки выполнения всех задач
 const checkAllTasksCompleted = (post: any): boolean => {
   return (
     (!post.post_needs_mini_video_smm || post.post_done_link_mini_video_smm) &&
@@ -16,7 +15,6 @@ const checkAllTasksCompleted = (post: any): boolean => {
   );
 };
 
-// Константы для типов задач
 const TASK_TYPE_IDS = {
   mini_video_smm: 1,
   video: 2,
@@ -76,7 +74,6 @@ export async function PATCH(request: NextRequest) {
       updateData.approved_by_id = userId;
     }
     else if (action === 'unapprove') {
-      // Проверка прав: только админ или координатор могут снять согласование
       const canUnapprove = userData.admin_role || userData.coordinator_role;
       if (!canUnapprove) {
         return NextResponse.json(
@@ -197,7 +194,6 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Обновление ссылок на выполненные задачи
     if (links && Object.keys(links).length > 0) {
       const updateData: any = {};
 
@@ -263,7 +259,6 @@ export async function PUT(request: NextRequest) {
       }, { status: 200 });
 
     } 
-    // Обновление данных поста (не ссылок)
     else if (data && Object.keys(data).length > 0) {
       const { post_deadline, tag_ids, ...otherData } = data;
       

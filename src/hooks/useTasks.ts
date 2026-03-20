@@ -4,10 +4,7 @@ import { Task } from '../../types/task';
 
 const API_URL = '/api/tasks';
 
-// ---- Запросы (queries) ----
-
 export const useTasks = (page = 1, limit = 100, filter?: string) => {
-  // Убрана проверка авторизации
   const params = new URLSearchParams();
   params.append('page', page.toString());
   params.append('limit', limit.toString());
@@ -30,7 +27,6 @@ export const useTasks = (page = 1, limit = 100, filter?: string) => {
 };
 
 export const useTask = (id: number | null) => {
-  // Убрана проверка авторизации
   return useQuery({
     queryKey: ['task', id],
     queryFn: async () => {
@@ -43,9 +39,6 @@ export const useTask = (id: number | null) => {
     enabled: !!id,
   });
 };
-
-// ---- Мутации (mutations) ----
-// (остаются без изменений)
 
 export const useCreateTask = () => {
   const queryClient = useQueryClient();

@@ -33,7 +33,7 @@ export default function CalendarPage() {
   const [selectedItem, setSelectedItem] = useState<{ post?: CalendarPost; task?: CalendarTask } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Фильтры для календаря (верхняя панель)
+  // Фильтры для календаря
   const [calendarViewMode, setCalendarViewMode] = useState<CalendarViewMode>('all');
   const [calendarRoleFilter, setCalendarRoleFilter] = useState<string | null>(null);
 
@@ -194,19 +194,15 @@ export default function CalendarPage() {
     setShowAddTaskModal(true);
   };
 
-  // Новая логика для кнопок сайдбара (аналогично главной странице)
   const handleSidebarPostsClick = () => {
     if (sidebarShowPosts) {
       if (sidebarShowTasks) {
-        // Оба активны → выключаем посты (остаются задачи)
         setSidebarShowPosts(false);
       } else {
-        // Только посты → переключаем на только задачи
         setSidebarShowPosts(false);
         setSidebarShowTasks(true);
       }
     } else {
-      // Посты неактивны (значит активны только задачи) → включаем посты (оба активны)
       setSidebarShowPosts(true);
     }
   };
@@ -214,15 +210,12 @@ export default function CalendarPage() {
   const handleSidebarTasksClick = () => {
     if (sidebarShowTasks) {
       if (sidebarShowPosts) {
-        // Оба активны → выключаем задачи (остаются посты)
         setSidebarShowTasks(false);
       } else {
-        // Только задачи → переключаем на только посты
         setSidebarShowTasks(false);
         setSidebarShowPosts(true);
       }
     } else {
-      // Задачи неактивны (активны только посты) → включаем задачи (оба активны)
       setSidebarShowTasks(true);
     }
   };

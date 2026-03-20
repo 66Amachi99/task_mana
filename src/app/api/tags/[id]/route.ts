@@ -7,7 +7,6 @@ interface Props {
   };
 }
 
-// Получить конкретный тег
 export async function GET(request: NextRequest, { params }: Props) {
   try {
     const tagId = parseInt(params.id);
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest, { params }: Props) {
               },
             },
           },
-          take: 10, // Ограничиваем количество постов
+          take: 10,
         },
         tasks: {
           include: {
@@ -54,7 +53,6 @@ export async function GET(request: NextRequest, { params }: Props) {
       );
     }
 
-    // Трансформируем данные для удобства
     const transformedTag = {
       ...tag,
       posts: tag.posts.map(pt => pt.post),

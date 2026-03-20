@@ -85,7 +85,6 @@ export function useUser() {
   const canPublish = useMemo(() => isAdmin || isSmm, [isAdmin, isSmm]);
   const isAdminOrCoordinatorOrSmm = useMemo(() => isAdmin || isCoordinator || isSmm, [isAdmin, isCoordinator, isSmm]);
 
-  // Для обычных задач (тасков)
   const canEditTask = useCallback((task: any, currentUserId?: number) => {
     if (!user) return false;
     if (isAdmin) return true;
@@ -108,14 +107,11 @@ export function useUser() {
     return isCreator || isAssignee;
   }, [user, isAdmin, isSmm]);
 
-  // Только авторизованные могут создавать задачи
   const canCreateTask = useMemo(() => !!user, [user]);
 
-  // Для задач внутри ПОСТА – проверка по роли задачи
   const canEditPostTask = useCallback((taskRole: string): boolean => {
     if (!user) return false;
 
-    // Админ, координатор, SMM могут редактировать любые задачи в постах
     if (isAdmin || isCoordinator || isSmm) return true;
 
     switch (taskRole) {
@@ -126,7 +122,7 @@ export function useUser() {
       case 'photographer':
         return isPhotographer;
       case 'text':
-        return true; // текст могут редактировать все
+        return true;
       default:
         return false;
     }

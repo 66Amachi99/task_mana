@@ -5,7 +5,7 @@ import { useUser } from '@/hooks/use-roles';
 import { X } from 'lucide-react';
 import { DatePicker } from '../ui/date_picker';
 import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
-import { useCreateTask } from '@/hooks/useTasks'; // <-- импорт мутации
+import { useCreateTask } from '@/hooks/useTasks';
 import styles from '../styles/TaskAddWindow.module.css';
 
 interface User {
@@ -26,11 +26,9 @@ interface Tag {
 
 interface TaskAddWindowProps {
   onClose: () => void;
-  // onTaskAdded больше не нужен, удаляем
   initialDate?: Date;
 }
 
-// Хук для закрытия дропдаунов по клику вне
 const useOutsideClick = (callback: () => void) => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -43,7 +41,6 @@ const useOutsideClick = (callback: () => void) => {
   return ref;
 };
 
-// Компонент выбора нескольких исполнителей
 const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   selectedUsers: User[];
   users: User[];
@@ -121,7 +118,6 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
   );
 };
 
-// Компонент выбора тегов
 const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
   selectedTags: Tag[];
   availableTags: Tag[];
@@ -223,12 +219,11 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
     title: '',
     description: '',
     all_day: false,
-    priority: '0', // Обычный по умолчанию
+    priority: '0',
   });
 
-  const createTask = useCreateTask(); // мутация
+  const createTask = useCreateTask();
 
-  // Массив настроек приоритета для рендера кнопок
   const priorityOptions = [
     { id: '0', label: 'Обычный', color: 'rgba(255, 255, 255, 0.4)' },
     { id: '1', label: 'Низкий', color: '#4ade80' },
@@ -320,7 +315,6 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
         assignee_ids: selectedAssignees.map(a => a.user_id),
         tag_ids: selectedTags.map(t => t.tag_id),
       });
-      // После успешного создания просто закрываем окно
       onClose();
     } catch (error: any) {
       setError(error.message || 'Ошибка при создании задачи');
@@ -379,7 +373,6 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
             </div>
           </div>
 
-          {/* Приоритет в виде кнопок */}
           <div className={styles.fieldGroup}>
             <div className={styles.priorityContainer}>
               {priorityOptions.map((opt) => (

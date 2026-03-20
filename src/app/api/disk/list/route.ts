@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const TOKEN = process.env.DISK_TOKEN;
 
     if (!TOKEN) {
-      return NextResponse.json({ error: 'Токен Яндекс.Диска не настроен' }, { status: 500 });
+      return NextResponse.json({ error: 'Токен Яндекс Диска не настроен' }, { status: 500 });
     }
 
     const wholePath = `/taskmanager/${encodeURIComponent(path)}`;

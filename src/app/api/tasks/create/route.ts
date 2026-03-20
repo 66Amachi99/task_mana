@@ -16,8 +16,6 @@ export async function POST(request: NextRequest) {
     const userData = session.user as any;
     const createdById = parseInt(userData.id);
 
-    // УБИРАЕМ ПРОВЕРКУ НА РОЛИ - теперь все могут создавать задачи
-
     const body = await request.json();
     const {
       title,
@@ -26,7 +24,7 @@ export async function POST(request: NextRequest) {
       end_time,
       all_day,
       priority,
-      assignee_ids, // Массив ID исполнителей
+      assignee_ids,
       tag_ids
     } = body;
 
@@ -37,7 +35,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Создаем задачу
     const task = await prisma.task.create({
       data: {
         title,
@@ -49,13 +46,11 @@ export async function POST(request: NextRequest) {
         priority: priority || 0,
         task_status: 'Поставлена',
         completed_task: null,
-        // Создаем исполнителей, если указаны
         assignees: assignee_ids && assignee_ids.length > 0 ? {
           create: assignee_ids.map((userId: number) => ({
             user_id: userId
           }))
         } : undefined,
-        // Создаем теги, если указаны
         tags: tag_ids && tag_ids.length > 0 ? {
           create: tag_ids.map((tagId: number) => ({
             tag_id: tagId

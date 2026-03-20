@@ -7,10 +7,9 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
-    const postId = searchParams.get('id'); // Добавляем возможность получить конкретный пост
+    const postId = searchParams.get('id');
 
     if (postId) {
-      // Получаем конкретный пост с комментариями
       const post = await prisma.post.findUnique({
         where: { post_id: Number(postId) },
         include: {
@@ -54,7 +53,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ posts: [transformedPost] }, { status: 200 });
     }
 
-    // Получаем все посты с пагинацией и комментариями
     const totalPosts = await prisma.post.count();
     const totalPages = Math.ceil(totalPosts / limit);
 

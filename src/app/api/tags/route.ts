@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// Массив твоих конкретных цветов
 const COLORS = [
   '#F7ADC440',
   '#48C88460',
@@ -11,7 +10,6 @@ const COLORS = [
   '#41A5F340'
 ];
 
-// Получить все теги
 export async function GET() {
   try {
     const tags = await prisma.tag.findMany({
@@ -30,7 +28,6 @@ export async function GET() {
   }
 }
 
-// Создать новый тег
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -43,7 +40,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Выбираем случайный цвет из твоего списка
     const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
 
     const tag = await prisma.tag.create({
@@ -55,7 +51,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(tag, { status: 201 });
   } catch (error: any) {
-    // Проверяем на уникальность имени
     if (error.code === 'P2002') {
       return NextResponse.json(
         { error: 'Тег с таким названием уже существует' },
@@ -71,7 +66,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Обновить тег
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
@@ -89,7 +83,6 @@ export async function PUT(request: NextRequest) {
       updateData.name = name.trim();
     }
     if (color && typeof color === 'string') {
-      // Проверяем, что цвет из разрешенного списка (опционально)
       if (!COLORS.includes(color)) {
         return NextResponse.json(
           { error: 'Недопустимый цвет' },
@@ -128,7 +121,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// Удалить тег
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

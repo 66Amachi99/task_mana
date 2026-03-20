@@ -90,7 +90,6 @@ export const FileUploader = ({
     }
   }, []);
 
-  // Очистка object URLs при размонтировании
   useEffect(() => {
     const urls: string[] = [];
     pendingFiles.forEach(file => {
@@ -112,7 +111,6 @@ export const FileUploader = ({
     setDeletingPaths(prev => new Set(prev).add(filePath));
     try {
       await onDeleteFile(filePath);
-      // после успешного удаления карточка будет удалена из списка (управляется родителем)
     } catch (error) {
       console.error('Ошибка удаления:', error);
     } finally {
@@ -149,7 +147,7 @@ export const FileUploader = ({
           </div>
         ) : (
           <div className={styles.imagesRow}>
-            {/* Загруженные файлы (из кеша) */}
+            {/* Загруженные файлы */}
             {existingFiles.map((file) => {
               const isLoaded = loadedImages[file.path];
               const isDeleting = deletingPaths.has(file.path);
@@ -165,7 +163,7 @@ export const FileUploader = ({
                       alt={file.fileName}
                       className={`${styles.image} ${isLoaded ? styles.imageLoaded : styles.imageLoading}`}
                       onLoad={() => handleImageLoad(file.path)}
-                      onError={() => handleImageLoad(file.path)} // если ошибка, тоже скрываем скелетон
+                      onError={() => handleImageLoad(file.path)}
                     />
                   )}
                   {!file.href && <div className={styles.placeholder}>Нет превью</div>}

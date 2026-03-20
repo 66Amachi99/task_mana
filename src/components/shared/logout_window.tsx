@@ -12,7 +12,7 @@ export const LogoutWindow = ({ onClose }: LogoutWindowProps) => {
 
   const handleConfirm = async () => {
     await signOut({ redirect: false });
-    queryClient.clear(); // сбрасываем кэш после выхода
+    queryClient.clear();
     onClose();
   };
 

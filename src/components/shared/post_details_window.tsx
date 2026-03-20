@@ -108,7 +108,6 @@ export const getCommentsForTask = (post: PostData | null, taskTypeId: number): C
   return post.comments.filter(c => c.task_type_id === taskTypeId);
 };
 
-// Функция транслитерации кириллицы в латиницу
 function transliterate(text: string): string {
   const map: Record<string, string> = {
     'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e', 'ж': 'zh',
@@ -123,7 +122,6 @@ function transliterate(text: string): string {
   return text.split('').map(char => map[char] || char).join('');
 }
 
-// Функция для создания безопасного имени папки из названия поста
 function slugifyPostTitle(title: string): string {
   return transliterate(title)
     .toLowerCase()
@@ -132,7 +130,7 @@ function slugifyPostTitle(title: string): string {
     .replace(/-+/g, '_');
 }
 
-// Вспомогательная функция для загрузки файлов на Яндекс.Диск – возвращает информацию о загруженных файлах
+// Возвращаем информацию о загруженных файлах
 async function uploadFilesToYandexDisk(files: File[], folderPath: string): Promise<Array<{ fileName: string; path: string }>> {
   const urlRes = await fetch('/api/disk/get-upload-urls', {
     method: 'POST',
@@ -357,7 +355,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     });
   }, []);
 
-  // Обновлённый handleDeleteFile: принимает folderPath и filePath, удаляет на сервере и из стора
   const handleDeleteFile = useCallback(async (taskId: number, folderPath: string, filePath: string) => {
     if (!post) return;
     try {
@@ -495,7 +492,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     try {
       const uploadedFilesMap = await uploadPendingFiles();
 
-      // После загрузки обновляем кеш для каждой папки
       const baseFolder = getPostFolderPath();
       const tasksToUpdate = Object.keys(uploadedFilesMap).map(Number);
       await Promise.all(tasksToUpdate.map(async (taskId) => {
@@ -517,7 +513,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
         }
       }));
 
-      // Обновляем tasks (пути к папкам)
       const updatedTasks = tasks.map(task => {
         if (uploadedFilesMap[task.id]) {
           return { ...task, link: `/taskmanager/${baseFolder}/${task.name}` };

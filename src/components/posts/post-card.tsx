@@ -74,7 +74,6 @@ interface PostCardProps {
   post: PostWithRelations;
 }
 
-// Конфигурация для автоматического сбора требуемых задач
 const TASK_DEFINITIONS = [
   { field: 'post_needs_mini_video_smm', linkField: 'post_done_link_mini_video_smm', name: 'Мини-видео', role: 'smm' },
   { field: 'post_needs_video', linkField: 'post_done_link_video', name: 'Видео', role: 'photographer' },
@@ -88,10 +87,8 @@ const TASK_DEFINITIONS = [
 export function PostCard({ post }: PostCardProps) {
   if (!post) return null;
 
-  // Получаем первый тег для градиента
   const firstTag = post.tags && post.tags.length > 0 ? post.tags[0] : null;
   
-  // Градиент точно как в сайдбаре
   const bgGradient = firstTag
     ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
     : undefined;

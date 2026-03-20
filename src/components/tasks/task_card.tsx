@@ -29,7 +29,6 @@ const formatDate = (dateString?: string) => {
   
   const date = new Date(dateString);
   
-  // Проверка на некорректную дату ("Invalid Date")
   if (isNaN(date.getTime())) {
     return 'Некорректная дата';
   }
@@ -44,10 +43,8 @@ const formatDate = (dateString?: string) => {
 };
 
 export const TaskCard = ({ task }: TaskCardProps) => {
-  // Получаем первый тег для градиента
   const firstTag = task.tags && task.tags.length > 0 ? task.tags[0] : null;
   
-  // Градиент точно как в сайдбаре
   const bgGradient = firstTag
     ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
     : undefined;

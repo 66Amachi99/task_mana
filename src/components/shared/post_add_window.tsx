@@ -7,7 +7,7 @@ import { Search, X } from 'lucide-react';
 import { DatePicker } from '../ui/date_picker';
 import styles from '../styles/PostAddWindow.module.css';
 import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
-import { useCreatePost } from '@/hooks/usePosts'; // <-- импорт мутации
+import { useCreatePost } from '@/hooks/usePosts';
 
 interface User {
   user_id: number;
@@ -27,7 +27,6 @@ interface Tag {
 
 interface PostAddWindowProps {
   onClose: () => void;
-  // onPostAdded больше не нужен
   initialDate?: Date;
 }
 
@@ -72,14 +71,13 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
     post_needs_mini_gallery: false,
   });
 
-  // Отдельное состояние для даты (объект Date)
   const [deadline, setDeadline] = useState<Date | null>(null);
 
   const [taskStates, setTaskStates] = useState(() => 
     TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean)
   );
 
-  const createPost = useCreatePost(); // мутация
+  const createPost = useCreatePost();
 
   useEffect(() => {
     setTaskStates(TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean));
@@ -98,7 +96,6 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
     fetchTags();
   }, []);
 
-  // Устанавливаем начальную дату
   const getDefaultDate = (): Date => {
     if (initialDate) {
       const date = new Date(initialDate);
@@ -267,7 +264,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
         responsible_person_id: formData.responsible_person_id || null,
         tag_ids: selectedTags.map(t => t.tag_id),
       });
-      onClose(); // закрываем окно после успеха
+      onClose();
     } catch (error) {
       console.error('Ошибка при создании поста:', error);
       setError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
@@ -300,7 +297,6 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
             </div>
           )}
 
-          {/* Поля в один столбец */}
           <div className={styles.fieldGroup}>
             <input
               type="text"
@@ -435,7 +431,6 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
             )}
           </div>
 
-          {/* Поле даты с кастомным DatePicker */}
           <div className={styles.fieldGroup}>
             <DatePicker
               value={deadline}
@@ -444,7 +439,6 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
             />
           </div>
 
-          {/* Кнопки задач */}
           <div className={styles.fieldGroup}>
             <div className={styles.taskButtonsContainer}>
               {TASK_ITEMS.map((task, index) => (

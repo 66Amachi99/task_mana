@@ -100,7 +100,6 @@ export default function HomePage() {
 
   const loading = postsLoading || tasksLoading;
 
-  // Логика кнопок
   const handlePostsClick = () => {
     if (showPosts) {
       if (showTasks) {
@@ -127,7 +126,6 @@ export default function HomePage() {
     }
   };
 
-  // Полный отсортированный список отфильтрованных элементов
   const allFilteredItems = useMemo(() => {
     let items: ContentItem[] = [];
     if (showPosts) items.push(...allPosts);
@@ -156,19 +154,17 @@ export default function HomePage() {
     return items;
   }, [allPosts, allTasks, showPosts, showTasks, showIncompleteOnly, roleFilter, filterPostByRole]);
 
-  // Видимые элементы (первые displayedCount)
   const visibleItems = useMemo(() => {
     return allFilteredItems.slice(0, displayedCount);
   }, [allFilteredItems, displayedCount]);
 
-  // Группируем видимые элементы по дням
   const visibleGroups = useMemo(() => {
     const groupsMap = new Map<string, { dateKey: string; displayDate: string; items: ContentItem[] }>();
 
     for (const item of visibleItems) {
       const date = item.type === 'post' ? item.post_deadline : new Date(item.end_time);
       const dateKey = format(date, 'yyyy-MM-dd');
-      const displayDate = format(date, 'dd EEEE', { locale: ru });
+      const displayDate = format(date, 'LLLL dd EEEE', { locale: ru });
 
       if (!groupsMap.has(dateKey)) {
         groupsMap.set(dateKey, { dateKey, displayDate, items: [] });
@@ -218,7 +214,6 @@ export default function HomePage() {
   return (
     <div className={styles.page}>
       <div className={styles.contentWrapper}>
-        {/* Фильтры */}
         <div className={styles.filterWrapper}>
           <button
             onClick={handlePostsClick}

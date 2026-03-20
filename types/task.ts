@@ -25,6 +25,6 @@ export interface Task {
   created_by?: {
     user_login: string;
   };
-  type?: 'task'; // Опционально, для различения с постами
-  [key: string]: unknown; // Сигнатура индекса
+  type?: 'task';
+  [key: string]: unknown;
 }

@@ -92,10 +92,9 @@ interface PostDetailsLeftPanelProps {
   onSaveChanges: () => void;
   hasChanges?: boolean;
 
-  // Актуальные состояния после действий
   isPublished: boolean;
   approvedBy: { user_login: string } | null;
-  localSocialLinks: SocialLinks; // для отображения соцсетей
+  localSocialLinks: SocialLinks;
 }
 
 const formatDeadline = (date: Date | null): string => {

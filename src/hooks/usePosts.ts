@@ -45,10 +45,7 @@ export interface Post {
 
 const API_URL = '/api/posts';
 
-// ---- Запросы (queries) ----
-
 export const usePosts = (page = 1, limit = 100) => {
-  // Убрана проверка авторизации – данные загружаются всегда
   return useQuery({
     queryKey: ['posts', { page, limit }],
     queryFn: async () => {
@@ -66,7 +63,6 @@ export const usePosts = (page = 1, limit = 100) => {
 };
 
 export const usePost = (id: number | null) => {
-  // Убрана проверка авторизации
   return useQuery({
     queryKey: ['post', id],
     queryFn: async () => {
@@ -79,9 +75,6 @@ export const usePost = (id: number | null) => {
     enabled: !!id,
   });
 };
-
-// ---- Мутации (mutations) ----
-// (остаются без изменений, так как они требуют авторизации на сервере)
 
 export const useCreatePost = () => {
   const queryClient = useQueryClient();
@@ -166,9 +159,6 @@ export const useDeletePost = () => {
     },
   });
 };
-
-// ---- Комментарии ----
-// (остаются без изменений)
 
 export const useAddComment = () => {
   const queryClient = useQueryClient();

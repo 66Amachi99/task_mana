@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-// GET – получить комментарии для поста
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -29,7 +28,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST – создать новый комментарий
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type');
@@ -59,11 +57,10 @@ export async function POST(request: NextRequest) {
         post_id: Number(postId),
         task_type_id: Number(taskTypeId),
         text: text.trim(),
-        status: '#FF4C4C33', // красный по умолчанию
+        status: '#FF4C4C33',
       },
     });
 
-    // Обновляем флаг активных комментариев для этой задачи
     const taskTypeToField: Record<number, string> = {
       1: 'has_active_comments_mini_video_smm',
       2: 'has_active_comments_video',
@@ -91,7 +88,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH – обновить статус комментария
 export async function PATCH(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type');
@@ -148,7 +144,6 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-// DELETE – удалить комментарий
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

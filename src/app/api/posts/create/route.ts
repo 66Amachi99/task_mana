@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
       post_needs_mini_gallery: body.post_needs_mini_gallery || false,
       post_needs_text: true,
       
-      // Поля для активных комментариев (по умолчанию false)
       has_active_comments_mini_video_smm: false,
       has_active_comments_video: false,
       has_active_comments_cover_photo: false,
@@ -52,7 +51,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // created_at и post_date установятся автоматически
     const post = await prisma.post.create({
       data: data,
     });

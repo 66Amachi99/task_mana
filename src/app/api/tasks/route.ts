@@ -23,10 +23,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
     const taskId = searchParams.get('id');
-    const filter = searchParams.get('filter'); // 'my' или null
+    const filter = searchParams.get('filter');
 
     if (taskId) {
-      // Получаем конкретную задачу
       const task = await prisma.task.findUnique({
         where: { task_id: Number(taskId) },
         include: {
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Проверяем права на просмотр
       const isCreator = task.created_by_id === userId;
       const isAssignee = task.assignees.some(a => a.user_id === userId);
       const canView = isAdmin || isSmm || isCreator || isAssignee;
@@ -83,17 +81,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ tasks: [transformedTask] }, { status: 200 });
     }
 
-    // Получаем все задачи с учетом прав
     const where: any = {};
     
-    // Если не админ и не SMM, показываем только свои задачи (созданные или назначенные)
     if (!isAdmin && !isSmm) {
       where.OR = [
         { created_by_id: userId },
         { assignees: { some: { user_id: userId } } }
       ];
     } else if (filter === 'my') {
-      // Если админ/SMM выбрали фильтр "Мои задачи"
       where.OR = [
         { created_by_id: userId },
         { assignees: { some: { user_id: userId } } }

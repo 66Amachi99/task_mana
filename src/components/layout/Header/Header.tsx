@@ -37,23 +37,19 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const handleLogoutConfirm = async () => {
-    // Выход происходит внутри LogoutWindow, здесь только закрываем окно
     setShowLogoutWindow(false);
   };
 
   const handleAuthSuccess = () => {
     setShowAuthWindow(false);
-    // Больше не диспатчим событие
   };
 
   const handlePostAdded = async () => {
     setLocalShowPostModal(false);
-    // Больше не диспатчим событие
   };
 
   const handleTaskAdded = async () => {
     setLocalShowTaskModal(false);
-    // Больше не диспатчим событие
   };
 
   const postIcon = pathname === '/' 
@@ -138,19 +134,16 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Правый пустой блок для баланса */}
           <div className={styles.rightSpacer}></div>
         </div>
       </header>
 
-      {/* Модальные окна */}
       {showAuthWindow && (
         <AuthWindow onClose={() => setShowAuthWindow(false)} />
       )}
       {showLogoutWindow && (
         <LogoutWindow onClose={() => setShowLogoutWindow(false)} />
       )}
-      {/* Локальные модалки (для страниц без календаря) */}
       {!onOpenPostModal && localShowPostModal && (
         <PostAddWindow onClose={() => setLocalShowPostModal(false)} />
       )}
