@@ -41,9 +41,7 @@
 }
 
 @media (min-width: 768px) {
-  .list {
-
-  }
+  .list {}
 }
 
 .emptyMessage {
@@ -82,12 +80,9 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  z-index: 50;
 }
 
-.dayGroup {
-
-}
+.dayGroup {}
 
 .dayHeader {
   text-align: center;
@@ -99,11 +94,11 @@
 }
 
 /* Отступы между карточками внутри одной группы */
-.dayGroup > div:not(.dayHeader) {
+.dayGroup>div:not(.dayHeader) {
   margin-bottom: 2rem;
 }
 
-.dayGroup > div:not(.dayHeader):last-child {
+.dayGroup>div:not(.dayHeader):last-child {
   margin-bottom: 0;
 }
 
@@ -114,16 +109,6 @@
 }
 
 /* ===== КНОПКИ ФИЛЬТРАЦИИ (липкие, прижаты к левому краю) ===== */
-.filterWrapper {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  gap: 0.5rem;
-
-  flex-wrap: wrap;
-  margin-bottom: 0;
-}
 
 .statsRowPosts,
 .statsRowTasks {
@@ -131,11 +116,10 @@
   padding: 0.2rem 0.75rem;
   font-size: 16px;
   transition: background-color 0.2s, color 0.2s;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #ffffff10;
   border-radius: 10px;
   cursor: pointer;
   white-space: nowrap;
-  background: transparent;
 }
 
 .statsRowPosts.active,
@@ -143,20 +127,22 @@
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
 }
 
-.filterButton {
+.filterWrapper {
+  position: sticky;
+  top: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding-inline: 0.5rem;
+  gap: 1rem;
   color: #ffffff;
+}
+
+.filterButton {
   padding: 0.2rem 0.75rem;
   font-size: 16px;
   transition: background-color 0.2s, color 0.2s;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #ffffff10;
   border-radius: 10px;
   cursor: pointer;
-  white-space: nowrap;
-  background: transparent;
 }
 
 .filterButtonActive {
@@ -164,7 +150,7 @@
 }
 
 .filterButtonInactive {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: #ffffff02;
 }
 
 .filterIcon {
@@ -193,15 +179,13 @@
 
 .roleDropdownMenu {
   position: absolute;
-  top: 100%;
-  margin-top: 0.25rem;
+  top: 130%;
   right: 0;
   width: 14rem;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  padding: 0.25rem 0;
   z-index: 60;
   overflow: hidden;
 }
@@ -223,7 +207,7 @@
 }
 
 .roleMenuItem.active {
-  background-color: rgba(255, 255, 255, 0.2);
+  /* background-color: rgba(255, 255, 255, 0.2); */
 }
 
 .menuDivider {
