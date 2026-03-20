@@ -155,6 +155,7 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
             className={styles.tag}
             style={{ backgroundColor: tag.color }}
           >
+            <span style={{ opacity: 0.4 }}>#</span>
             {tag.name}
             <button
               type="button"
