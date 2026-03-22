@@ -3,7 +3,7 @@
 import { PostDetailsButton } from '../ui/post_details_button';
 import { getStatusColor } from '../../lib/post-status';
 import { ExternalLink, CheckCircle, Globe } from 'lucide-react';
-import styles from '../styles/PostList.module.css';
+import styles from '../styles/PostCard.module.css';
 
 interface PostWithRelations {
   post_id: number;

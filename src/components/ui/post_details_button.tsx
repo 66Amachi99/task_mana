@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { PostDetailsWindow } from '../shared/post_details_window';
 import { Eye } from 'lucide-react';
-import styles from '../styles/PostList.module.css';
+import styles from '../styles/PostCard.module.css';
 
 interface PostData {
   post_id: number;

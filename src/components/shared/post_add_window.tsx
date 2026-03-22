@@ -321,18 +321,6 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
           </div>
 
           <div className={styles.fieldGroup}>
-            <input
-              type="text"
-              name="tz_link"
-              value={formData.tz_link}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              className={styles.input}
-              placeholder="Ссылка на ТЗ..."
-            />
-          </div>
-
-          <div className={styles.fieldGroup}>
             <div className={styles.tagSelector} ref={tagDropdownRef}>
               <div className={styles.tagSelectorContainer}>
                 {selectedTags.map(tag => (
@@ -362,7 +350,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
                 />
               </div>
               {isTagDropdownOpen && (
-                <div className={styles.tagDropdown}>
+                <div className={`${styles.tagDropdown} no-scrollbar`}>
                   {filteredTags.map(tag => (
                     <div
                       key={tag.tag_id}
@@ -455,6 +443,18 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <input
+              type="text"
+              name="tz_link"
+              value={formData.tz_link}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              className={styles.input}
+              placeholder="Ссылка на ТЗ..."
+            />
           </div>
 
           <div className={styles.actions}>

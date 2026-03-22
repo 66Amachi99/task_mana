@@ -1,9 +1,9 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { 
-  Lock, ExternalLink, Circle, CheckCircle, MessageSquare, Trash2, 
-  Copy, Download 
+import {
+  Lock, ExternalLink, Circle, CheckCircle, MessageSquare, Trash2,
+  Copy, Download
 } from 'lucide-react';
 import { TASK_CONFIG, COMMENT_STATUS, TaskWithComments, CommentData } from './post_details_window';
 import { useUser } from '../../hooks/use-roles';
@@ -281,7 +281,6 @@ export const PostDetailsRightPanel = ({
                           )}
                         </div>
                         <div className={rowClass}>
-                          <div className={styles.taskInputCol}>
                             {userCanEdit ? (
                               <TaskTextarea
                                 value={task.link}
@@ -295,7 +294,6 @@ export const PostDetailsRightPanel = ({
                               </div>
                             )}
                           </div>
-                        </div>
                       </>
                     ) : (
                       <>
@@ -304,6 +302,17 @@ export const PostDetailsRightPanel = ({
                             {task.label}
                             {!userCanEdit && <Lock className={styles.lockIcon} />}
                           </h4>
+                          {hasLink && (
+                            <div className={styles.linkContainer}>
+                              <button
+                                onClick={e => handleLinkClick(originalLink, e)}
+                                className={styles.linkButton}
+                                title="Открыть в новой вкладке"
+                              >
+                                <ExternalLink className="w-4 h-4" /> Открыть
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <div className={rowClass}>
                           <div className={styles.taskInputCol}>
@@ -323,53 +332,30 @@ export const PostDetailsRightPanel = ({
                             )}
                           </div>
                         </div>
-
-                        {hasLink && (
-                          <div className={styles.linkBlock}>
-                            <div className={styles.linkContainer}>
-                              <div className={styles.linkInfo}>
-                                <span className={styles.linkLabel}>Ссылка:</span>
-                                <p className={styles.linkUrl} title={originalLink}>{originalLink}</p>
-                              </div>
-                              <button
-                                onClick={e => handleLinkClick(originalLink, e)}
-                                className={styles.linkButton}
-                                title="Открыть в новой вкладке"
-                              >
-                                <ExternalLink className="w-4 h-4" /> Открыть
-                              </button>
-                            </div>
-                          </div>
-                        )}
                       </>
                     )}
                   </>
                 )}
 
                 {userCanAddComment && (
-                  <div className={styles.addCommentSection}>
-                    <div className={styles.addCommentRow}>
-                      <MessageSquare className={styles.commentIconGray} />
-                      <div className={styles.addCommentField}>
-                        <AutoResizeTextarea
-                          value={task.newCommentText}
-                          onChange={e => onNewCommentChange(task.id, e.target.value)}
-                          placeholder="Добавить комментарий..."
+                  <div className={styles.addCommentField}>
+                    <AutoResizeTextarea
+                      value={task.newCommentText}
+                      onChange={e => onNewCommentChange(task.id, e.target.value)}
+                      placeholder="Добавить комментарий..."
+                      disabled={isSaving || isActionLoading || isAdding}
+                    />
+                    {task.newCommentText.trim() && (
+                      <div className={styles.addCommentButtonWrapper}>
+                        <button
+                          onClick={() => handleAddCommentClick(task.id)}
                           disabled={isSaving || isActionLoading || isAdding}
-                        />
-                        {task.newCommentText.trim() && (
-                          <div className={styles.addCommentButtonWrapper}>
-                            <button
-                              onClick={() => handleAddCommentClick(task.id)}
-                              disabled={isSaving || isActionLoading || isAdding}
-                              className={styles.addCommentButton}
-                            >
-                              {isAdding && addingCommentFor === task.id ? 'Добавление...' : 'Добавить комментарий'}
-                            </button>
-                          </div>
-                        )}
+                          className={styles.addCommentButton}
+                        >
+                          {isAdding && addingCommentFor === task.id ? 'Отправка...' : 'Отправить'}
+                        </button>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 

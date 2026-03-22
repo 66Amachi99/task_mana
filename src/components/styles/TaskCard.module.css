@@ -1,6 +1,6 @@
 .card {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
-  border-radius: 10px;
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.2s;
   padding: 1rem;
@@ -97,6 +97,7 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  white-space: pre-wrap;
 }
 
 @media (min-width: 768px) {
@@ -208,10 +209,7 @@
 }
 
 .assigneesBlock {
-  padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  
 }
 
 .assigneesRow {
@@ -246,9 +244,6 @@
 }
 
 .footer {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: flex-end;

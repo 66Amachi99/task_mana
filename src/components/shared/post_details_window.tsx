@@ -12,6 +12,8 @@ import { ru } from 'date-fns/locale';
 import { useGalleryStore } from '@/store/useGalleryStore';
 import styles from '../styles/PostDetailsWindow.module.css';
 
+// ─── Конфигурации ────────────────────────────────────────────────────────────
+
 export const TASK_CONFIG = [
   { id: 1, name: 'mini_video_smm', label: 'Мини-видео', needsKey: 'post_needs_mini_video_smm', linkKey: 'post_done_link_mini_video_smm', role: 'smm' },
   { id: 2, name: 'video', label: 'Видео', needsKey: 'post_needs_video', linkKey: 'post_done_link_video', role: 'photographer' },
@@ -33,6 +35,11 @@ export const COMMENT_STATUS = {
   YELLOW: '#FFD70033',
   GREEN: '#4CAF5033',
 } as const;
+
+/** ID задач с поддержкой файлов (загрузка на Я.Диск) */
+const FILE_SUPPORT_TASK_IDS = [5, 6, 7];
+
+// ─── Типы ────────────────────────────────────────────────────────────────────
 
 export type SocialKey = typeof SOCIAL_CONFIG[number]['key'];
 export type SocialLinks = Record<SocialKey, string>;
@@ -103,59 +110,95 @@ export interface PostDetailsWindowProps {
   postId: number;
 }
 
+// ─── Утилиты ─────────────────────────────────────────────────────────────────
+
+const EMPTY_SOCIAL: SocialLinks = { telegram: '', vkontakte: '', max: '' };
+
 export const getCommentsForTask = (post: PostData | null, taskTypeId: number): CommentData[] => {
-  if (!post || !post.comments) return [];
+  if (!post?.comments) return [];
   return post.comments.filter(c => c.task_type_id === taskTypeId);
 };
 
 function transliterate(text: string): string {
   const map: Record<string, string> = {
-    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e', 'ж': 'zh',
-    'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
-    'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts',
-    'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
-    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'E', 'Ж': 'Zh',
-    'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O',
-    'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'H', 'Ц': 'Ts',
-    'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch', 'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+    'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh',
+    'з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o',
+    'п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts',
+    'ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya',
+    'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Е':'E','Ё':'E','Ж':'Zh',
+    'З':'Z','И':'I','Й':'Y','К':'K','Л':'L','М':'M','Н':'N','О':'O',
+    'П':'P','Р':'R','С':'S','Т':'T','У':'U','Ф':'F','Х':'H','Ц':'Ts',
+    'Ч':'Ch','Ш':'Sh','Щ':'Sch','Ъ':'','Ы':'Y','Ь':'','Э':'E','Ю':'Yu','Я':'Ya',
   };
-  return text.split('').map(char => map[char] || char).join('');
+  return text.split('').map(c => map[c] || c).join('');
 }
 
 function slugifyPostTitle(title: string): string {
   return transliterate(title)
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '_')
-    .replace(/-+/g, '_');
+    .replace(/[\s-]+/g, '_');
 }
 
-// Возвращаем информацию о загруженных файлах
-async function uploadFilesToYandexDisk(files: File[], folderPath: string): Promise<Array<{ fileName: string; path: string }>> {
+/** Единая функция построения пути к папке поста */
+function buildFolderPath(title: string, deadline: Date, postId: number): string {
+  const dateStr = format(deadline, 'dd.MM.yyyy', { locale: ru });
+  return `posts/${dateStr}_${slugifyPostTitle(title)}_${postId}`;
+}
+
+/** Извлечь социальные ссылки из поста */
+function extractSocialLinks(post: PostData): SocialLinks {
+  return {
+    telegram: post.telegram_published || '',
+    vkontakte: post.vkontakte_published || '',
+    max: post.MAX_published || '',
+  };
+}
+
+/** Собрать задачи из данных поста */
+function buildTasksFromPost(post: PostData): TaskWithComments[] {
+  return TASK_CONFIG
+    .filter(cfg => post[cfg.needsKey] as boolean)
+    .map(cfg => ({
+      id: cfg.id,
+      name: cfg.name,
+      label: cfg.label,
+      link: ((post[cfg.linkKey] as string) || '').toString(),
+      required: true,
+      role: cfg.role,
+      linkKey: cfg.linkKey,
+      comments: [...getCommentsForTask(post, cfg.id)].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ),
+      newCommentText: '',
+    }));
+}
+
+/** Глубокая копия массива задач (с копированием комментариев) */
+function cloneTasks(tasks: TaskWithComments[]): TaskWithComments[] {
+  return tasks.map(t => ({ ...t, comments: [...t.comments] }));
+}
+
+async function uploadFilesToYandexDisk(
+  files: File[],
+  folderPath: string,
+): Promise<Array<{ fileName: string; path: string }>> {
   const urlRes = await fetch('/api/disk/get-upload-urls', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      fileNames: files.map(f => f.name),
-      pathSuffix: folderPath,
-    }),
+    body: JSON.stringify({ fileNames: files.map(f => f.name), pathSuffix: folderPath }),
   });
   if (!urlRes.ok) throw new Error('Не удалось получить URL для загрузки');
-  const urlData = await urlRes.json();
-  const uploadItems = urlData.results;
+  const { results: uploadItems } = await urlRes.json();
 
-  const uploadPromises = files.map(async (file) => {
-    const target = uploadItems.find((item: any) => item.fileName === file.name);
-    if (!target) throw new Error(`Не найден URL для ${file.name}`);
-
-    const uploadRes = await fetch(target.uploadUrl, {
-      method: 'PUT',
-      body: file,
-    });
-    if (!uploadRes.ok) throw new Error(`Ошибка загрузки ${file.name}`);
-  });
-
-  await Promise.all(uploadPromises);
+  await Promise.all(
+    files.map(async file => {
+      const target = uploadItems.find((item: any) => item.fileName === file.name);
+      if (!target) throw new Error(`Не найден URL для ${file.name}`);
+      const res = await fetch(target.uploadUrl, { method: 'PUT', body: file });
+      if (!res.ok) throw new Error(`Ошибка загрузки ${file.name}`);
+    }),
+  );
 
   return files.map(file => ({
     fileName: file.name,
@@ -163,11 +206,30 @@ async function uploadFilesToYandexDisk(files: File[], folderPath: string): Promi
   }));
 }
 
+async function renameFolderOnDisk(oldPath: string, newPath: string): Promise<boolean> {
+  if (oldPath === newPath) return false;
+  const res = await fetch('/api/disk/move', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fromPath: `/taskmanager/${oldPath}`,
+      toPath: `/taskmanager/${newPath}`,
+    }),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Ошибка переименования папки');
+  }
+  return (await res.json()).moved === true;
+}
+
+// ─── Компонент ───────────────────────────────────────────────────────────────
+
 export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) => {
   const { user, canEditPostTask, canApprove, canPublish } = useUser();
   const { data: fetchedPost, isLoading } = usePost(postId);
 
-  const post = useMemo(() => {
+  const post = useMemo<PostData | null>(() => {
     if (!fetchedPost) return null;
     return {
       ...fetchedPost,
@@ -176,10 +238,12 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     };
   }, [fetchedPost]);
 
+  // ── Состояния ──
+
   const [tasks, setTasks] = useState<TaskWithComments[]>([]);
   const [originalTasks, setOriginalTasks] = useState<TaskWithComments[]>([]);
-  const [socialLinks, setSocialLinks] = useState<SocialLinks>({ telegram: '', vkontakte: '', max: '' });
-  const [originalSocialLinks, setOriginalSocialLinks] = useState<SocialLinks>({ telegram: '', vkontakte: '', max: '' });
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>(EMPTY_SOCIAL);
+  const [originalSocialLinks, setOriginalSocialLinks] = useState<SocialLinks>(EMPTY_SOCIAL);
   const [editedDeadline, setEditedDeadline] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -190,41 +254,45 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [tagSearchQuery, setTagSearchQuery] = useState('');
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
-  const tagDropdownRef = useRef<HTMLDivElement>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const datePickerRef = useRef<HTMLDivElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [isClosingDetails, setIsClosingDetails] = useState(false);
-  const [isOpening, setIsOpening] = useState(true);
-
+  const [isClosing, setIsClosing] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<Record<number, File[]>>({});
   const [uploadingTasks, setUploadingTasks] = useState<Record<number, boolean>>({});
 
-  const [localIsPublished, setLocalIsPublished] = useState(post?.is_published || false);
-  const [localApprovedBy, setLocalApprovedBy] = useState(post?.approved_by || null);
-  const [localSocialLinks, setLocalSocialLinks] = useState<SocialLinks>({
-    telegram: post?.telegram_published || '',
-    vkontakte: post?.vkontakte_published || '',
-    max: post?.MAX_published || '',
-  });
+  // Оптимистичное локальное состояние (обновляется до рефетча)
+  const [localIsPublished, setLocalIsPublished] = useState(false);
+  const [localApprovedBy, setLocalApprovedBy] = useState<{ user_login: string } | null>(null);
+  const [localSocialLinks, setLocalSocialLinks] = useState<SocialLinks>(EMPTY_SOCIAL);
 
-  const canEditPost = !!(user && (user.admin_role || user.SMM_role));
-  const canDelete = !!(user && (user.admin_role || user.SMM_role));
-  const canManageSocial = !!(user && (user.admin_role || user.SMM_role));
+  // ── Рефы ──
+
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  // ── Производные значения ──
+
+  const isAdminOrSMM = !!(user?.admin_role || user?.SMM_role);
+
+  // ── Мутации ──
 
   const updatePost = useUpdatePost();
   const patchPost = usePatchPost();
-  const deletePost = useDeletePost();
-  const addComment = useAddComment();
-  const updateCommentStatus = useUpdateCommentStatus();
-  const deleteComment = useDeleteComment();
+  const deletePostMut = useDeletePost();
+  const addCommentMut = useAddComment();
+  const updateCommentStatusMut = useUpdateCommentStatus();
+  const deleteCommentMut = useDeleteComment();
 
-  // Zustand
-  const removeImageFromCache = useGalleryStore((state) => state.removeImageFromCache);
-  const setImagesToCache = useGalleryStore((state) => state.setImagesToCache);
+  // ── Zustand ──
 
+  const removeImageFromCache = useGalleryStore(s => s.removeImageFromCache);
+  const setImagesToCache = useGalleryStore(s => s.setImagesToCache);
+  const renameCacheKey = useGalleryStore(s => s.renameCacheKey);
+
+  // ── Эффекты ──
+
+  // Блокировка прокрутки body
   useLayoutEffect(() => {
     if (!post) return;
     const prev = document.body.style.overflow;
@@ -232,204 +300,266 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     return () => { document.body.style.overflow = prev; };
   }, [post]);
 
+  // Закрытие дропдаунов по клику вне
   useEffect(() => {
-    const onDocMouseDown = (e: MouseEvent) => {
-      if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node)) setIsTagDropdownOpen(false);
-      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) setShowDatePicker(false);
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(target)) setIsTagDropdownOpen(false);
+      if (datePickerRef.current && !datePickerRef.current.contains(target)) setShowDatePicker(false);
     };
-    document.addEventListener('mousedown', onDocMouseDown);
-    return () => document.removeEventListener('mousedown', onDocMouseDown);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Загрузка доступных тегов
   useEffect(() => {
-    const fetchTags = async () => {
-      try {
-        const response = await fetch('/api/tags');
-        const data = await response.json();
-        setAvailableTags(data);
-      } catch (error) { console.error('Ошибка загрузки тегов:', error); }
-    };
-    fetchTags();
+    fetch('/api/tags')
+      .then(r => r.json())
+      .then(setAvailableTags)
+      .catch(e => console.error('Ошибка загрузки тегов:', e));
   }, []);
 
+  // Синхронизация состояния при изменении поста (после фетча/рефетча)
   useLayoutEffect(() => {
     if (!post) return;
 
-    const tasksWithComments = TASK_CONFIG
-      .filter(cfg => post[cfg.needsKey] as boolean)
-      .map(cfg => ({
-        id: cfg.id,
-        name: cfg.name,
-        label: cfg.label,
-        link: ((post[cfg.linkKey] as string) || '').toString(),
-        required: true,
-        role: cfg.role,
-        linkKey: cfg.linkKey,
-        comments: [...getCommentsForTask(post, cfg.id)].sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        ),
-        newCommentText: '',
-      }));
+    const tasksFromPost = buildTasksFromPost(post);
+    const social = extractSocialLinks(post);
 
-    const social = {
-      telegram: post.telegram_published || '',
-      vkontakte: post.vkontakte_published || '',
-      max: post.MAX_published || '',
-    };
-
-    const taskSelection = TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false);
-
-    setTasks(tasksWithComments);
-    setOriginalTasks(tasksWithComments.map(t => ({ ...t, comments: [...t.comments] })));
+    setTasks(tasksFromPost);
+    setOriginalTasks(cloneTasks(tasksFromPost));
     setSocialLinks(social);
     setOriginalSocialLinks({ ...social });
     setEditedDeadline(post.post_deadline ? new Date(post.post_deadline) : null);
     setEditedTitle(post.post_title || '');
     setEditedDescription(post.post_description || '');
     setEditedTzLink(post.tz_link || '');
-    setSelectedTasks(taskSelection);
+    setSelectedTasks(TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false));
     setSelectedTags(post.tags || []);
     setLocalIsPublished(post.is_published);
     setLocalApprovedBy(post.approved_by || null);
     setLocalSocialLinks(social);
   }, [post]);
 
+  // Обновление списка задач при переключении чекбоксов в режиме редактирования
   useEffect(() => {
     if (!isEditing || !post) return;
 
-    setTasks(prevTasks => {
-      const newTasks = TASK_CONFIG
+    setTasks(prevTasks =>
+      TASK_CONFIG
         .filter(cfg => selectedTasks[cfg.id - 1])
-        .map(cfg => {
-          const existing = prevTasks.find(t => t.id === cfg.id);
-          if (existing) {
-            return existing;
-          } else {
-            return {
-              id: cfg.id,
-              name: cfg.name,
-              label: cfg.label,
-              link: '',
-              required: true,
-              role: cfg.role,
-              linkKey: cfg.linkKey,
-              comments: [],
-              newCommentText: '',
-            };
-          }
-        });
-      return newTasks;
-    });
+        .map(cfg =>
+          prevTasks.find(t => t.id === cfg.id) ?? {
+            id: cfg.id,
+            name: cfg.name,
+            label: cfg.label,
+            link: '',
+            required: true,
+            role: cfg.role,
+            linkKey: cfg.linkKey,
+            comments: [],
+            newCommentText: '',
+          },
+        ),
+    );
   }, [selectedTasks, isEditing, post]);
+
+  // ── Мемоизированные вычисления ──
+
+  const filteredTags = useMemo(
+    () =>
+      availableTags.filter(
+        tag =>
+          tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
+          !selectedTags.some(t => t.tag_id === tag.tag_id),
+      ),
+    [availableTags, tagSearchQuery, selectedTags],
+  );
+
+  const hasChanges = useMemo(() => {
+    if (!post) return false;
+    return (
+      tasks.some((task, i) => {
+        const original = originalTasks[i];
+        return !original || task.link !== original.link;
+      }) ||
+      (Object.keys(socialLinks) as SocialKey[]).some(k => socialLinks[k] !== originalSocialLinks[k]) ||
+      (!!editedDeadline && new Date(post.post_deadline).getTime() !== editedDeadline.getTime()) ||
+      Object.keys(pendingFiles).length > 0
+    );
+  }, [tasks, originalTasks, socialLinks, originalSocialLinks, editedDeadline, post, pendingFiles]);
+
+  const canShowApprove = useMemo(() => {
+    if (!canApprove || localApprovedBy || !post) return false;
+    return TASK_CONFIG.every(cfg => !post[cfg.needsKey] || (post[cfg.linkKey] as string)?.trim());
+  }, [canApprove, localApprovedBy, post]);
+
+  // ── Обработчики файлов ──
 
   const handleFilesSelected = useCallback((taskId: number, files: File[]) => {
     setPendingFiles(prev => {
-      const isMultiple = taskId !== 5;
-      if (!isMultiple) {
-        return { ...prev, [taskId]: files };
-      } else {
-        const current = prev[taskId] || [];
-        return { ...prev, [taskId]: [...current, ...files] };
-      }
+      const isMultiple = taskId !== 5; // Обложка — только один файл
+      return {
+        ...prev,
+        [taskId]: isMultiple ? [...(prev[taskId] || []), ...files] : files,
+      };
     });
   }, []);
 
   const handleFilesCleared = useCallback((taskId: number) => {
     setPendingFiles(prev => {
-      const newState = { ...prev };
-      delete newState[taskId];
-      return newState;
+      const { [taskId]: _, ...rest } = prev;
+      return rest;
     });
   }, []);
 
   const handleRemovePendingFile = useCallback((taskId: number, fileName: string) => {
     setPendingFiles(prev => {
-      const current = prev[taskId] || [];
-      const filtered = current.filter(f => f.name !== fileName);
+      const filtered = (prev[taskId] || []).filter(f => f.name !== fileName);
       if (filtered.length === 0) {
-        const newState = { ...prev };
-        delete newState[taskId];
-        return newState;
+        const { [taskId]: _, ...rest } = prev;
+        return rest;
       }
       return { ...prev, [taskId]: filtered };
     });
   }, []);
 
-  const handleDeleteFile = useCallback(async (taskId: number, folderPath: string, filePath: string) => {
-    if (!post) return;
-    try {
-      const res = await fetch('/api/disk/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: filePath }),
-      });
-      if (!res.ok) throw new Error('Ошибка удаления');
-
-      removeImageFromCache(folderPath, filePath);
-    } catch (error) {
-      console.error('Ошибка удаления файла:', error);
-      alert('Не удалось удалить файл');
-    }
-  }, [post, removeImageFromCache]);
-
-  const filteredTags = availableTags.filter(tag =>
-    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
-    !selectedTags.find(t => t.tag_id === tag.tag_id)
+  const handleDeleteFile = useCallback(
+    async (_taskId: number, folderPath: string, filePath: string) => {
+      if (!post) return;
+      try {
+        const res = await fetch('/api/disk/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: filePath }),
+        });
+        if (!res.ok) throw new Error('Ошибка удаления');
+        removeImageFromCache(folderPath, filePath);
+      } catch (error) {
+        console.error('Ошибка удаления файла:', error);
+        alert('Не удалось удалить файл');
+      }
+    },
+    [post, removeImageFromCache],
   );
 
-  const handleTagSelect = (tag: Tag) => {
-    if (!selectedTags.find(t => t.tag_id === tag.tag_id)) setSelectedTags([...selectedTags, tag]);
+  // ── Обработчики тегов ──
+
+  const handleTagSelect = useCallback((tag: Tag) => {
+    setSelectedTags(prev => (prev.some(t => t.tag_id === tag.tag_id) ? prev : [...prev, tag]));
     setTagSearchQuery('');
     setIsTagDropdownOpen(false);
-  };
-  const handleTagRemove = (tagId: number) => setSelectedTags(selectedTags.filter(t => t.tag_id !== tagId));
-  const handleCreateTag = async () => {
-    if (!tagSearchQuery.trim()) return;
+  }, []);
+
+  const handleTagRemove = useCallback((tagId: number) => {
+    setSelectedTags(prev => prev.filter(t => t.tag_id !== tagId));
+  }, []);
+
+  const handleCreateTag = useCallback(async () => {
+    const name = tagSearchQuery.trim();
+    if (!name) return;
     try {
-      const response = await fetch('/api/tags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: tagSearchQuery }) });
-      if (response.ok) {
-        const newTag = await response.json();
-        setAvailableTags([...availableTags, newTag]);
-        setSelectedTags([...selectedTags, newTag]);
+      const res = await fetch('/api/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        const newTag = await res.json();
+        setAvailableTags(prev => [...prev, newTag]);
+        setSelectedTags(prev => [...prev, newTag]);
         setTagSearchQuery('');
         setIsTagDropdownOpen(false);
       }
-    } catch (error) { console.error('Ошибка создания тега:', error); }
-  };
-  const handleTaskToggle = (taskId: number) => setSelectedTasks(prev => {
-    const newSelection = [...prev];
-    newSelection[taskId - 1] = !newSelection[taskId - 1];
-    return newSelection;
-  });
-  const handleDeadlineChange = (newDate: Date) => setEditedDeadline(newDate);
-  const handleEditStart = () => setIsEditing(true);
-  const handleEditCancel = () => {
-    setIsEditing(false);
-    setTasks(originalTasks.map(t => ({ ...t, comments: [...t.comments] })));
-    setSelectedTasks(TASK_CONFIG.map(cfg => (post?.[cfg.needsKey] as boolean) || false));
-    setSelectedTags(post?.tags || []);
-    setEditedTitle(post?.post_title || '');
-    setEditedDescription(post?.post_description || '');
-    setEditedTzLink(post?.tz_link || '');
-    setEditedDeadline(post?.post_deadline ? new Date(post.post_deadline) : null);
-  };
+    } catch (error) {
+      console.error('Ошибка создания тега:', error);
+    }
+  }, [tagSearchQuery]);
 
-  const handleSave = async () => {
+  // ── Обработчики задач ──
+
+  const handleTaskToggle = useCallback((taskId: number) => {
+    setSelectedTasks(prev => {
+      const next = [...prev];
+      next[taskId - 1] = !next[taskId - 1];
+      return next;
+    });
+  }, []);
+
+  // ── Обработчики редактирования ──
+
+  const handleEditStart = useCallback(() => setIsEditing(true), []);
+
+  const handleEditCancel = useCallback(() => {
+    if (!post) return;
+    setIsEditing(false);
+    setTasks(cloneTasks(originalTasks));
+    setSelectedTasks(TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false));
+    setSelectedTags(post.tags || []);
+    setEditedTitle(post.post_title || '');
+    setEditedDescription(post.post_description || '');
+    setEditedTzLink(post.tz_link || '');
+    setEditedDeadline(post.post_deadline ? new Date(post.post_deadline) : null);
+  }, [post, originalTasks]);
+
+  // ── Сохранение метаданных поста (режим редактирования) ──
+
+  const handleSave = useCallback(async () => {
     if (!post) return;
     setIsSaving(true);
     try {
-      const updateData: any = {
+      const oldFolder = buildFolderPath(post.post_title, post.post_deadline, post.post_id);
+      const newDeadline = editedDeadline || post.post_deadline;
+      const newFolder = buildFolderPath(editedTitle, newDeadline, post.post_id);
+      const folderRenamed = oldFolder !== newFolder;
+
+      // Переименование папки на диске, если изменилось название или дата
+      if (folderRenamed) {
+        await renameFolderOnDisk(oldFolder, newFolder);
+
+        TASK_CONFIG
+          .filter(t => FILE_SUPPORT_TASK_IDS.includes(t.id))
+          .forEach(task => {
+            renameCacheKey(`${oldFolder}/${task.name}`, `${newFolder}/${task.name}`);
+          });
+      }
+
+      // Собираем актуальный список задач (с обновлёнными ссылками, если папка переименована)
+      const finalTasks = folderRenamed
+        ? tasks.map(task =>
+            FILE_SUPPORT_TASK_IDS.includes(task.id) && task.link
+              ? { ...task, link: `/taskmanager/${newFolder}/${task.name}` }
+              : task,
+          )
+        : tasks;
+
+      if (folderRenamed) setTasks(finalTasks);
+
+      // Подготовка данных для API
+      const updateData: Record<string, any> = {
         post_title: editedTitle,
         post_description: editedDescription || null,
         tz_link: editedTzLink || null,
-        post_deadline: editedDeadline ? editedDeadline.toISOString() : null,
+        post_deadline: editedDeadline?.toISOString() || null,
+        tag_ids: selectedTags.map(t => t.tag_id),
       };
-      TASK_CONFIG.forEach(cfg => { updateData[cfg.needsKey] = selectedTasks[cfg.id - 1] || false; });
-      updateData.tag_ids = selectedTags.map(t => t.tag_id);
+
+      TASK_CONFIG.forEach(cfg => {
+        updateData[cfg.needsKey] = selectedTasks[cfg.id - 1] || false;
+      });
+
+      if (folderRenamed) {
+        TASK_CONFIG
+          .filter(t => FILE_SUPPORT_TASK_IDS.includes(t.id))
+          .forEach(cfg => {
+            if ((post[cfg.linkKey] as string)?.trim()) {
+              updateData[cfg.linkKey] = `/taskmanager/${newFolder}/${cfg.name}`;
+            }
+          });
+      }
 
       await updatePost.mutateAsync({ postId: post.post_id, data: updateData });
-      
-      setOriginalTasks(tasks.map(t => ({ ...t, comments: [...t.comments] })));
+      setOriginalTasks(cloneTasks(finalTasks));
       setIsEditing(false);
     } catch (error) {
       console.error('❌ Ошибка при сохранении:', error);
@@ -437,92 +567,93 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [
+    post, editedTitle, editedDescription, editedTzLink, editedDeadline,
+    selectedTasks, selectedTags, tasks, updatePost, renameCacheKey,
+  ]);
 
-  const getPostFolderPath = (): string => {
-    if (!post) return '';
-    const dateStr = format(post.post_deadline, 'dd.MM.yyyy', { locale: ru });
-    const slug = slugifyPostTitle(post.post_title);
-    return `posts/${dateStr}_${slug}_${post.post_id}`;
-  };
+  // ── Загрузка файлов и сохранение ссылок (правая панель) ──
 
-  const uploadPendingFiles = async (): Promise<Record<number, Array<{ fileName: string; path: string }>>> => {
-    const results: Record<number, Array<{ fileName: string; path: string }>> = {};
-    const fileSupportTaskIds = [5, 6, 7];
+  const uploadPendingFiles = useCallback(
+    async (baseFolder: string): Promise<Record<number, Array<{ fileName: string; path: string }>>> => {
+      const results: Record<number, Array<{ fileName: string; path: string }>> = {};
 
-    const uploading = Object.keys(pendingFiles).reduce((acc, taskIdStr) => {
-      acc[Number(taskIdStr)] = true;
-      return acc;
-    }, {} as Record<number, boolean>);
-    setUploadingTasks(uploading);
+      const uploading = Object.keys(pendingFiles).reduce<Record<number, boolean>>((acc, id) => {
+        acc[Number(id)] = true;
+        return acc;
+      }, {});
+      setUploadingTasks(uploading);
 
-    try {
-      for (const [taskIdStr, files] of Object.entries(pendingFiles)) {
-        const taskId = Number(taskIdStr);
-        if (!fileSupportTaskIds.includes(taskId)) continue;
+      try {
+        for (const [taskIdStr, files] of Object.entries(pendingFiles)) {
+          const taskId = Number(taskIdStr);
+          if (!FILE_SUPPORT_TASK_IDS.includes(taskId)) continue;
 
-        const task = TASK_CONFIG.find(t => t.id === taskId);
-        if (!task) continue;
+          const task = TASK_CONFIG.find(t => t.id === taskId);
+          if (!task) continue;
 
-        const baseFolder = getPostFolderPath();
-        const folderPath = `${baseFolder}/${task.name}`;
-        try {
-          const uploadedFiles = await uploadFilesToYandexDisk(files, folderPath);
-          results[taskId] = uploadedFiles;
-        } catch (error) {
-          console.error(`Ошибка загрузки файлов для задачи ${taskId}:`, error);
-          throw error;
-        } finally {
-          setUploadingTasks(prev => {
-            const newState = { ...prev };
-            delete newState[taskId];
-            return newState;
-          });
+          try {
+            results[taskId] = await uploadFilesToYandexDisk(files, `${baseFolder}/${task.name}`);
+          } catch (error) {
+            console.error(`Ошибка загрузки файлов для задачи ${taskId}:`, error);
+            throw error;
+          } finally {
+            setUploadingTasks(prev => {
+              const { [taskId]: _, ...rest } = prev;
+              return rest;
+            });
+          }
         }
+      } finally {
+        setUploadingTasks({});
       }
-    } finally {
-      setUploadingTasks({});
-    }
-    return results;
-  };
+      return results;
+    },
+    [pendingFiles],
+  );
 
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = useCallback(async () => {
     if (!post) return;
     setIsSaving(true);
     try {
-      const uploadedFilesMap = await uploadPendingFiles();
+      const baseFolder = buildFolderPath(
+        editedTitle || post.post_title,
+        editedDeadline || post.post_deadline,
+        post.post_id,
+      );
 
-      const baseFolder = getPostFolderPath();
-      const tasksToUpdate = Object.keys(uploadedFilesMap).map(Number);
-      await Promise.all(tasksToUpdate.map(async (taskId) => {
-        const task = TASK_CONFIG.find(t => t.id === taskId);
-        if (!task) return;
-        const folderPath = `${baseFolder}/${task.name}`;
-        try {
-          const res = await fetch('/api/disk/list', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ path: folderPath }),
-          });
-          const data = await res.json();
-          if (data.result) {
-            setImagesToCache(folderPath, data.result);
+      const uploadedFilesMap = await uploadPendingFiles(baseFolder);
+
+      // Обновление кеша для загруженных папок
+      await Promise.all(
+        Object.keys(uploadedFilesMap).map(async taskIdStr => {
+          const task = TASK_CONFIG.find(t => t.id === Number(taskIdStr));
+          if (!task) return;
+          const folderPath = `${baseFolder}/${task.name}`;
+          try {
+            const res = await fetch('/api/disk/list', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: folderPath }),
+            });
+            const data = await res.json();
+            if (data.result) setImagesToCache(folderPath, data.result);
+          } catch (error) {
+            console.error(`Ошибка обновления кеша для ${folderPath}:`, error);
           }
-        } catch (error) {
-          console.error(`Ошибка обновления кеша для папки ${folderPath}:`, error);
-        }
-      }));
+        }),
+      );
 
-      const updatedTasks = tasks.map(task => {
-        if (uploadedFilesMap[task.id]) {
-          return { ...task, link: `/taskmanager/${baseFolder}/${task.name}` };
-        }
-        return task;
-      });
+      const updatedTasks = tasks.map(task =>
+        uploadedFilesMap[task.id]
+          ? { ...task, link: `/taskmanager/${baseFolder}/${task.name}` }
+          : task,
+      );
       setTasks(updatedTasks);
 
+      // Сборка данных для API
       const data: Record<string, any> = {};
-      for (const t of updatedTasks) data[t.linkKey] = t.link?.trim() ? t.link.trim() : null;
+      for (const t of updatedTasks) data[t.linkKey] = t.link?.trim() || null;
       data.telegram_published = socialLinks.telegram?.trim() || null;
       data.vkontakte_published = socialLinks.vkontakte?.trim() || null;
       data.MAX_published = socialLinks.max?.trim() || null;
@@ -531,53 +662,66 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       await updatePost.mutateAsync({ postId: post.post_id, data });
 
       setPendingFiles({});
-      setOriginalTasks(updatedTasks.map(t => ({ ...t, comments: [...t.comments] })));
+      setOriginalTasks(cloneTasks(updatedTasks));
       setOriginalSocialLinks({ ...socialLinks });
-    } catch (e) {
-      console.error('Ошибка:', e);
-      alert(e instanceof Error ? e.message : 'Ошибка сохранения');
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert(error instanceof Error ? error.message : 'Ошибка сохранения');
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [post, editedTitle, editedDeadline, tasks, socialLinks, uploadPendingFiles, updatePost, setImagesToCache]);
 
-  const handleAction = async (action: string, confirmMsg?: string) => {
-    if (!post) return;
-    if (confirmMsg && !window.confirm(confirmMsg)) return;
-    setIsActionLoading(true);
-    try {
-      if (action === 'delete') {
-        await deletePost.mutateAsync(post.post_id);
-        onClose();
-      } else {
+  // ── Действия (approve / unapprove / publish / delete) ──
+
+  const handleAction = useCallback(
+    async (action: string, confirmMsg?: string) => {
+      if (!post) return;
+      if (confirmMsg && !window.confirm(confirmMsg)) return;
+      setIsActionLoading(true);
+      try {
+        if (action === 'delete') {
+          await deletePostMut.mutateAsync(post.post_id);
+          onClose();
+          return;
+        }
+
         const result = await patchPost.mutateAsync({ postId: post.post_id, action });
         if (result?.post) {
           const updatedPost = result.post;
           setLocalIsPublished(updatedPost.is_published);
           setLocalApprovedBy(updatedPost.approved_by || null);
-          setLocalSocialLinks({
-            telegram: updatedPost.telegram_published || '',
-            vkontakte: updatedPost.vkontakte_published || '',
-            max: updatedPost.MAX_published || '',
-          });
-          setSocialLinks({
-            telegram: updatedPost.telegram_published || '',
-            vkontakte: updatedPost.vkontakte_published || '',
-            max: updatedPost.MAX_published || '',
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Ошибка:', error);
-      alert(error instanceof Error ? error.message : 'Ошибка');
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
 
-  const handleApprove = () => handleAction('approve');
-  const handleUnapprove = () => handleAction('unapprove');
-  const handlePublishToggle = () => handleAction(localIsPublished ? 'unpublish' : 'publish');
+          const newSocial: SocialLinks = {
+            telegram: updatedPost.telegram_published || '',
+            vkontakte: updatedPost.vkontakte_published || '',
+            max: updatedPost.MAX_published || '',
+          };
+          setLocalSocialLinks(newSocial);
+          setSocialLinks(newSocial);
+        }
+      } catch (error) {
+        console.error('Ошибка:', error);
+        alert(error instanceof Error ? error.message : 'Ошибка');
+      } finally {
+        setIsActionLoading(false);
+      }
+    },
+    [post, deletePostMut, patchPost, onClose],
+  );
+
+  const handleApprove = useCallback(() => handleAction('approve'), [handleAction]);
+  const handleUnapprove = useCallback(() => handleAction('unapprove'), [handleAction]);
+  const handlePublishToggle = useCallback(
+    () => handleAction(localIsPublished ? 'unpublish' : 'publish'),
+    [handleAction, localIsPublished],
+  );
+  const handleDelete = useCallback(
+    () => handleAction('delete', 'Вы уверены, что хотите удалить этот пост? Это действие нельзя отменить.'),
+    [handleAction],
+  );
+
+  // ── Обработчики комментариев ──
 
   const handleLinkChange = useCallback((id: number, value: string) => {
     setTasks(prev => prev.map(t => (t.id === id ? { ...t, link: value } : t)));
@@ -587,175 +731,169 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     setTasks(prev => prev.map(t => (t.id === id ? { ...t, newCommentText: value } : t)));
   }, []);
 
-  const handleAddComment = useCallback(async (taskId: number) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || !task.newCommentText.trim() || !post) return;
+  const handleAddComment = useCallback(
+    async (taskId: number) => {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task?.newCommentText.trim() || !post) return;
 
-    try {
-      const newComment = await addComment.mutateAsync({
-        postId: post.post_id,
-        taskTypeId: taskId,
-        text: task.newCommentText,
-      });
+      try {
+        const newComment = await addCommentMut.mutateAsync({
+          postId: post.post_id,
+          taskTypeId: taskId,
+          text: task.newCommentText,
+        });
+        setTasks(prev =>
+          prev.map(t =>
+            t.id === taskId ? { ...t, comments: [newComment, ...t.comments], newCommentText: '' } : t,
+          ),
+        );
+      } catch (error) {
+        console.error('Ошибка при добавлении комментария:', error);
+        alert('Не удалось добавить комментарий');
+      }
+    },
+    [tasks, post, addCommentMut],
+  );
 
-      setTasks(prev => prev.map(t => {
-        if (t.id !== taskId) return t;
-        return {
-          ...t,
-          comments: [newComment, ...t.comments],
-          newCommentText: '',
-        };
-      }));
-    } catch (error) {
-      console.error('Ошибка при добавлении комментария:', error);
-      alert('Не удалось добавить комментарий');
-    }
-  }, [tasks, post, addComment]);
+  const handleCommentStatusChange = useCallback(
+    async (commentId: number, newStatus: string) => {
+      try {
+        await updateCommentStatusMut.mutateAsync({ commentId, status: newStatus });
+        setTasks(prev =>
+          prev.map(t => ({
+            ...t,
+            comments: t.comments.map(c => (c.id === commentId ? { ...c, status: newStatus } : c)),
+          })),
+        );
+      } catch (error) {
+        console.error('Ошибка при обновлении статуса комментария:', error);
+      }
+    },
+    [updateCommentStatusMut],
+  );
 
-  const handleCommentStatusChange = useCallback(async (commentId: number, newStatus: string) => {
-    try {
-      await updateCommentStatus.mutateAsync({ commentId, status: newStatus });
-      
-      setTasks(prev => prev.map(t => ({
-        ...t,
-        comments: t.comments.map(c => (c.id === commentId ? { ...c, status: newStatus } : c)),
-      })));
-    } catch (error) {
-      console.error('Ошибка при обновлении статуса комментария:', error);
-    }
-  }, [updateCommentStatus]);
-
-  const handleDeleteComment = useCallback(async (commentId: number) => {
-    try {
-      await deleteComment.mutateAsync(commentId);
-      
-      setTasks(prev => prev.map(task => ({
-        ...task,
-        comments: task.comments.filter(c => c.id !== commentId),
-      })));
-    } catch (error) {
-      console.error('Ошибка при удалении комментария:', error);
-      alert('Не удалось удалить комментарий');
-    }
-  }, [deleteComment]);
+  const handleDeleteComment = useCallback(
+    async (commentId: number) => {
+      try {
+        await deleteCommentMut.mutateAsync(commentId);
+        setTasks(prev =>
+          prev.map(task => ({ ...task, comments: task.comments.filter(c => c.id !== commentId) })),
+        );
+      } catch (error) {
+        console.error('Ошибка при удалении комментария:', error);
+        alert('Не удалось удалить комментарий');
+      }
+    },
+    [deleteCommentMut],
+  );
 
   const handleSocialLinkChange = useCallback((social: string, value: string) => {
     setSocialLinks(prev => ({ ...prev, [social]: value }));
   }, []);
 
+  // ── Закрытие окна (с анимацией) ──
+
   const handleClose = useCallback(() => {
-    setIsClosingDetails(true);
-    setTimeout(() => {
-      onClose();
-      setIsClosingDetails(false);
-      setIsOpening(true);
-    }, 200);
+    setIsClosing(true);
+    setTimeout(onClose, 200);
   }, [onClose]);
+
+  // ── Рендер ──
 
   if (!post || isLoading) return null;
 
-  const hasChanges =
-    tasks.some((task, i) => {
-      const original = originalTasks[i];
-      if (!original) return true;
-      if (task.link !== original.link) return true;
-      return false;
-    }) ||
-    (Object.keys(socialLinks) as SocialKey[]).some(key => socialLinks[key] !== originalSocialLinks[key]) ||
-    (!!editedDeadline && new Date(post.post_deadline).getTime() !== editedDeadline.getTime()) ||
-    Object.keys(pendingFiles).length > 0;
-
-  const canShowApprove = !!(canApprove && !localApprovedBy && TASK_CONFIG.every(cfg => !post[cfg.needsKey] || (post[cfg.linkKey] as string)?.trim()));
-
   return (
-    <>
-      {!showEditModal && !isClosingDetails && (
-        <div className={`${styles.overlay} ${styles.overlayVisible}`} onClick={handleClose}>
-          <div className={`${styles.container} ${isOpening ? styles.containerOpening : styles.containerClosing}`} onClick={e => e.stopPropagation()}>
-            <div className={styles.header}>
-              <div className={styles.headerSpacer} />
-              <button onClick={handleClose} className={styles.closeButton}>
-                <X size={24} />
-              </button>
-            </div>
-            <div className={styles.content}>
-              <div className={`${styles.leftPanel} no-scrollbar`}>
-                <PostDetailsLeftPanel
-                  post={post}
-                  socialLinks={socialLinks}
-                  onSocialLinkChange={handleSocialLinkChange}
-                  canManageSocial={canManageSocial}
-                  isSaving={isSaving}
-                  isActionLoading={isActionLoading}
-                  isEditing={isEditing}
-                  onEditStart={handleEditStart}
-                  onEditCancel={handleEditCancel}
-                  onSave={handleSave}
-                  editedTitle={editedTitle}
-                  onTitleChange={setEditedTitle}
-                  editedDescription={editedDescription}
-                  onDescriptionChange={setEditedDescription}
-                  editedTzLink={editedTzLink}
-                  onTzLinkChange={setEditedTzLink}
-                  selectedTasks={selectedTasks}
-                  onTaskToggle={handleTaskToggle}
-                  availableTags={availableTags}
-                  selectedTags={selectedTags}
-                  onTagSelect={handleTagSelect}
-                  onTagRemove={handleTagRemove}
-                  onTagSearchChange={setTagSearchQuery}
-                  tagSearchQuery={tagSearchQuery}
-                  onTagCreate={handleCreateTag}
-                  filteredTags={filteredTags}
-                  showTagDropdown={isTagDropdownOpen}
-                  setShowTagDropdown={setIsTagDropdownOpen}
-                  tagDropdownRef={tagDropdownRef}
-                  deadlineValue={editedDeadline ?? new Date(post.post_deadline)}
-                  onDeadlineChange={handleDeadlineChange}
-                  showDatePicker={showDatePicker}
-                  setShowDatePicker={setShowDatePicker}
-                  datePickerRef={datePickerRef}
-                  onApprove={handleApprove}
-                  onUnapprove={handleUnapprove}
-                  onPublishToggle={handlePublishToggle}
-                  onDelete={() => handleAction('delete', 'Вы уверены, что хотите удалить этот пост? Это действие нельзя отменить.')}
-                  canApprove={!!(canApprove && !localApprovedBy) && canShowApprove}
-                  canUnapprove={!!(canApprove && localApprovedBy)}
-                  canPublish={!!canPublish}
-                  canDelete={canDelete}
-                  canEditPost={canEditPost}
-                  onSaveChanges={handleSaveChanges}
-                  hasChanges={hasChanges}
-                  isPublished={localIsPublished}
-                  approvedBy={localApprovedBy}
-                  localSocialLinks={localSocialLinks}
-                />
-              </div>
-              <div className={`${styles.rightPanel} no-scrollbar`}>
-                <PostDetailsRightPanel
-                  tasks={tasks}
-                  post={post}
-                  canEditPostTask={canEditPostTask}
-                  onLinkChange={handleLinkChange}
-                  onNewCommentChange={handleNewCommentChange}
-                  onAddComment={handleAddComment}
-                  onCommentStatusChange={handleCommentStatusChange}
-                  onDeleteComment={handleDeleteComment}
-                  onFilesSelected={handleFilesSelected}
-                  onFilesCleared={handleFilesCleared}
-                  onRemovePendingFile={handleRemovePendingFile}
-                  onDeleteFile={handleDeleteFile}
-                  pendingFiles={pendingFiles}
-                  uploadingTasks={uploadingTasks}
-                  isSaving={isSaving}
-                  isActionLoading={isActionLoading}
-                  isEditing={isEditing}
-                />
-              </div>
-            </div>
+    <div
+      className={`${styles.overlay} ${styles.overlayVisible}`}
+      onClick={handleClose}
+    >
+      <div
+        className={`${styles.container} ${isClosing ? styles.containerClosing : styles.containerOpening}`}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className={styles.header}>
+          <div className={styles.headerSpacer} />
+          <button onClick={handleClose} className={styles.closeButton}>
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className={styles.content}>
+          <div className={`${styles.leftPanel} no-scrollbar`}>
+            <PostDetailsLeftPanel
+              post={post}
+              socialLinks={socialLinks}
+              onSocialLinkChange={handleSocialLinkChange}
+              canManageSocial={isAdminOrSMM}
+              isSaving={isSaving}
+              isActionLoading={isActionLoading}
+              isEditing={isEditing}
+              onEditStart={handleEditStart}
+              onEditCancel={handleEditCancel}
+              onSave={handleSave}
+              editedTitle={editedTitle}
+              onTitleChange={setEditedTitle}
+              editedDescription={editedDescription}
+              onDescriptionChange={setEditedDescription}
+              editedTzLink={editedTzLink}
+              onTzLinkChange={setEditedTzLink}
+              selectedTasks={selectedTasks}
+              onTaskToggle={handleTaskToggle}
+              selectedTags={selectedTags}
+              onTagSelect={handleTagSelect}
+              onTagRemove={handleTagRemove}
+              onTagSearchChange={setTagSearchQuery}
+              tagSearchQuery={tagSearchQuery}
+              onTagCreate={handleCreateTag}
+              filteredTags={filteredTags}
+              showTagDropdown={isTagDropdownOpen}
+              setShowTagDropdown={setIsTagDropdownOpen}
+              tagDropdownRef={tagDropdownRef}
+              deadlineValue={editedDeadline ?? new Date(post.post_deadline)}
+              onDeadlineChange={setEditedDeadline}
+              showDatePicker={showDatePicker}
+              setShowDatePicker={setShowDatePicker}
+              datePickerRef={datePickerRef}
+              onApprove={handleApprove}
+              onUnapprove={handleUnapprove}
+              onPublishToggle={handlePublishToggle}
+              onDelete={handleDelete}
+              canApprove={canShowApprove}
+              canUnapprove={!!(canApprove && localApprovedBy)}
+              canPublish={!!canPublish}
+              canDelete={isAdminOrSMM}
+              canEditPost={isAdminOrSMM}
+              onSaveChanges={handleSaveChanges}
+              hasChanges={hasChanges}
+              isPublished={localIsPublished}
+              approvedBy={localApprovedBy}
+              localSocialLinks={localSocialLinks}
+            />
+          </div>
+
+          <div className={`${styles.rightPanel} no-scrollbar`}>
+            <PostDetailsRightPanel
+              tasks={tasks}
+              post={post}
+              canEditPostTask={canEditPostTask}
+              onLinkChange={handleLinkChange}
+              onNewCommentChange={handleNewCommentChange}
+              onAddComment={handleAddComment}
+              onCommentStatusChange={handleCommentStatusChange}
+              onDeleteComment={handleDeleteComment}
+              onFilesSelected={handleFilesSelected}
+              onFilesCleared={handleFilesCleared}
+              onRemovePendingFile={handleRemovePendingFile}
+              onDeleteFile={handleDeleteFile}
+              pendingFiles={pendingFiles}
+              uploadingTasks={uploadingTasks}
+              isSaving={isSaving}
+              isActionLoading={isActionLoading}
+              isEditing={isEditing}
+            />
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 };

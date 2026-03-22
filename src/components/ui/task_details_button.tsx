@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { TaskDetailsWindow } from '../shared/task_details_window';
 import { Eye } from 'lucide-react';
 import { Task } from '../../../types/task';
-import styles from '../styles/PostList.module.css';
+import styles from '../styles/PostCard.module.css';
 
 interface TaskDetailsButtonProps {
   task: Task;

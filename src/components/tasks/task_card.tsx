@@ -108,7 +108,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
           </div>
           <div className={styles.dateRow}>
             <Calendar className={styles.dateIcon} />
-            <span>Окончание: {formatDate(task.end_time, task.all_day)}</span>
+            <span>Конец: {formatDate(task.end_time, task.all_day)}</span>
           </div>
         </div>
       </div>

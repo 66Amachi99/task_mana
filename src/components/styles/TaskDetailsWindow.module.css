@@ -21,7 +21,6 @@
   overflow-y: auto;
 }
 
-/* Заголовок модального окна */
 .header {
   display: flex;
   justify-content: space-between;
@@ -34,9 +33,10 @@
   font-size: 36px;
   font-weight: 500;
   color: #ffffff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-wrap: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .headerTitleInput {

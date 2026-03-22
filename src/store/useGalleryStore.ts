@@ -12,6 +12,7 @@ interface GalleryState {
   cache: Record<string, ImageItem[]>;
   setImagesToCache: (folderPath: string, images: ImagesOrUpdater) => void;
   removeImageFromCache: (folderPath: string, imagePath: string) => void;
+  renameCacheKey: (oldPath: string, newPath: string) => void;
   clearCache: () => void;
 }
 
@@ -32,5 +33,21 @@ export const useGalleryStore = create<GalleryState>((set) => ({
         [folderPath]: state.cache[folderPath]?.filter((img) => img.path !== imagePath) || [],
       },
     })),
+  renameCacheKey: (oldPath, newPath) =>
+    set((state) => {
+      if (!state.cache[oldPath]) return state;
+      const { [oldPath]: oldEntry, ...restCache } = state.cache;
+      // Обновляем пути в изображениях
+      const updatedImages = oldEntry.map((img) => ({
+        ...img,
+        path: img.path.replace(oldPath, newPath),
+      }));
+      return {
+        cache: {
+          ...restCache,
+          [newPath]: updatedImages,
+        },
+      };
+    }),
   clearCache: () => set({ cache: {} }),
 }));
