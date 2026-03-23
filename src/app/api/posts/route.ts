@@ -32,6 +32,14 @@ export async function GET(request: NextRequest) {
             orderBy: {
               created_at: 'desc',
             },
+            include: {
+              created_by: {
+                select: {
+                  user_id: true,
+                  user_login: true,
+                },
+              },
+            },
           },
         },
       });
@@ -77,6 +85,14 @@ export async function GET(request: NextRequest) {
           orderBy: {
             created_at: 'desc',
           },
+          include: {
+            created_by: {
+              select: {
+                user_id: true,
+                user_login: true,
+              },
+            },
+          },
         },
       },
       orderBy: {
@@ -85,14 +101,14 @@ export async function GET(request: NextRequest) {
       skip: skip,
       take: limit,
     });
-    
+
     const transformedPosts = posts.map(post => ({
       ...post,
       tags: post.tags.map(pt => pt.tag),
       post_date: post.post_date ? post.post_date.toISOString() : null,
       post_deadline: post.post_deadline.toISOString(),
     }));
-    
+
     return NextResponse.json({
       posts: transformedPosts,
       currentPage: page,

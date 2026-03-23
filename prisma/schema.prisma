@@ -19,20 +19,21 @@ model User {
 
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
-  
+
   posts             Post[]
   approved_posts    Post[]         @relation("ApprovedPosts")
   created_tasks     Task[]         @relation("CreatedTasks")
   assigned_tasks    TaskAssignee[]
+  created_comments  Comment[]      @relation("CommentAuthor")
 }
 
 model Tag {
   tag_id        Int      @id @default(autoincrement())
   name          String   @unique
   color         String
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
   posts         PostTag[]
   tasks         TaskTag[]
 }
@@ -41,45 +42,45 @@ model PostTag {
   post_tag_id   Int      @id @default(autoincrement())
   post_id       Int
   tag_id        Int
-  
+
   post          Post     @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
   tag           Tag      @relation(fields: [tag_id], references: [tag_id], onDelete: Cascade)
 
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 }
 
 model TaskTag {
   task_tag_id   Int      @id @default(autoincrement())
   task_id       Int
   tag_id        Int
-  
+
   task          Task     @relation(fields: [task_id], references: [task_id], onDelete: Cascade)
   tag           Tag      @relation(fields: [tag_id], references: [tag_id], onDelete: Cascade)
 
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 }
 
 model Task {
   task_id        Int      @id @default(autoincrement())
   title          String
   description    String?
-  
+
   created_by_id  Int
   created_by     User     @relation("CreatedTasks", fields: [created_by_id], references: [user_id])
-  
+
   start_time     DateTime
   end_time       DateTime
   all_day        Boolean  @default(false)
-  
-  priority         Int    @default(0)
-  task_status      String   @default("Поставлена")
-  completed_task   String?
 
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
+  priority       Int      @default(0)
+  task_status    String   @default("Поставлена")
+  completed_task String?
+
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
   assignees      TaskAssignee[]
   tags           TaskTag[]
 }
@@ -88,83 +89,83 @@ model TaskAssignee {
   task_assignee_id Int      @id @default(autoincrement())
   task_id          Int
   user_id          Int
-  
+
   task             Task     @relation(fields: [task_id], references: [task_id], onDelete: Cascade)
   user             User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 }
 
 model Post {
-  post_id            Int      @id @default(autoincrement())
-  post_title         String
-  post_description   String?
-  
-  post_status        String   @default("В работе")
-  
-  tz_link            String?
-  is_published       Boolean  @default(false)
-  telegram_published String?
-  vkontakte_published String?
-  MAX_published String?
-  
-  post_needs_mini_video_smm      Boolean @default(false)
-  post_needs_video               Boolean @default(false)
-  post_needs_cover_photo         Boolean @default(false)
-  post_needs_photo_cards         Boolean @default(false)
-  post_needs_photogallery        Boolean @default(false)
-  post_needs_mini_gallery        Boolean @default(false)
-  post_needs_text                Boolean @default(true)
-  
-  post_done_link_mini_video_smm      String?
-  post_done_link_video               String?
-  post_done_link_cover_photo         String?
-  post_done_link_photo_cards         String?
-  post_done_link_photogallery        String?
-  post_done_link_mini_gallery        String?
-  post_done_link_text                String?
+  post_id                         Int      @id @default(autoincrement())
+  post_title                      String
+  post_description                String?
+  post_status                     String   @default("В работе")
+  tz_link                         String?
+  is_published                    Boolean  @default(false)
+  telegram_published              String?
+  vkontakte_published             String?
+  MAX_published                   String?
 
-  has_active_comments_mini_video_smm   Boolean @default(false)
-  has_active_comments_video            Boolean @default(false)
-  has_active_comments_cover_photo      Boolean @default(false)
-  has_active_comments_photo_cards      Boolean @default(false)
-  has_active_comments_photogallery     Boolean @default(false)
-  has_active_comments_mini_gallery     Boolean @default(false)
-  has_active_comments_text             Boolean @default(false)
-  
-  responsible_person_id   Int?
-  user                    User?     @relation(fields: [responsible_person_id], references: [user_id])
-  
-  approved_by_id          Int?
-  approved_by             User?     @relation("ApprovedPosts", fields: [approved_by_id], references: [user_id])
-  
-  tags                    PostTag[]
-  comments                Comment[]
+  post_needs_mini_video_smm       Boolean @default(false)
+  post_needs_video                Boolean @default(false)
+  post_needs_cover_photo          Boolean @default(false)
+  post_needs_photo_cards          Boolean @default(false)
+  post_needs_photogallery         Boolean @default(false)
+  post_needs_mini_gallery         Boolean @default(false)
+  post_needs_text                 Boolean @default(true)
 
-  post_date          DateTime? @default(now())
-  post_deadline      DateTime
+  post_done_link_mini_video_smm   String?
+  post_done_link_video            String?
+  post_done_link_cover_photo      String?
+  post_done_link_photo_cards      String?
+  post_done_link_photogallery     String?
+  post_done_link_mini_gallery     String?
+  post_done_link_text             String?
 
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  has_active_comments_mini_video_smm Boolean @default(false)
+  has_active_comments_video          Boolean @default(false)
+  has_active_comments_cover_photo    Boolean @default(false)
+  has_active_comments_photo_cards    Boolean @default(false)
+  has_active_comments_photogallery   Boolean @default(false)
+  has_active_comments_mini_gallery   Boolean @default(false)
+  has_active_comments_text           Boolean @default(false)
+
+  responsible_person_id           Int?
+  user                            User?     @relation(fields: [responsible_person_id], references: [user_id])
+
+  approved_by_id                  Int?
+  approved_by                     User?     @relation("ApprovedPosts", fields: [approved_by_id], references: [user_id])
+
+  tags                            PostTag[]
+  comments                        Comment[]
+
+  post_date                       DateTime? @default(now())
+  post_deadline                   DateTime
+
+  created_at                      DateTime @default(now())
+  updated_at                      DateTime @updatedAt
 }
 
 model Comment {
   id              Int      @id @default(autoincrement())
-  
+
   post_id         Int
   post            Post     @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
-  
+
+  created_by_id   Int
+  created_by      User     @relation("CommentAuthor", fields: [created_by_id], references: [user_id], onDelete: Cascade)
+
   task_type_id    Int
-  
   text            String   @db.Text
-  
-  status          String   @default("#FF4C4C33")
-  
+  status          String   @default("new")
+
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
   @@index([post_id])
+  @@index([created_by_id])
   @@index([task_type_id])
   @@index([status])
   @@index([created_at])

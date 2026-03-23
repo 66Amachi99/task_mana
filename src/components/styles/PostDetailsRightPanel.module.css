@@ -1,41 +1,8 @@
-/* Основной контейнер панели */
 .panel {
   display: flex;
   flex-direction: column;
 }
 
-/* Заголовок */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.headerTitle {
-  font-size: 16px;
-  font-weight: 500;
-  color: #ffffff;
-}
-
-@media (min-width: 768px) {
-  .headerTitle {
-    font-size: 1.125rem;
-  }
-}
-
-.headerCount {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-@media (min-width: 768px) {
-  .headerCount {
-    font-size: 16px;
-  }
-}
-
-/* Список задач */
 .taskList {
   display: flex;
   flex-direction: column;
@@ -51,13 +18,11 @@
   }
 }
 
-/* Карточка задачи */
 .taskCard {
   padding: 1rem;
   color: #ffffff;
 }
 
-/* Строка задачи (заголовок + поле ввода) */
 .taskRow {
   display: flex;
   justify-content: space-between;
@@ -71,7 +36,6 @@
   }
 }
 
-/* Выравнивание по центру (для ссылок) */
 .taskRowCenter {
   composes: taskRow;
 }
@@ -82,7 +46,6 @@
   }
 }
 
-/* Выравнивание по верху (для текстовых задач) */
 .taskRowTop {
   composes: taskRow;
 }
@@ -93,7 +56,6 @@
   }
 }
 
-/* Левая колонка (заголовок задачи) */
 .taskLabelCol {
   width: auto;
   align-self: center;
@@ -114,13 +76,11 @@
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* Правая колонка (поле ввода) */
 .taskInputCol {
   width: 100%;
   min-height: 44px;
 }
 
-/* Общий стиль для инпута (ссылки) – есть обводка */
 .inputLink {
   width: 100%;
   padding: 0rem 1rem;
@@ -142,7 +102,6 @@
   cursor: not-allowed;
 }
 
-/* Текстовая область для задачи (большая) – есть обводка */
 .taskTextarea {
   width: 100%;
   padding: 0.5rem 1rem; 
@@ -165,7 +124,6 @@
   cursor: not-allowed;
 }
 
-/* Заблокированное поле просмотра – тоже может быть без обводки? Оставим как есть */
 .viewOnlyField {
   width: 100%;
   padding: 0.625rem 1rem;
@@ -179,7 +137,6 @@
   white-space: nowrap;
 }
 
-/* Блок со ссылкой (для не-текстовых задач) */
 .linkBlock {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
@@ -213,62 +170,47 @@
   white-space: nowrap;
 }
 
-/* Кнопка открытия ссылки */
 .linkButton {
   composes: panelButton;
 }
 
-/* Блок комментариев */
 .commentsSection {
-  margin-top: 0.75rem;
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
-/* Комментарий */
-.commentItem {
-  padding: 0.3rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-
-/* Цветные варианты комментариев */
 .commentRed {
-  composes: commentItem;
   background: #FF4C4C1A;
-  border: 1px solid #FF4C4C33
+  border: 1px solid #FF4C4C33;
+  border-radius: 10px;
 }
 
 .commentYellow {
-  composes: commentItem;
   background: #FFCF4C1A;
-  border: 1px solid #FFCF4C33
+  border: 1px solid #FFCF4C33;
+  border-radius: 10px;
 }
 
 .commentGreen {
-  composes: commentItem;
   background: #7CFF4C1A;
-  border: 1px solid #7CFF4C33
+  border: 1px solid #7CFF4C33;
+  border-radius: 10px;
 }
 
 .commentGray {
-  composes: commentItem;
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
 
 .commentContent {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.commentIcon {
-  flex-shrink: 0;
-  margin-top: 0.25rem;
-  color: rgba(255, 255, 255, 0.6);
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 6px 10px 6px 10px;
 }
 
 .commentTextWrapper {
@@ -281,12 +223,7 @@
   color: #ffffff;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.commentDate {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 0.25rem;
+  line-height: 1.5;
 }
 
 .addCommentField {
@@ -294,7 +231,6 @@
   margin-top: 12px;
 }
 
-/* Маленькая текстовая область для комментария – есть обводка */
 .commentTextarea {
   width: 100%;
   padding: 0.7rem 0.75rem;
@@ -317,7 +253,6 @@
   cursor: not-allowed;
 }
 
-/* Общий класс для всех кнопок в правой панели */
 .addCommentButtonWrapper {
   display: flex;
   justify-content: flex-end;
@@ -354,14 +289,12 @@
   cursor: not-allowed;
 }
 
-/* Кнопка изменения статуса комментария */
 .commentStatusButton {
   composes: panelButton;
   min-width: 110px;
   font-size: 12px;
 }
 
-/* Кнопка добавления комментария (градиентная) */
 .addCommentButton {
   composes: panelButton;
 }
@@ -371,7 +304,6 @@
   cursor: not-allowed;
 }
 
-/* Пустое состояние (нет задач) */
 .emptyState {
   text-align: center;
   padding: 2rem 0;
@@ -386,7 +318,8 @@
 .commentActions {
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: flex-start;
+  flex-shrink: 0;
 }
 
 .commentDeleteButton {
@@ -397,6 +330,11 @@
   padding: 4px;
   border-radius: 4px;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  width: 24px;
 }
 
 .commentDeleteButton:hover {
@@ -404,7 +342,6 @@
   background: rgba(255, 0, 0, 0.1);
 }
 
-/* Заголовок задачи с кнопкой */
 .taskHeader {
   display: flex;
   justify-content: space-between;
@@ -413,7 +350,6 @@
   min-height: 27px;
 }
 
-/* Кнопки копирования и скачивания в заголовке */
 .copyButton,
 .downloadButton {
   composes: panelButton;
@@ -431,7 +367,6 @@
   margin-left: 2px;
 }
 
-/* Контейнер для галереи */
 .galleryContainer {
   width: 100%;
 }

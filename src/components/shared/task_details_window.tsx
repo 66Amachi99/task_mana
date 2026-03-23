@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { X, Calendar, User, Edit, Trash2, ExternalLink, CheckCircle, Save, Users } from 'lucide-react';
+import { X, Calendar, User, Edit, Trash2, Save, Users } from 'lucide-react';
 import { useUser } from '@/hooks/use-roles';
 import { Task } from '../../../types/task';
 import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
@@ -127,7 +127,7 @@ const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled
   const [search, setSearch] = useState('');
   const ref = useOutsideClick(() => setIsOpen(false));
 
-  const filtered = availableTags.filter(t => 
+  const filtered = availableTags.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) && !selectedTags.some(st => st.tag_id === t.tag_id)
   );
 
@@ -282,18 +282,20 @@ const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
 
 export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => {
   const { user } = useUser();
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState({ data: true, action: false });
   const [users, setUsers] = useState<UserType[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-  
+
   const [completedTaskInput, setCompletedTaskInput] = useState('');
   const [savedCompletedTask, setSavedCompletedTask] = useState('');
   const [isSavingCompleted, setIsSavingCompleted] = useState(false);
-  
+
   const [formData, setFormData] = useState<FormData | null>(null);
   const [initialData, setInitialData] = useState<FormData | null>(null);
+
+  const overlayPointerDownRef = useRef(false);
 
   const updateTask = useUpdateTask();
   const patchTask = usePatchTask();
@@ -312,24 +314,24 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
       fetch('/api/users').then(r => r.json()),
       fetch('/api/tags').then(r => r.json())
     ])
-    .then(([usersData, tagsData]) => {
-      setUsers(usersData);
-      setAvailableTags(tagsData);
-    })
-    .catch(err => console.error('Ошибка загрузки данных:', err))
-    .finally(() => setIsLoading(prev => ({ ...prev, data: false })));
+      .then(([usersData, tagsData]) => {
+        setUsers(usersData);
+        setAvailableTags(tagsData);
+      })
+      .catch(err => console.error('Ошибка загрузки данных:', err))
+      .finally(() => setIsLoading(prev => ({ ...prev, data: false })));
   }, []);
 
   useEffect(() => {
     if (!task || isLoading.data) return;
 
-    const assignees = task.assignees?.length 
+    const assignees = task.assignees?.length
       ? users.filter(u => task.assignees!.some(a => a.user_id === u.user_id))
       : [];
-    
+
     setCompletedTaskInput(task.completed_task || '');
     setSavedCompletedTask(task.completed_task || '');
-    
+
     const state: FormData = {
       title: task.title || '',
       description: task.description || '',
@@ -368,9 +370,9 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
 
   const hasChanges = useMemo(() => {
     if (!formData || !initialData) return false;
-    
+
     const sortIds = (items: any[]) => items.map(i => i.user_id || i.tag_id).sort();
-    
+
     const current = {
       ...formData,
       assignees: sortIds(formData.assignees),
@@ -381,7 +383,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
       assignees: sortIds(initialData.assignees),
       tags: sortIds(initialData.tags)
     };
-    
+
     return JSON.stringify(current) !== JSON.stringify(initial);
   }, [formData, initialData]);
 
@@ -403,16 +405,9 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
     return null;
   };
 
-  const handleLinkClick = (url: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!url) return;
-    const fullUrl = url.trim().match(/^https?:\/\//) ? url.trim() : `https://${url.trim()}`;
-    window.open(fullUrl, '_blank', 'noopener,noreferrer');
-  };
-
   const handleSaveCompleted = async () => {
     if (!task) return;
-    
+
     setIsSavingCompleted(true);
     try {
       const result = await patchTask.mutateAsync({
@@ -487,7 +482,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
 
   const handleDelete = async () => {
     if (!task || !window.confirm('Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.')) return;
-    
+
     setIsLoading(prev => ({ ...prev, action: true }));
     try {
       await deleteTask.mutateAsync(task.task_id);
@@ -505,10 +500,27 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
   const priorityClass = PRIORITIES[formData.priority]?.className || DEFAULT_PRIORITY.className;
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={`${styles.modalContainer} no-scrollbar`} onClick={e => e.stopPropagation()}>
-        
-        {/* ХЕДЕР */}
+    <div
+      className={styles.modalOverlay}
+      onPointerDown={(e) => {
+        overlayPointerDownRef.current = e.target === e.currentTarget;
+      }}
+      onPointerUp={(e) => {
+        const shouldClose = overlayPointerDownRef.current && e.target === e.currentTarget;
+        overlayPointerDownRef.current = false;
+        if (shouldClose) onClose();
+      }}
+      onPointerCancel={() => {
+        overlayPointerDownRef.current = false;
+      }}
+    >
+      <div
+        className={`${styles.modalContainer} no-scrollbar`}
+        onClick={e => e.stopPropagation()}
+        onPointerDown={() => {
+          overlayPointerDownRef.current = false;
+        }}
+      >
         <div className={styles.header}>
           {isEditing ? (
             <input
@@ -528,11 +540,8 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
           </button>
         </div>
 
-        {/* ОСНОВНОЙ КОНТЕНТ */}
         <div className={`${styles.content} no-scrollbar`}>
           <div className={styles.contentInner}>
-            
-            {/* Статус и приоритет */}
             <div className={styles.statusPriority}>
               {isEditing ? (
                 <>
@@ -566,7 +575,6 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
               )}
             </div>
 
-            {/* Теги */}
             {isEditing ? (
               <TagSelector
                 selectedTags={formData.tags}
@@ -583,14 +591,13 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                     className={styles.tag}
                     style={{ backgroundColor: t.color }}
                   >
-                  <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>  
+                    <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>
                     {t.name}
                   </span>
                 ))}
               </div>
             )}
 
-            {/* Описание */}
             <div>
               {isEditing ? (
                 <AutoResizeTextarea
@@ -611,7 +618,6 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
               )}
             </div>
 
-            {/* Даты */}
             <div className={styles.datesGrid}>
               <div className={styles.dateItem}>
                 {isEditing ? (
@@ -648,7 +654,6 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
               </div>
             </div>
 
-            {/* Весь день */}
             {isEditing && (
               <div className={styles.allDayCheckbox}>
                 <input
@@ -664,7 +669,6 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
               </div>
             )}
 
-            {/* Исполнители */}
             <div>
               <div className={styles.assigneesSectionHeader}>
                 <Users className="w-4 h-4" />
@@ -691,7 +695,6 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
               )}
             </div>
 
-            {/* Результат выполнения */}
             <div className={styles.resultSection}>
               <AutoResizeTextarea
                 value={completedTaskInput}
@@ -700,7 +703,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                 disabled={isSavingCompleted}
                 className={styles.resultTextarea}
               />
-              
+
               {hasCompletedChanges && (
                 <div className={styles.saveResultButtonContainer}>
                   <button
@@ -717,7 +720,6 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
           </div>
         </div>
 
-        {/* ФУТЕР */}
         <div className={styles.footer}>
           <div className={styles.actions}>
             {!isEditing ? (
@@ -727,7 +729,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                   disabled={isLoading.action}
                   className={styles.button}
                 >
-                  <Edit className="w-4 h-4"/> Изменить
+                  <Edit className="w-4 h-4" /> Изменить
                 </button>
                 {canDelete && (
                   <button
@@ -735,7 +737,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                     disabled={isLoading.action}
                     className={`${styles.button} ${styles.buttonRed} ml-2`}
                   >
-                    <Trash2 className="w-4 h-4"/> Удалить
+                    <Trash2 className="w-4 h-4" /> Удалить
                   </button>
                 )}
               </>
@@ -746,24 +748,23 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                   disabled={isLoading.action || !hasChanges}
                   className={`${styles.button} ${hasChanges ? styles.buttonGreen : styles.buttonGray}`}
                 >
-                  <Save className="w-4 h-4"/>
+                  <Save className="w-4 h-4" />
                   {isLoading.action ? 'Сохранение...' : 'Сохранить'}
                 </button>
                 <button
-                  onClick={() => { 
-                    setFormData(initialData); 
-                    setIsEditing(false); 
+                  onClick={() => {
+                    setFormData(initialData);
+                    setIsEditing(false);
                   }}
                   disabled={isLoading.action}
                   className={`${styles.button} ${styles.buttonCancel}`}
                 >
-                  <X className="w-4 h-4"/> Отмена
+                  <X className="w-4 h-4" /> Отмена
                 </button>
               </>
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

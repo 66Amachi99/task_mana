@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
@@ -26,12 +27,12 @@ export async function POST(req: Request) {
       }
     );
 
-    if (response.status === 204 || response.status === 202) {
+    if (response.status === 204 || response.status === 202 || response.status === 404) {
       return NextResponse.json({ success: true });
     }
 
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Ошибка удаления');
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || 'Ошибка удаления');
   } catch (error) {
     const err = error as Error;
     return NextResponse.json({ error: err.message }, { status: 500 });

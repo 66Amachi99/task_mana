@@ -1,47 +1,35 @@
-/* FileUploader.module.css */
 
 .container {
   margin-top: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02);
-  transition: all 0.2s;
   position: relative;
   overflow: hidden;
 }
 
 .container.dragOver {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s;
 }
 
 .scrollWrapper {
+  position: relative;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior: contain;
-  padding: 12px;
-  height: 224px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
-  /* scroll-behavior: smooth; удалено */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  user-select: none;
+  touch-action: pan-x;
+  cursor: default;
+  padding: 0; 
+}
+
+.scrollWrapper {
+  scrollbar-width: none;
 }
 
 .scrollWrapper::-webkit-scrollbar {
-  height: 8px;
-}
-
-.scrollWrapper::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-}
-
-.scrollWrapper::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-}
-
-.scrollWrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
+  display: none;
 }
 
 .imagesRow {
@@ -60,11 +48,55 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.imageCardDeleting {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
 .image {
+  position: relative;
+  z-index: 1;
   height: 100%;
   width: auto;
   max-width: none;
   display: block;
+  transition:
+    filter 0.35s ease,
+    opacity 0.35s ease,
+    transform 0.35s ease;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.imageLoading {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.imageLoaded {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+}
+
+.imageUploading {
+  opacity: 1;
+  transform: scale(1.02);
+  filter: blur(10px);
+}
+
+.imageOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .placeholder {
@@ -75,6 +107,7 @@
   justify-content: center;
   color: rgba(255, 255, 255, 0.5);
   font-size: 14px;
+  user-select: none;
 }
 
 .deleteButton {
@@ -93,7 +126,7 @@
   cursor: pointer;
   backdrop-filter: blur(4px);
   transition: background 0.2s;
-  z-index: 2;
+  z-index: 4;
 }
 
 .deleteButton:hover {
@@ -114,7 +147,8 @@
   background: rgba(255, 255, 255, 0.02);
   border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+  margin-right: 1px;
 }
 
 .uploadCard:hover {
@@ -134,11 +168,16 @@
   padding: 16px;
   width: 100%;
   height: 100%;
-  transition: color 0.2s;
+  transition: color 0.2s, opacity 0.2s;
 }
 
 .uploadButton:hover {
   color: white;
+}
+
+.uploadButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .uploadButton span {
@@ -146,21 +185,23 @@
   font-weight: 500;
 }
 
-.loadingOverlay {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 200px;
-  gap: 16px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
+.imageSkeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.05) 25%,
+    rgba(255,255,255,0.1) 50%,
+    rgba(255,255,255,0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  z-index: 0;
 }
 
 .spinner {
   animation: spin 1s linear infinite;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 @keyframes spin {
@@ -168,54 +209,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Скелетон (пульсирующий фон) */
-.imageSkeleton {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  z-index: 1;
-}
-
 @keyframes loading {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
-}
-
-/* Базовые стили для изображения */
-.image {
-  position: relative;
-  z-index: 2;
-  opacity: 0;
-}
-
-/* Состояние после загрузки */
-.imageLoaded {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* Дополнительно: если изображение ещё не загружено, оно невидимо */
-.imageLoading {
-  opacity: 0;
-  transform: scale(0.95);
-}
-
-/* Контейнер карточки для позиционирования */
-.imageCard {
-  position: relative;
-  overflow: hidden;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.imageCardDeleting {
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  pointer-events: none;
 }

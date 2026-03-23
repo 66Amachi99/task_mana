@@ -28,16 +28,33 @@ const getStatusDotColor = (item: CalendarItem): string => {
   }
 };
 
+const getCardBackground = (item: CalendarItem): string => {
+  const isCompleted =
+    item.type === 'post'
+      ? item.post_status === 'Завершен'
+      : item.task_status === 'Выполнена';
+
+  if (isCompleted) {
+    return 'linear-gradient(90deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 255, 0, 0.15) 100%)';
+  }
+
+  const firstTag = item.tags && item.tags.length > 0 ? item.tags[0] : null;
+
+  if (!firstTag) {
+    return 'none';
+  }
+
+  return `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`;
+};
+
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedItem, setSelectedItem] = useState<{ post?: CalendarPost; task?: CalendarTask } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Фильтры для календаря
   const [calendarViewMode, setCalendarViewMode] = useState<CalendarViewMode>('all');
   const [calendarRoleFilter, setCalendarRoleFilter] = useState<string | null>(null);
 
-  // Фильтры для сайдбара
   const [sidebarShowPosts, setSidebarShowPosts] = useState(true);
   const [sidebarShowTasks, setSidebarShowTasks] = useState(true);
   const [sidebarRoleFilter, setSidebarRoleFilter] = useState<string | null>(null);
@@ -46,7 +63,7 @@ export default function CalendarPage() {
   const [showAddPostModal, setShowAddPostModal] = useState(false);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
 
-  const { user, filterPostByRole } = useUser();
+  const { filterPostByRole } = useUser();
 
   const [isSidebarRoleDropdownOpen, setIsSidebarRoleDropdownOpen] = useState(false);
   const sidebarRoleDropdownRef = useRef<HTMLDivElement>(null);
@@ -81,24 +98,6 @@ export default function CalendarPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const currentMonth = new Date();
-  const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-  const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-
-  const postsInMonth = useMemo(() => {
-    return posts.filter(p => {
-      const date = new Date(p.post_deadline);
-      return date >= monthStart && date <= monthEnd;
-    }).length;
-  }, [posts, monthStart, monthEnd]);
-
-  const tasksInMonth = useMemo(() => {
-    return tasks.filter(t => {
-      const date = new Date(t.end_time);
-      return date >= monthStart && date <= monthEnd;
-    }).length;
-  }, [tasks, monthStart, monthEnd]);
 
   const calendarItemsByDate = useMemo(() => {
     const map = new Map<string, CalendarItem[]>();
@@ -250,7 +249,6 @@ export default function CalendarPage() {
 
   const renderCard = (item: CalendarItem) => {
     const isPost = item.type === 'post';
-    const firstTag = item.tags && item.tags.length > 0 ? item.tags[0] : null;
     const taskIcons = isPost ? getTaskIconsForPost(item as CalendarPost) : [];
 
     let timeDisplay: string;
@@ -273,9 +271,7 @@ export default function CalendarPage() {
     }
 
     const dotColor = getStatusDotColor(item);
-    const bgGradient = firstTag
-      ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
-      : 'none';
+    const bgGradient = getCardBackground(item);
 
     return (
       <div
@@ -364,8 +360,6 @@ export default function CalendarPage() {
                 onRoleFilterChange={setCalendarRoleFilter}
                 handlePostsClick={handleCalendarPostsClick}
                 handleTasksClick={handleCalendarTasksClick}
-                postsCount={postsInMonth}
-                tasksCount={tasksInMonth}
               />
             </div>
             <div className={styles.calendarFilterBar}>
@@ -374,8 +368,16 @@ export default function CalendarPage() {
                 onViewModeChange={handleViewModeChange}
                 roleFilter={calendarRoleFilter}
                 onRoleFilterChange={setCalendarRoleFilter}
-                postsCount={postsInMonth}
-                tasksCount={tasksInMonth}
+                postsCount={posts.filter(p => {
+                  const date = new Date(p.post_deadline);
+                  const currentMonth = new Date();
+                  return date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
+                }).length}
+                tasksCount={tasks.filter(t => {
+                  const date = new Date(t.end_time);
+                  const currentMonth = new Date();
+                  return date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
+                }).length}
                 showCounts={true}
               />
             </div>

@@ -31,7 +31,14 @@ export async function POST(req: Request) {
         fileName: item.name,
         path: item.path,
         href: item.file,
-      }));
+        created: item.created,
+        modified: item.modified,
+      }))
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.created || a.modified || 0).getTime();
+        const dateB = new Date(b.created || b.modified || 0).getTime();
+        return dateA - dateB;
+      });
 
     return NextResponse.json({ result: files });
   } catch (error) {

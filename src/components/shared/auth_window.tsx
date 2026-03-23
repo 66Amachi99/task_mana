@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+
+import { useState, useRef } from 'react';
 import { signIn } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from '../styles/AuthWindow.module.css';
@@ -14,6 +15,7 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+  const overlayPointerDownRef = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,8 +43,27 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={styles.overlay}
+      onPointerDown={(e) => {
+        overlayPointerDownRef.current = e.target === e.currentTarget;
+      }}
+      onPointerUp={(e) => {
+        const shouldClose = overlayPointerDownRef.current && e.target === e.currentTarget;
+        overlayPointerDownRef.current = false;
+        if (shouldClose) onClose();
+      }}
+      onPointerCancel={() => {
+        overlayPointerDownRef.current = false;
+      }}
+    >
+      <div
+        className={styles.modal}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={() => {
+          overlayPointerDownRef.current = false;
+        }}
+      >
         <h2 className={styles.title}>Вход в систему</h2>
 
         {error && <div className={styles.error}>{error}</div>}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { ImageItem } from '@/store/useGalleryStore';
 import styles from '../styles/FileUploader.module.css';
@@ -23,7 +23,40 @@ interface FileUploaderProps {
   existingFiles?: ImageItem[];
   pendingFiles?: File[];
   readOnly?: boolean;
-  isUploading?: boolean;
+  uploadingFileNames?: string[];
+}
+
+const ALLOWED_IMAGE_EXTENSIONS = new Set([
+  'pcx','dcx','wmf','emf','wpg','bpg','eprn','prm','ppm','pgm','pbm','pix','pct','pic','dib','psd','tiff','rpng','jif','vst','tga','bmp','jpg','apng','jpeg','heic','png','eps','webp','svgz','gif','svg','heif','prn','icns','xpm','abrn','tif','blk','avif',
+]);
+
+const ACCEPT_ATTR = Array.from(ALLOWED_IMAGE_EXTENSIONS)
+  .map(ext => `.${ext}`)
+  .join(',');
+
+function getFileExtension(fileName: string): string {
+  const parts = fileName.toLowerCase().split('.');
+  return parts.length > 1 ? parts.pop() || '' : '';
+}
+
+function isAllowedImageFile(file: File): boolean {
+  const extension = getFileExtension(file.name);
+  return ALLOWED_IMAGE_EXTENSIONS.has(extension);
+}
+
+function validateFiles(files: File[]) {
+  const validFiles: File[] = [];
+  const invalidFiles: File[] = [];
+
+  for (const file of files) {
+    if (isAllowedImageFile(file)) {
+      validFiles.push(file);
+    } else {
+      invalidFiles.push(file);
+    }
+  }
+
+  return { validFiles, invalidFiles };
 }
 
 export const FileUploader = ({
@@ -39,40 +72,89 @@ export const FileUploader = ({
   existingFiles = [],
   pendingFiles = [],
   readOnly = false,
-  isUploading = false,
+  uploadingFileNames = [],
 }: FileUploaderProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [deletingPaths, setDeletingPaths] = useState<Set<string>>(new Set());
+  
+  // Для drag-scroll
+  const [isPointerDown, setIsPointerDown] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const showUploadArea = !readOnly && !isUploading && (multiple || (existingFiles.length === 0 && pendingFiles.length === 0));
+  const hasUploadingFiles = uploadingFileNames.length > 0;
+  const showUploadArea = !readOnly && (multiple || (existingFiles.length === 0 && pendingFiles.length === 0));
 
-  const handleFiles = (fileList: FileList | null) => {
-    if (readOnly || isUploading || !fileList || fileList.length === 0 || !onFilesSelected) return;
+  const pendingPreviews = useMemo(() => {
+    return pendingFiles.map(file => ({
+      file,
+      url: isAllowedImageFile(file) ? URL.createObjectURL(file) : null,
+      key: `pending-${file.name}-${file.lastModified}`,
+    }));
+  }, [pendingFiles]);
 
-    if (!multiple && (existingFiles.length + pendingFiles.length > 0)) {
+  useEffect(() => {
+    return () => {
+      pendingPreviews.forEach(item => {
+        if (item.url) URL.revokeObjectURL(item.url);
+      });
+    };
+  }, [pendingPreviews]);
+
+  const isFileUploading = useCallback(
+    (fileName: string) => uploadingFileNames.includes(fileName),
+    [uploadingFileNames]
+  );
+
+  const showInvalidFilesAlert = (invalidFiles: File[]) => {
+    if (invalidFiles.length === 0) return;
+    const names = invalidFiles.map(file => file.name).join(', ');
+    alert(`Допускается загрузка только изображений разрешённых форматов.\n\nОтклонены файлы: ${names}`);
+  };
+
+  const processFiles = (files: File[]) => {
+    if (readOnly || hasUploadingFiles || files.length === 0 || !onFilesSelected) return;
+
+    const { validFiles, invalidFiles } = validateFiles(files);
+
+    if (invalidFiles.length > 0) {
+      showInvalidFilesAlert(invalidFiles);
+    }
+
+    if (validFiles.length === 0) return;
+
+    if (!multiple && (existingFiles.length + pendingFiles.length > 0 || validFiles.length > 1)) {
       alert('Можно загрузить только один файл');
       return;
     }
 
-    const filesArray = Array.from(fileList);
-    onFilesSelected(taskId, filesArray);
+    onFilesSelected(taskId, multiple ? validFiles : [validFiles[0]]);
+  };
+
+  const handleFiles = (fileList: FileList | null) => {
+    if (!fileList) return;
+    processFiles(Array.from(fileList));
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleRemovePending = (fileName: string) => {
-    if (readOnly || isUploading || !onRemovePendingFile) return;
+    if (readOnly || hasUploadingFiles || !onRemovePendingFile) return;
     onRemovePendingFile(taskId, fileName);
   };
 
   const handleClearAll = () => {
-    if (readOnly || isUploading || !onFilesCleared) return;
+    if (readOnly || hasUploadingFiles || !onFilesCleared) return;
     onFilesCleared(taskId);
   };
 
+  // ✅ Возвращаем простой обработчик колеса мыши без ошибок
   const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (scrollRef.current) {
+    if (scrollRef.current && e.deltaY !== 0) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       const atLeftEdge = scrollLeft <= 0;
       const atRightEdge = scrollLeft + clientWidth >= scrollWidth;
@@ -83,24 +165,11 @@ export const FileUploader = ({
 
       e.preventDefault();
       e.stopPropagation();
-      scrollRef.current.scrollBy({
-        left: e.deltaY * 3,
-        behavior: 'smooth'
-      });
+      
+      // Используем обычный scrollLeft вместо scrollBy для большей стабильности
+      scrollRef.current.scrollLeft += e.deltaY * 2;
     }
   }, []);
-
-  useEffect(() => {
-    const urls: string[] = [];
-    pendingFiles.forEach(file => {
-      if (file.type.startsWith('image/')) {
-        urls.push(URL.createObjectURL(file));
-      }
-    });
-    return () => {
-      urls.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [pendingFiles]);
 
   const handleImageLoad = (key: string) => {
     setLoadedImages(prev => ({ ...prev, [key]: true }));
@@ -122,87 +191,146 @@ export const FileUploader = ({
     }
   };
 
+  // Простая логика для drag-scroll (свайп мышкой)
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!scrollRef.current || e.button !== 0) return;
+    
+    // Если жмем на кнопку или ссылку — не начинаем драг
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) return;
+
+    scrollRef.current.style.cursor = 'grabbing';
+    scrollRef.current.style.userSelect = 'none';
+    
+    const startX = e.pageX;
+    const scrollLeft = scrollRef.current.scrollLeft;
+    
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!scrollRef.current) return;
+      const x = ev.pageX;
+      const walk = (x - startX) * 1.5; // Скорость прокрутки
+      scrollRef.current.scrollLeft = scrollLeft - walk;
+    };
+    
+    const handleMouseUp = () => {
+      if (scrollRef.current) {
+        scrollRef.current.style.cursor = '';
+        scrollRef.current.style.userSelect = '';
+      }
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
   return (
     <div
       className={`${styles.container} ${isDragOver ? styles.dragOver : ''}`}
-      onDragOver={(e) => { if (!readOnly && !isUploading) { e.preventDefault(); setIsDragOver(true); } }}
+      onDragOver={(e) => {
+        if (!readOnly && !hasUploadingFiles) {
+          e.preventDefault();
+          setIsDragOver(true);
+        }
+      }}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={(e) => {
         e.preventDefault();
         setIsDragOver(false);
-        if (!readOnly && !isUploading) {
-          handleFiles(e.dataTransfer.files);
+
+        if (!readOnly && !hasUploadingFiles) {
+          processFiles(Array.from(e.dataTransfer.files));
         }
       }}
     >
-      <div 
-        className={styles.scrollWrapper} 
-        ref={scrollRef} 
+      {/* ✅ Добавил onWheel обратно и убрал сложную логику с слушателями */}
+      <div
+        className={styles.scrollWrapper}
+        ref={scrollRef}
+        onMouseDown={handleMouseDown}
         onWheel={handleWheel}
       >
-        {isUploading ? (
-          <div className={styles.loadingOverlay}>
-            <Loader2 className={styles.spinner} size={40} />
-            <span>Загрузка...</span>
-          </div>
-        ) : (
-          <div className={styles.imagesRow}>
-            {/* Загруженные файлы */}
-            {existingFiles.map((file) => {
-              const isLoaded = loadedImages[file.path];
-              const isDeleting = deletingPaths.has(file.path);
-              return (
-                <div 
-                  key={file.path} 
-                  className={`${styles.imageCard} ${isDeleting ? styles.imageCardDeleting : ''}`}
-                >
-                  {!isLoaded && !isDeleting && <div className={styles.imageSkeleton} />}
-                  {file.href && (
-                    <img
-                      src={file.href}
-                      alt={file.fileName}
-                      className={`${styles.image} ${isLoaded ? styles.imageLoaded : styles.imageLoading}`}
-                      onLoad={() => handleImageLoad(file.path)}
-                      onError={() => handleImageLoad(file.path)}
-                    />
-                  )}
-                  {!file.href && <div className={styles.placeholder}>Нет превью</div>}
-                  {!readOnly && onDeleteFile && !isDeleting && (
-                    <button
-                      onClick={() => handleDeleteClick(file.path)}
-                      className={styles.deleteButton}
-                      title="Удалить"
-                    >
-                      <X size={16} />
-                      <span className={styles.deleteText}>Удалить</span>
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+        <div className={styles.imagesRow}>
+          {existingFiles.map((file) => {
+            const isLoaded = loadedImages[file.path];
+            const isDeleting = deletingPaths.has(file.path);
 
-            {/* Ожидающие загрузки файлы */}
-            {!readOnly && pendingFiles.map((file) => {
-              const objectUrl = URL.createObjectURL(file);
-              const key = `pending-${file.name}`;
+            return (
+              <div
+                key={file.path}
+                className={`${styles.imageCard} ${isDeleting ? styles.imageCardDeleting : ''}`}
+              >
+                {!isLoaded && !isDeleting && <div className={styles.imageSkeleton} />}
+
+                {file.href && (
+                  <img
+                    src={file.href}
+                    alt={file.fileName}
+                    className={`${styles.image} ${isLoaded ? styles.imageLoaded : styles.imageLoading}`}
+                    onLoad={() => handleImageLoad(file.path)}
+                    onError={() => handleImageLoad(file.path)}
+                    draggable={false}
+                  />
+                )}
+
+                {!file.href && <div className={styles.placeholder}>Нет превью</div>}
+
+                {!readOnly && onDeleteFile && !isDeleting && !hasUploadingFiles && (
+                  <button
+                    onClick={() => handleDeleteClick(file.path)}
+                    className={styles.deleteButton}
+                    title="Удалить"
+                  >
+                    <X size={16} />
+                    <span className={styles.deleteText}>Удалить</span>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {!readOnly &&
+            pendingPreviews.map(({ file, url, key }) => {
               const isLoaded = loadedImages[key];
               const isDeleting = deletingPaths.has(key);
+              const isUploadingFile = isFileUploading(file.name);
+
               return (
-                <div 
-                  key={file.name} 
+                <div
+                  key={`${file.name}-${file.lastModified}`}
                   className={`${styles.imageCard} ${isDeleting ? styles.imageCardDeleting : ''}`}
                 >
                   {!isLoaded && !isDeleting && <div className={styles.imageSkeleton} />}
-                  {file.type.startsWith('image/') && (
-                    <img
-                      src={objectUrl}
-                      alt={file.name}
-                      className={`${styles.image} ${isLoaded ? styles.imageLoaded : styles.imageLoading}`}
-                      onLoad={() => handleImageLoad(key)}
-                      onError={() => handleImageLoad(key)}
-                    />
+
+                  {url && (
+                    <>
+                      <img
+                        src={url}
+                        alt={file.name}
+                        className={`${styles.image} ${
+                          isUploadingFile
+                            ? styles.imageUploading
+                            : isLoaded
+                            ? styles.imageLoaded
+                            : styles.imageLoading
+                        }`}
+                        onLoad={() => handleImageLoad(key)}
+                        onError={() => handleImageLoad(key)}
+                        draggable={false}
+                      />
+
+                      {isUploadingFile && (
+                        <div className={styles.imageOverlay}>
+                          <Loader2 className={styles.spinner} size={28} />
+                        </div>
+                      )}
+                    </>
                   )}
-                  {!isDeleting && (
+
+                  {!url && <div className={styles.placeholder}>Нет превью</div>}
+
+                  {!isDeleting && !hasUploadingFiles && (
                     <button
                       onClick={() => handleRemovePending(file.name)}
                       className={styles.deleteButton}
@@ -216,29 +344,28 @@ export const FileUploader = ({
               );
             })}
 
-            {/* Блок загрузки */}
-            {showUploadArea && (
-              <div className={styles.uploadCard}>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={(e) => handleFiles(e.target.files)}
-                  style={{ display: 'none' }}
-                  accept="image/*"
-                  multiple={multiple}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className={styles.uploadButton}
-                >
-                  <Upload size={24} />
-                  <span>Загрузить</span>
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+          {showUploadArea && (
+            <div className={styles.uploadCard}>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(e) => handleFiles(e.target.files)}
+                style={{ display: 'none' }}
+                accept={ACCEPT_ATTR}
+                multiple={multiple}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className={styles.uploadButton}
+                disabled={hasUploadingFiles}
+              >
+                <Upload size={24} />
+                <span>{hasUploadingFiles ? 'Загрузка...' : 'Загрузить'}</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

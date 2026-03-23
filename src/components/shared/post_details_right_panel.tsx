@@ -2,12 +2,10 @@
 
 import { useRef, useEffect, useState } from 'react';
 import {
-  Lock, ExternalLink, Circle, CheckCircle, MessageSquare, Trash2,
-  Copy, Download
+  Lock, ExternalLink, Trash2, Copy
 } from 'lucide-react';
-import { TASK_CONFIG, COMMENT_STATUS, TaskWithComments, CommentData } from './post_details_window';
+import { COMMENT_STATUS, TaskWithComments, CommentData } from './post_details_window';
 import { useUser } from '../../hooks/use-roles';
-import { FileUploader } from './file_uploader';
 import { Gallery } from './gallery';
 import styles from '../styles/PostDetailsRightPanel.module.css';
 
@@ -25,33 +23,34 @@ interface PostDetailsRightPanelProps {
   onAddComment: (taskId: number) => Promise<void>;
   onCommentStatusChange: (commentId: number, newStatus: string) => void;
   onDeleteComment: (commentId: number) => Promise<void>;
-  onFilesSelected: (taskId: number, files: File[]) => void;
+  onFilesSelected: (taskId: number, files: File[]) => void | Promise<void>;
   onFilesCleared: (taskId: number) => void;
   onRemovePendingFile: (taskId: number, fileName: string) => void;
   onDeleteFile: (taskId: number, folderPath: string, filePath: string) => Promise<void>;
   pendingFiles: Record<number, File[]>;
-  uploadingTasks: Record<number, boolean>;
+  uploadingFilesByTask: Record<number, string[]>;
   isSaving: boolean;
   isActionLoading: boolean;
   isEditing: boolean;
 }
 
-const fileSupportTaskIds = [5, 6, 7]; // cover_photo, photo_cards, mini_gallery
+const fileSupportTaskIds = [5, 6, 7];
 
-const AutoResizeTextarea = ({ value, onChange, placeholder, disabled, className }: {
+const AutoResizeTextarea = ({ value, onChange, placeholder, disabled }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
   disabled?: boolean;
-  className?: string;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
   }, [value]);
+
   return (
     <textarea
       ref={textareaRef}
@@ -72,12 +71,14 @@ const TaskTextarea = ({ value, onChange, placeholder, disabled }: {
   disabled?: boolean;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
   }, [value]);
+
   return (
     <textarea
       ref={textareaRef}
@@ -91,47 +92,36 @@ const TaskTextarea = ({ value, onChange, placeholder, disabled }: {
   );
 };
 
-const CommentItem = ({ comment, onStatusChange, onDelete, userCanEdit }: {
+const CommentItem = ({ comment, onStatusChange, onDelete, canDelete }: {
   comment: CommentData;
   onStatusChange: (commentId: number, newStatus: string) => void;
   onDelete: (commentId: number) => Promise<void>;
-  userCanEdit: boolean;
+  canDelete: boolean;
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const getStatusClass = (status: string) => {
     switch (status) {
-      case COMMENT_STATUS.RED: return styles.commentRed;
-      case COMMENT_STATUS.YELLOW: return styles.commentYellow;
-      case COMMENT_STATUS.GREEN: return styles.commentGreen;
+      case COMMENT_STATUS.NEW: return styles.commentRed;
+      case COMMENT_STATUS.COMPLETED: return styles.commentYellow;
+      case COMMENT_STATUS.CONFIRMED: return styles.commentGreen;
       default: return styles.commentGray;
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case COMMENT_STATUS.RED: return <Circle className="w-3 h-3 text-red-500 fill-red-500" />;
-      case COMMENT_STATUS.YELLOW: return <Circle className="w-3 h-3 text-yellow-500 fill-yellow-500" />;
-      case COMMENT_STATUS.GREEN: return <CheckCircle className="w-3 h-3 text-green-500" />;
-      default: return <Circle className="w-3 h-3 text-gray-400" />;
-    }
-  };
-
-  const formatCommentDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
-    }).format(date);
-  };
-
-  const canChangeStatus = () => (comment.status === COMMENT_STATUS.RED || comment.status === COMMENT_STATUS.YELLOW) && userCanEdit;
+  const canChangeStatus = comment.status === COMMENT_STATUS.NEW || comment.status === COMMENT_STATUS.COMPLETED;
 
   const handleStatusClick = async () => {
-    if (!canChangeStatus()) return;
+    if (!canChangeStatus) return;
     setIsUpdating(true);
-    const newStatus = comment.status === COMMENT_STATUS.RED ? COMMENT_STATUS.YELLOW : COMMENT_STATUS.GREEN;
+
     try {
+      const newStatus =
+        comment.status === COMMENT_STATUS.NEW
+          ? COMMENT_STATUS.COMPLETED
+          : COMMENT_STATUS.CONFIRMED;
+
       await onStatusChange(comment.id, newStatus);
     } catch (error) {
       console.error('Ошибка:', error);
@@ -154,23 +144,21 @@ const CommentItem = ({ comment, onStatusChange, onDelete, userCanEdit }: {
   return (
     <div className={getStatusClass(comment.status)}>
       <div className={styles.commentContent}>
-        <div className={styles.commentIcon}>{getStatusIcon(comment.status)}</div>
         <div className={styles.commentTextWrapper}>
           <p className={styles.commentText}>{comment.text}</p>
-          <p className={styles.commentDate}>{formatCommentDate(comment.created_at)}</p>
         </div>
         <div className={styles.commentActions}>
-          {canChangeStatus() && (
+          {canChangeStatus && (
             <button
               onClick={handleStatusClick}
               disabled={isUpdating}
               className={styles.commentStatusButton}
-              title={comment.status === COMMENT_STATUS.RED ? "Отметить как выполненное" : "Подтвердить"}
+              title={comment.status === COMMENT_STATUS.NEW ? 'Отметить как выполненное' : 'Подтвердить'}
             >
-              {isUpdating ? '...' : (comment.status === COMMENT_STATUS.RED ? "✓ Выполнено" : "✓ Подтвердить")}
+              {isUpdating ? '...' : (comment.status === COMMENT_STATUS.NEW ? '✓ Выполнено' : '✓ Подтвердить')}
             </button>
           )}
-          {userCanEdit && (
+          {canDelete && (
             <button
               onClick={handleDeleteClick}
               disabled={isDeleting}
@@ -189,7 +177,9 @@ const CommentItem = ({ comment, onStatusChange, onDelete, userCanEdit }: {
 const normalizeUrl = (url: string): string => {
   const trimmed = url.trim();
   if (!trimmed) return trimmed;
-  return trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : 'https://' + trimmed;
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://')
+    ? trimmed
+    : 'https://' + trimmed;
 };
 
 export const PostDetailsRightPanel = ({
@@ -206,25 +196,36 @@ export const PostDetailsRightPanel = ({
   onRemovePendingFile,
   onDeleteFile,
   pendingFiles,
-  uploadingTasks,
+  uploadingFilesByTask,
   isSaving,
   isEditing,
   isActionLoading
 }: PostDetailsRightPanelProps) => {
-  const { user, canAddComment } = useUser();
+  const { canAddComment, canDeleteComment } = useUser();
   const [addingCommentFor, setAddingCommentFor] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
   const handleLinkClick = (url: string, e: React.MouseEvent) => {
     e.preventDefault();
     if (!url) return;
-    try { window.open(normalizeUrl(url), '_blank', 'noopener,noreferrer'); } catch { window.open(url, '_blank', 'noopener,noreferrer'); }
+
+    try {
+      window.open(normalizeUrl(url), '_blank', 'noopener,noreferrer');
+    } catch {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const handleAddCommentClick = async (taskId: number) => {
     setAddingCommentFor(taskId);
     setIsAdding(true);
-    try { await onAddComment(taskId); } finally { setIsAdding(false); setAddingCommentFor(null); }
+
+    try {
+      await onAddComment(taskId);
+    } finally {
+      setIsAdding(false);
+      setAddingCommentFor(null);
+    }
   };
 
   return (
@@ -257,7 +258,7 @@ export const PostDetailsRightPanel = ({
                     onFilesSelected={onFilesSelected}
                     onDelete={(taskId, filePath) => onDeleteFile(taskId, folderPath!, filePath)}
                     onRemovePendingFile={onRemovePendingFile}
-                    uploading={uploadingTasks[task.id]}
+                    uploadingFileNames={uploadingFilesByTask[task.id] || []}
                     pendingFiles={pendingFiles[task.id] || []}
                   />
                 ) : (
@@ -269,6 +270,7 @@ export const PostDetailsRightPanel = ({
                             {task.label}
                             {!userCanEdit && <Lock className={styles.lockIcon} />}
                           </h4>
+
                           {task.link && (
                             <button
                               onClick={() => navigator.clipboard.writeText(task.link)}
@@ -280,20 +282,21 @@ export const PostDetailsRightPanel = ({
                             </button>
                           )}
                         </div>
+
                         <div className={rowClass}>
-                            {userCanEdit ? (
-                              <TaskTextarea
-                                value={task.link}
-                                onChange={e => onLinkChange(task.id, e.target.value)}
-                                placeholder="Введите текст задачи..."
-                                disabled={isSaving || isActionLoading}
-                              />
-                            ) : (
-                              <div className={styles.viewOnlyField}>
-                                {task.link || 'Нет доступа к редактированию'}
-                              </div>
-                            )}
-                          </div>
+                          {userCanEdit ? (
+                            <TaskTextarea
+                              value={task.link}
+                              onChange={e => onLinkChange(task.id, e.target.value)}
+                              placeholder="Введите текст задачи..."
+                              disabled={isSaving || isActionLoading}
+                            />
+                          ) : (
+                            <div className={styles.viewOnlyField}>
+                              {task.link || 'Нет доступа к редактированию'}
+                            </div>
+                          )}
+                        </div>
                       </>
                     ) : (
                       <>
@@ -302,6 +305,7 @@ export const PostDetailsRightPanel = ({
                             {task.label}
                             {!userCanEdit && <Lock className={styles.lockIcon} />}
                           </h4>
+
                           {hasLink && (
                             <div className={styles.linkContainer}>
                               <button
@@ -314,6 +318,7 @@ export const PostDetailsRightPanel = ({
                             </div>
                           )}
                         </div>
+
                         <div className={rowClass}>
                           <div className={styles.taskInputCol}>
                             {userCanEdit ? (
@@ -345,6 +350,7 @@ export const PostDetailsRightPanel = ({
                       placeholder="Добавить комментарий..."
                       disabled={isSaving || isActionLoading || isAdding}
                     />
+
                     {task.newCommentText.trim() && (
                       <div className={styles.addCommentButtonWrapper}>
                         <button
@@ -367,7 +373,7 @@ export const PostDetailsRightPanel = ({
                         comment={comment}
                         onStatusChange={onCommentStatusChange}
                         onDelete={onDeleteComment}
-                        userCanEdit={userCanEdit}
+                        canDelete={canDeleteComment(comment)}
                       />
                     ))}
                   </div>

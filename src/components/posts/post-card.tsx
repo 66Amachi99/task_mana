@@ -88,8 +88,11 @@ export function PostCard({ post }: PostCardProps) {
   if (!post) return null;
 
   const firstTag = post.tags && post.tags.length > 0 ? post.tags[0] : null;
+  const isCompleted = post.post_status === 'Завершен';
   
-  const bgGradient = firstTag
+  const bgGradient = isCompleted
+    ? 'linear-gradient(90deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 255, 0, 0.15) 100%)'
+    : firstTag
     ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
     : undefined;
 
@@ -116,13 +119,13 @@ export function PostCard({ post }: PostCardProps) {
       .filter(def => post[def.field])
       .map(def => {
         const linkValue = post[def.linkField];
-        const isCompleted = Boolean(typeof linkValue === 'string' && linkValue.trim() !== '');
+        const isCompletedTask = Boolean(typeof linkValue === 'string' && linkValue.trim() !== '');
         
         return {
           name: def.name,
           role: def.role,
           field: def.field,
-          isCompleted
+          isCompleted: isCompletedTask
         };
       });
   };

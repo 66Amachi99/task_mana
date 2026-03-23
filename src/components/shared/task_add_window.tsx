@@ -223,6 +223,7 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
     priority: '0',
   });
 
+  const overlayPointerDownRef = useRef(false);
   const createTask = useCreateTask();
 
   const priorityOptions = [
@@ -324,8 +325,27 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={`${styles.modalContainer} no-scrollbar`} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={styles.modalOverlay}
+      onPointerDown={(e) => {
+        overlayPointerDownRef.current = e.target === e.currentTarget;
+      }}
+      onPointerUp={(e) => {
+        const shouldClose = overlayPointerDownRef.current && e.target === e.currentTarget;
+        overlayPointerDownRef.current = false;
+        if (shouldClose) onClose();
+      }}
+      onPointerCancel={() => {
+        overlayPointerDownRef.current = false;
+      }}
+    >
+      <div
+        className={`${styles.modalContainer} no-scrollbar`}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={() => {
+          overlayPointerDownRef.current = false;
+        }}
+      >
         <form onSubmit={handleSubmit} className={styles.modalForm}>
           <div className={styles.header}>
             <h2 className={styles.headerTitle}>Новая задача</h2>
@@ -344,7 +364,7 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
             className={styles.input}
             placeholder="Что нужно сделать?"
             required
-          />  
+          />
 
           <div className={styles.fieldGroup}>
             <TagSelector selectedTags={selectedTags} availableTags={tags} onChange={setSelectedTags} onCreate={handleCreateTag} disabled={isSubmitting} />

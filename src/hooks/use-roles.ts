@@ -145,6 +145,12 @@ export function useUser() {
     }
   }, [user, isAdmin, isCoordinator, isSmm, isDesigner, isPhotographer]);
 
+  const canDeleteComment = useCallback((comment: any): boolean => {
+    if (!user) return false;
+    if (isAdmin) return true;
+    return Number(comment?.created_by_id) === user.id;
+  }, [user, isAdmin]);
+
   return {
     user,
     loading,
@@ -169,5 +175,6 @@ export function useUser() {
     },
     canEditPostTask,
     canAddComment,
+    canDeleteComment,
   };
 }

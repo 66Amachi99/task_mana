@@ -13,10 +13,10 @@ interface GalleryProps {
   multiple?: boolean;
   taskId: number;
   taskLabel: string;
-  onFilesSelected?: (taskId: number, files: File[]) => void;
+  onFilesSelected?: (taskId: number, files: File[]) => void | Promise<void>;
   onDelete?: (taskId: number, filePath: string) => Promise<void>;
   onRemovePendingFile?: (taskId: number, fileName: string) => void;
-  uploading?: boolean;
+  uploadingFileNames?: string[];
   pendingFiles?: File[];
 }
 
@@ -29,7 +29,7 @@ export const Gallery = ({
   onFilesSelected,
   onDelete,
   onRemovePendingFile,
-  uploading = false,
+  uploadingFileNames = [],
   pendingFiles = [],
 }: GalleryProps) => {
   const cachedFiles = useGalleryStore(
@@ -55,6 +55,7 @@ export const Gallery = ({
         console.error(`Ошибка загрузки файлов для ${folderPath}:`, error);
       }
     };
+
     loadFiles();
   }, [folderPath, cachedFiles.length, setImagesToCache]);
 
@@ -89,6 +90,7 @@ export const Gallery = ({
           {taskLabel}
           {!canEdit && <Lock className={styles.lockIcon} />}
         </h4>
+
         {cachedFiles.length > 0 && (
           <button
             onClick={handleDownloadAll}
@@ -100,6 +102,7 @@ export const Gallery = ({
           </button>
         )}
       </div>
+
       <FileUploader
         existingFiles={cachedFiles}
         pendingFiles={pendingFiles}
@@ -108,7 +111,7 @@ export const Gallery = ({
         onRemovePendingFile={onRemovePendingFile}
         readOnly={!canEdit}
         multiple={multiple}
-        isUploading={uploading}
+        uploadingFileNames={uploadingFileNames}
         postId={0}
         taskId={taskId}
         taskName=""

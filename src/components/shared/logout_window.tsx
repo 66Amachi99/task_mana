@@ -1,4 +1,6 @@
 'use client';
+
+import { useRef } from 'react';
 import { signOut } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from '../styles/LogoutWindow.module.css';
@@ -9,6 +11,7 @@ interface LogoutWindowProps {
 
 export const LogoutWindow = ({ onClose }: LogoutWindowProps) => {
   const queryClient = useQueryClient();
+  const overlayPointerDownRef = useRef(false);
 
   const handleConfirm = async () => {
     await signOut({ redirect: false });
@@ -17,8 +20,27 @@ export const LogoutWindow = ({ onClose }: LogoutWindowProps) => {
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={styles.overlay}
+      onPointerDown={(e) => {
+        overlayPointerDownRef.current = e.target === e.currentTarget;
+      }}
+      onPointerUp={(e) => {
+        const shouldClose = overlayPointerDownRef.current && e.target === e.currentTarget;
+        overlayPointerDownRef.current = false;
+        if (shouldClose) onClose();
+      }}
+      onPointerCancel={() => {
+        overlayPointerDownRef.current = false;
+      }}
+    >
+      <div
+        className={styles.modal}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={() => {
+          overlayPointerDownRef.current = false;
+        }}
+      >
         <div className={styles.content}>
           <div className={styles.header}>
             <div className={styles.spacer}></div>

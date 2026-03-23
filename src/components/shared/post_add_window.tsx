@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/use-roles';
 import { Search, X } from 'lucide-react';
 import { DatePicker } from '../ui/date_picker';
@@ -40,7 +39,6 @@ const TASK_ITEMS = [
 ];
 
 export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
-  const router = useRouter();
   const { user: currentUser } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,11 +49,12 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
   const [tagSearchQuery, setTagSearchQuery] = useState('');
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const tagDropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const overlayPointerDownRef = useRef(false);
 
   const [formData, setFormData] = useState({
     post_title: '',
@@ -73,7 +72,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
 
   const [deadline, setDeadline] = useState<Date | null>(null);
 
-  const [taskStates, setTaskStates] = useState(() => 
+  const [taskStates, setTaskStates] = useState(() =>
     TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean)
   );
 
@@ -133,7 +132,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
         const response = await fetch('/api/users');
         const data = await response.json();
         setUsers(data);
-        
+
         if (currentUser && data.length > 0) {
           const currentUserInList = data.find((u: User) => u.user_login === currentUser.login);
           if (currentUserInList) {
@@ -273,8 +272,27 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.container} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={styles.overlay}
+      onPointerDown={(e) => {
+        overlayPointerDownRef.current = e.target === e.currentTarget;
+      }}
+      onPointerUp={(e) => {
+        const shouldClose = overlayPointerDownRef.current && e.target === e.currentTarget;
+        overlayPointerDownRef.current = false;
+        if (shouldClose) onClose();
+      }}
+      onPointerCancel={() => {
+        overlayPointerDownRef.current = false;
+      }}
+    >
+      <div
+        className={styles.container}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={() => {
+          overlayPointerDownRef.current = false;
+        }}
+      >
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.header}>
             <h2 className={styles.headerTitle}>Новый пост</h2>
@@ -370,7 +388,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
               )}
             </div>
           </div>
-          
+
           <div ref={dropdownRef} className={styles.dropdownWrapper}>
             <div className={styles.searchInputWrapper}>
               <input

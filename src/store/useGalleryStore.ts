@@ -4,6 +4,8 @@ export interface ImageItem {
   fileName: string;
   path: string;
   href: string;
+  created?: string;
+  modified?: string;
 }
 
 type ImagesOrUpdater = ImageItem[] | ((prev: ImageItem[]) => ImageItem[]);
@@ -37,7 +39,6 @@ export const useGalleryStore = create<GalleryState>((set) => ({
     set((state) => {
       if (!state.cache[oldPath]) return state;
       const { [oldPath]: oldEntry, ...restCache } = state.cache;
-      // Обновляем пути в изображениях
       const updatedImages = oldEntry.map((img) => ({
         ...img,
         path: img.path.replace(oldPath, newPath),

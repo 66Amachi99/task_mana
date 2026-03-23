@@ -24,7 +24,6 @@ const getStatusClass = (status: string): string => {
   }
 };
 
-// Обновлённая функция форматирования даты
 const formatDate = (dateString?: string, allDay?: boolean): string => {
   if (!dateString) return 'Нет даты';
 
@@ -39,7 +38,6 @@ const formatDate = (dateString?: string, allDay?: boolean): string => {
     year: 'numeric',
   };
 
-  // Если задача не на весь день, добавляем время
   if (!allDay) {
     options.hour = '2-digit';
     options.minute = '2-digit';
@@ -50,8 +48,12 @@ const formatDate = (dateString?: string, allDay?: boolean): string => {
 
 export const TaskCard = ({ task }: TaskCardProps) => {
   const firstTag = task.tags && task.tags.length > 0 ? task.tags[0] : null;
+  const isCompleted = task.task_status === 'Выполнена';
 
-  const bgGradient = firstTag
+  // Если выполнена — зеленый градиент, если нет и есть тег — радиальный, иначе ничего
+  const bgGradient = isCompleted
+    ? 'linear-gradient(90deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 255, 0, 0.15) 100%)'
+    : firstTag
     ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
     : undefined;
 

@@ -35,7 +35,7 @@
 /* Календарь (левая панель) */
 .calendarWrapper {
   height: 100%;
-  transition: all 0.5s ease-in-out;
+  transition: width 0.5s ease-in-out;
 }
 
 .calendarWrapperFull {
@@ -48,13 +48,7 @@
 
 @media (min-width: 1024px) {
   .calendarWrapperWithSidebar {
-    width: 66.666667%;
-  }
-}
-
-@media (min-width: 1280px) {
-  .calendarWrapperWithSidebar {
-    width: 75%;
+    width: calc(100% - min(33.333333vw, 440px));
   }
 }
 
@@ -71,29 +65,28 @@
   flex-direction: column;
   overflow: hidden;
   height: 100%;
-  transition: all 0.5s ease-in-out;
+  transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
+  flex-shrink: 0;
+  max-width: 440px;
 }
 
 .sidebarOpen {
   width: 100%;
+  max-width: 440px;
   opacity: 1;
 }
 
 .sidebarClosed {
   width: 0;
+  max-width: 0;
   opacity: 0;
   visibility: hidden;
 }
 
 @media (min-width: 1024px) {
   .sidebarOpen {
-    width: 33.333333%;
-  }
-}
-
-@media (min-width: 1280px) {
-  .sidebarOpen {
-    width: 25%;
+    width: min(33.333333vw, 440px);
+    max-width: 440px;
   }
 }
 
@@ -103,18 +96,23 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-width: 320px;
+  width: 100%;
+  min-width: 0;
+  max-width: 440px;
+  overflow: hidden;
 }
 
 /* Заголовок сайдбара */
 .sidebarHeader {
   align-items: flex-start;
   margin-bottom: 1.5rem;
+  min-width: 0;
 }
 
 .sidebarHeaderTitle {
   display: flex;
   justify-content: space-between;
+  min-width: 0;
 }
 
 .dateTitle {
@@ -127,6 +125,8 @@
   display: flex;
   gap: 0.5rem;
   padding-top: 1.8rem;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .statsRowPosts,
@@ -206,6 +206,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 /* Пустое состояние */
@@ -399,18 +400,19 @@
 }
 
 /* Верхняя строка карточки */
-
 .sidebarCardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  min-width: 0;
 }
 
 .leftGroup {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .sidebarCardTime {
@@ -422,22 +424,17 @@
 }
 
 .sidebarCardStatus {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 9999px;
-  display: inline-block;
-}
-
-.sidebarCardStatus {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .taskIcons {
   display: flex;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .taskIcon {
