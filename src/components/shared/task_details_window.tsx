@@ -47,6 +47,7 @@ const PRIORITIES: Record<number, { label: string; className: string }> = {
   2: { label: 'Средний', className: styles.priorityMedium },
   3: { label: 'Высокий', className: styles.priorityHigh },
 };
+
 const DEFAULT_PRIORITY = { label: 'Обычный', className: styles.priorityDefault };
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -287,13 +288,12 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
   const [isLoading, setIsLoading] = useState({ data: true, action: false });
   const [users, setUsers] = useState<UserType[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-
   const [completedTaskInput, setCompletedTaskInput] = useState('');
   const [savedCompletedTask, setSavedCompletedTask] = useState('');
   const [isSavingCompleted, setIsSavingCompleted] = useState(false);
-
   const [formData, setFormData] = useState<FormData | null>(null);
   const [initialData, setInitialData] = useState<FormData | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   const overlayPointerDownRef = useRef(false);
 
@@ -302,6 +302,12 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
   const deleteTask = useDeleteTask();
 
   const canDelete = user?.admin_role || task?.created_by_id === user?.id;
+
+  const handleClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(onClose, 200);
+  }, [isClosing, onClose]);
 
   useEffect(() => {
     if (!task) return;
@@ -486,7 +492,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
     setIsLoading(prev => ({ ...prev, action: true }));
     try {
       await deleteTask.mutateAsync(task.task_id);
-      onClose();
+      handleClose();
     } catch (err) {
       console.error('Ошибка удаления:', err);
       setIsLoading(prev => ({ ...prev, action: false }));
@@ -508,14 +514,14 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
       onPointerUp={(e) => {
         const shouldClose = overlayPointerDownRef.current && e.target === e.currentTarget;
         overlayPointerDownRef.current = false;
-        if (shouldClose) onClose();
+        if (shouldClose) handleClose();
       }}
       onPointerCancel={() => {
         overlayPointerDownRef.current = false;
       }}
     >
       <div
-        className={`${styles.modalContainer} no-scrollbar`}
+        className={`${styles.modalContainer} no-scrollbar ${isClosing ? styles.modalClosing : styles.modalOpening}`}
         onClick={e => e.stopPropagation()}
         onPointerDown={() => {
           overlayPointerDownRef.current = false;
@@ -535,7 +541,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
               {formData.title}
             </h2>
           )}
-          <button onClick={onClose} className={styles.closeButton}>
+          <button onClick={handleClose} className={styles.closeButton}>
             <X size={24} />
           </button>
         </div>

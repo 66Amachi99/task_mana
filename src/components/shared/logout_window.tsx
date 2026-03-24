@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { signOut } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from '../styles/LogoutWindow.module.css';
@@ -12,11 +12,18 @@ interface LogoutWindowProps {
 export const LogoutWindow = ({ onClose }: LogoutWindowProps) => {
   const queryClient = useQueryClient();
   const overlayPointerDownRef = useRef(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(onClose, 200);
+  }, [isClosing, onClose]);
 
   const handleConfirm = async () => {
     await signOut({ redirect: false });
     queryClient.clear();
-    onClose();
+    handleClose();
   };
 
   return (
@@ -28,14 +35,14 @@ export const LogoutWindow = ({ onClose }: LogoutWindowProps) => {
       onPointerUp={(e) => {
         const shouldClose = overlayPointerDownRef.current && e.target === e.currentTarget;
         overlayPointerDownRef.current = false;
-        if (shouldClose) onClose();
+        if (shouldClose) handleClose();
       }}
       onPointerCancel={() => {
         overlayPointerDownRef.current = false;
       }}
     >
       <div
-        className={styles.modal}
+        className={`${styles.modal} ${isClosing ? styles.modalClosing : styles.modalOpening}`}
         onClick={(e) => e.stopPropagation()}
         onPointerDown={() => {
           overlayPointerDownRef.current = false;
@@ -45,7 +52,7 @@ export const LogoutWindow = ({ onClose }: LogoutWindowProps) => {
           <div className={styles.header}>
             <div className={styles.spacer}></div>
             <h2 className={styles.title}>Подтверждение</h2>
-            <button type="button" onClick={onClose} className={styles.closeButton} aria-label="Закрыть">
+            <button type="button" onClick={handleClose} className={styles.closeButton} aria-label="Закрыть">
               <svg className={styles.closeIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -55,7 +62,7 @@ export const LogoutWindow = ({ onClose }: LogoutWindowProps) => {
           <p className={styles.message}>Вы уверены, что хотите выйти?</p>
 
           <div className={styles.footer}>
-            <button type="button" onClick={onClose} className={styles.buttonCancel}>
+            <button type="button" onClick={handleClose} className={styles.buttonCancel}>
               Отмена
             </button>
             <button type="button" onClick={handleConfirm} className={styles.buttonConfirm}>

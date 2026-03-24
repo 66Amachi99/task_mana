@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { Search, X } from 'lucide-react';
 import { DatePicker } from '../ui/date_picker';
@@ -56,6 +56,8 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const overlayPointerDownRef = useRef(false);
 
+  const [isClosing, setIsClosing] = useState(false);
+
   const [formData, setFormData] = useState({
     post_title: '',
     post_description: '',
@@ -77,6 +79,12 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
   );
 
   const createPost = useCreatePost();
+
+  const handleClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(onClose, 200);
+  }, [isClosing, onClose]);
 
   useEffect(() => {
     setTaskStates(TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean));
@@ -263,7 +271,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
         responsible_person_id: formData.responsible_person_id || null,
         tag_ids: selectedTags.map(t => t.tag_id),
       });
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Ошибка при создании поста:', error);
       setError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
@@ -280,14 +288,14 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
       onPointerUp={(e) => {
         const shouldClose = overlayPointerDownRef.current && e.target === e.currentTarget;
         overlayPointerDownRef.current = false;
-        if (shouldClose) onClose();
+        if (shouldClose) handleClose();
       }}
       onPointerCancel={() => {
         overlayPointerDownRef.current = false;
       }}
     >
       <div
-        className={styles.container}
+        className={`${styles.container} ${isClosing ? styles.containerClosing : styles.containerOpening}`}
         onClick={(e) => e.stopPropagation()}
         onPointerDown={() => {
           overlayPointerDownRef.current = false;
@@ -298,7 +306,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
             <h2 className={styles.headerTitle}>Новый пост</h2>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isSubmitting}
               className={styles.closeButton}
             >
@@ -478,7 +486,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
           <div className={styles.actions}>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isSubmitting}
               className={`${styles.button} ${styles.buttonCancel}`}
             >

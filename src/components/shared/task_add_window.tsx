@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { X } from 'lucide-react';
 import { DatePicker } from '../ui/date_picker';
@@ -210,6 +210,7 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [isClosing, setIsClosing] = useState(false);
 
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
@@ -225,6 +226,12 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
 
   const overlayPointerDownRef = useRef(false);
   const createTask = useCreateTask();
+
+  const handleClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(onClose, 200);
+  }, [isClosing, onClose]);
 
   const priorityOptions = [
     { id: '0', label: 'Обычный', color: 'rgba(255, 255, 255, 0.4)' },
@@ -317,7 +324,7 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
         assignee_ids: selectedAssignees.map(a => a.user_id),
         tag_ids: selectedTags.map(t => t.tag_id),
       });
-      onClose();
+      handleClose();
     } catch (error: any) {
       setError(error.message || 'Ошибка при создании задачи');
       setIsSubmitting(false);
@@ -333,14 +340,14 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
       onPointerUp={(e) => {
         const shouldClose = overlayPointerDownRef.current && e.target === e.currentTarget;
         overlayPointerDownRef.current = false;
-        if (shouldClose) onClose();
+        if (shouldClose) handleClose();
       }}
       onPointerCancel={() => {
         overlayPointerDownRef.current = false;
       }}
     >
       <div
-        className={`${styles.modalContainer} no-scrollbar`}
+        className={`${styles.modalContainer} no-scrollbar ${isClosing ? styles.modalClosing : styles.modalOpening}`}
         onClick={(e) => e.stopPropagation()}
         onPointerDown={() => {
           overlayPointerDownRef.current = false;
@@ -349,7 +356,7 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
         <form onSubmit={handleSubmit} className={styles.modalForm}>
           <div className={styles.header}>
             <h2 className={styles.headerTitle}>Новая задача</h2>
-            <button type="button" onClick={onClose} className={styles.closeButton}>
+            <button type="button" onClick={handleClose} className={styles.closeButton}>
               <X size={24} />
             </button>
           </div>
@@ -416,7 +423,7 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
           </div>
 
           <div className={styles.actions}>
-            <button type="button" onClick={onClose} className={`${styles.button} ${styles.buttonCancel}`}>Отмена</button>
+            <button type="button" onClick={handleClose} className={`${styles.button} ${styles.buttonCancel}`}>Отмена</button>
             <button type="submit" disabled={isSubmitting} className={`${styles.button} ${styles.buttonSubmit}`}>
               {isSubmitting ? 'Создание...' : 'Создать'}
             </button>

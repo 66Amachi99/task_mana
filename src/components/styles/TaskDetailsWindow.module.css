@@ -1,4 +1,3 @@
-/* Основной контейнер модального окна */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -9,16 +8,28 @@
   background-color: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(30px);
   padding: 1rem;
+  opacity: 0;
+  animation: overlayFadeIn 0.2s ease-out forwards;
 }
 
 .modalContainer {
   border-radius: 0.5rem;
-  width: 600px;
+  width: 100%;
   max-width: 42rem;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+}
+
+.modalOpening {
+  transform: scale(0.95) translateY(10px);
+  opacity: 0;
+  animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.modalClosing {
+  animation: modalSlideOut 0.2s ease-in forwards;
 }
 
 .header {
@@ -73,7 +84,6 @@
   transform: scale(1.15) rotate(90deg);
 }
 
-/* Основное содержимое */
 .content {
   flex: 1;
   padding: 1rem 1.5rem;
@@ -85,7 +95,6 @@
   gap: 12px;
 }
 
-/* Статус и приоритет */
 .statusPriority {
   display: flex;
   align-items: center;
@@ -147,23 +156,6 @@
   color: #969696;
 }
 
-.select {
-  padding: 0.25rem 0.75rem;
-  font-size: 16px;
-  font-weight: 500;
-  border: 1px solid #ffffff10;
-  background-color: #ffffff02;
-  border-radius: 10px;
-  outline: none;
-  background-color: #ffffff;
-  height: 44px;
-}
-
-.select:focus {
-  border: 1px solid #ffffff20;
-}
-
-/* Кастомный селект */
 .customSelect {
   position: relative;
 }
@@ -236,7 +228,6 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Теги */
 .tagsContainer {
   display: flex;
   flex-wrap: wrap;
@@ -272,13 +263,8 @@
   opacity: 1;
 }
 
-/* TagSelector (компонент выбора тегов) */
 .tagSelector {
   position: relative;
-}
-
-.tagSelectorInput:disabled {
-  cursor: not-allowed;
 }
 
 .tagSelectorInputContainer {
@@ -293,8 +279,8 @@
   color: #ffffff;
 }
 
-.tagSelectorInputContainer:focus{
-  border-color: rgba(255, 255, 255, 0.20); 
+.tagSelectorInputContainer:focus-within {
+  border-color: rgba(255, 255, 255, 0.2); 
 }
 
 .tagSelectorInput {
@@ -353,81 +339,6 @@
   color: #6b7280;
 }
 
-/* AssigneesSelector */
-.assigneesSelector {
-  position: relative;
-}
-
-.assigneeChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 8px 10px;
-  height: 27px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: #ffffffb6;
-  font-size: 16px;
-}
-
-.assigneeChipRemove {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  opacity: 0.7;
-  padding: 0;
-}
-
-.assigneeChipRemove:hover {
-  opacity: 1;
-}
-
-.assigneeSearchInput {
-  outline: none;
-}
-
-.assigneeDropdown {
-  position: absolute;
-  z-index: 100;
-  width: 100%;
-  margin-top: 0.25rem;
-  background-color: #1a1a1a;
-  border: 1px solid #ffffff10;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  max-height: 15rem;
-  overflow-y: auto;
-}
-
-.assigneeOption {
-  padding: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  color: #ffffffc7;
-}
-
-.assigneeOption:hover {
-  background-color: #ffffff10;
-}
-
-.assigneeName {
-  font-weight: 500;
-}
-
-.assigneeRoles {
-  font-size: 0.75rem;
-}
-
-/* Описание */
-.sectionTitle {
-  font-size: 16px;
-  font-weight: 500;
-  color: #ffffff;
-  margin-bottom: 0.5rem;
-}
-
 .descriptionBox {
   min-height: 44px;
 }
@@ -464,46 +375,16 @@
   line-height: 1.5;
   word-wrap: break-word;
   white-space: pre-wrap;
-  min-height: 44px;
 }
 
 .descriptionTextarea:focus {
   border: 1px solid #ffffff20;
 }
 
-/* Даты */
 .datesGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
-}
-
-.dateItem {
-  /* пусто */
-}
-
-.dateLabel {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
-}
-
-.dateInput {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #ffffff02;
-  border: 1px solid #ffffff10;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 500;
-  outline: none;
-  transition: border-color 0.2s;
-  height: 44px;
-}
-
-.dateInput:focus {
-  border: 1px solid #ffffff20;
 }
 
 .dateDisplay {
@@ -529,15 +410,7 @@
   font-weight: 500;
 }
 
-/* Весь день */
 .allDayCheckbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.checkboxGroup {
-  margin-top: 10px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -576,19 +449,9 @@
   box-shadow: 0 0 0 2px #ffffff20;
 }
 
-.checkbox:disabled {
-  cursor: not-allowed;
-}
-
 .checkboxLabel {
   font-size: 0.875rem;
   color: #ffffff;
-}
-
-/* Исполнители */
-.assigneesSection {
-  display: flex;
-  flex-direction: column;
 }
 
 .assigneesSectionHeader {
@@ -630,88 +493,82 @@
   color: #ffffff;
 }
 
-.noAssignees {
-  font-size: 16px;
-  color: #6b7280;
-  font-style: italic;
+.assigneesSelector {
+  position: relative;
 }
 
-/* Результат выполнения */
-.resultSection {
-  padding-top: 1rem;
-}
-
-.resultTitle {
-  font-size: 16px;
-  font-weight: 500;
-  color: #ffffff;
-  margin-bottom: 0.75rem;
-}
-
-.resultTextarea {
-  composes: descriptionTextarea;
-  /* используем те же стили, что и для описания */
-}
-
-.savedResult {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 0.5rem;
-}
-
-.savedResultContent {
-  display: flex;
+.assigneeChip {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-.savedResultText {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.savedResultIcon {
-  width: 1rem;
-  height: 1rem;
-  color: #16a34a;
-  flex-shrink: 0;
-}
-
-.savedResultLink {
-  font-size: 16px;
-  color: #166534;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.openLinkButton {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 0.25rem;
+  padding: 8px 10px;
+  height: 27px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   color: #ffffffb6;
-  cursor: pointer;
-  transition: all 0.2s;
-  padding: 0.375rem 0.75rem;
   font-size: 16px;
-  font-weight: 500;
-  flex-shrink: 0;
-  margin-left: 0.5rem;
-  height: 27px;
 }
 
-.openLinkButton:hover {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
+.assigneeChipRemove {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 0;
+}
+
+.assigneeChipRemove:hover {
+  opacity: 1;
+}
+
+.assigneeSearchInput {
+  outline: none;
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+.assigneeDropdown {
+  position: absolute;
+  z-index: 100;
+  width: 100%;
+  margin-top: 0.25rem;
+  background-color: #1a1a1a;
+  border: 1px solid #ffffff10;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.assigneeOption {
+  padding: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #ffffffc7;
+}
+
+.assigneeOption:hover {
+  background-color: #ffffff10;
+}
+
+.assigneeName {
+  font-weight: 500;
+}
+
+.assigneeRoles {
+  font-size: 0.75rem;
+}
+
+.resultSection {
+  padding-top: 1rem;
+}
+
+.resultTextarea {
+  composes: descriptionTextarea;
 }
 
 .saveResultButtonContainer {
@@ -744,7 +601,6 @@
   cursor: not-allowed;
 }
 
-/* Футер */
 .footer {
   padding: 0rem 1.5rem;
   flex-shrink: 0;
@@ -786,39 +642,9 @@
   cursor: not-allowed;
 }
 
-.buttonGreen {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: #ffffffb6;
-}
-
-.buttonGreen:hover:not(:disabled) {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
-}
-
-.buttonRed {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: #ffffffb6;
-}
-
-.buttonRed:hover:not(:disabled) {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
-}
-
-.buttonGray {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: #ffffffb6;
-}
-
-.buttonGray:hover:not(:disabled) {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
-}
-
+.buttonGreen,
+.buttonRed,
+.buttonGray,
 .buttonCancel {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -826,34 +652,48 @@
   color: #ffffffb6;
 }
 
+.buttonGreen:hover:not(:disabled),
+.buttonRed:hover:not(:disabled),
+.buttonGray:hover:not(:disabled),
 .buttonCancel:hover {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
-}
-
-.changesIndicator {
-  font-size: 0.75rem;
-  color: #d97706;
-  background-color: #fef9c3;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
-}
-
-/* Вспомогательные классы */
-.textSmall {
-  font-size: 16px;
 }
 
 .textGray500 {
   color: #6b7280;
 }
 
-.flexRow {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
 .italic {
   font-style: italic;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: scale(0.95) translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideOut {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95) translateY(10px);
+    opacity: 0;
+  }
 }
