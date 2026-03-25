@@ -54,6 +54,7 @@ export default function HomePage() {
   const [showPosts, setShowPosts] = useState(true);
   const [showTasks, setShowTasks] = useState(true);
   const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
+  const [showOverdueOnly, setShowOverdueOnly] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const roleDropdownRef = useRef<HTMLDivElement>(null);
@@ -68,15 +69,15 @@ export default function HomePage() {
 
   useEffect(() => {
     setDisplayedCount(ITEMS_PER_BATCH);
-  }, [showPosts, showTasks, showIncompleteOnly, roleFilter]);
+  }, [showPosts, showTasks, showIncompleteOnly, showOverdueOnly, roleFilter]);
 
-  // Закрытие дропдауна при клике вне
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
         setIsRoleDropdownOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -125,44 +126,67 @@ export default function HomePage() {
     }
   };
 
+  const isPostCompleted = (status: string) => ['Завершен', 'Завершено'].includes(status);
+  const isTaskCompleted = (status: string) => ['Выполнена', 'Выполнено'].includes(status);
+
+  const itemDate = (item: ContentItem) => {
+    return item.type === 'post' ? item.post_deadline : new Date(item.end_time);
+  };
+
   const allFilteredItems = useMemo(() => {
     let items: ContentItem[] = [];
+
     if (showPosts) items.push(...allPosts);
     if (showTasks) items.push(...allTasks);
 
-    // Фильтр "Не готовые"
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
     if (showIncompleteOnly) {
-      items = items.filter(item => {
-        if (item.type === 'post') return item.post_status !== 'Завершен';
-        return item.task_status !== 'Выполнена';
+      items = items.filter((item) => {
+        if (item.type === 'post') return !isPostCompleted(item.post_status);
+        return !isTaskCompleted(item.task_status);
       });
     }
 
-    // Фильтр по роли (только для постов)
+    if (showOverdueOnly) {
+      items = items.filter((item) => {
+        if (item.type === 'post') {
+          return item.post_deadline < todayStart && !isPostCompleted(item.post_status);
+        }
+        return new Date(item.end_time) < todayStart && !isTaskCompleted(item.task_status);
+      });
+    } else {
+      items = items.filter((item) => {
+        const date = itemDate(item);
+        return date >= todayStart;
+      });
+    }
+
     if (roleFilter) {
-      items = items.filter(item => {
+      items = items.filter((item) => {
         if (item.type === 'post') return filterPostByRole(item, roleFilter);
         return true;
       });
     }
 
-    // Фильтр: только текущие и будущие (начиная с сегодня)
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    items = items.filter(item => {
-      const date = item.type === 'post' ? item.post_deadline : new Date(item.end_time);
-      return date >= todayStart;
-    });
-
-    // Сортировка по дате (от ближайших к дальним)
     items.sort((a, b) => {
-      const dateA = a.type === 'post' ? a.post_deadline.getTime() : new Date(a.end_time).getTime();
-      const dateB = b.type === 'post' ? b.post_deadline.getTime() : new Date(b.end_time).getTime();
-      return dateA - dateB;
+      const dateA = itemDate(a).getTime();
+      const dateB = itemDate(b).getTime();
+      return showOverdueOnly ? dateB - dateA : dateA - dateB;
     });
 
     return items;
-  }, [allPosts, allTasks, showPosts, showTasks, showIncompleteOnly, roleFilter, filterPostByRole]);
+  }, [
+    allPosts,
+    allTasks,
+    showPosts,
+    showTasks,
+    showIncompleteOnly,
+    showOverdueOnly,
+    roleFilter,
+    filterPostByRole,
+  ]);
 
   const visibleItems = useMemo(() => {
     return allFilteredItems.slice(0, displayedCount);
@@ -172,23 +196,31 @@ export default function HomePage() {
     const groupsMap = new Map<string, { dateKey: string; displayDate: string; items: ContentItem[] }>();
 
     for (const item of visibleItems) {
-      const date = item.type === 'post' ? item.post_deadline : new Date(item.end_time);
+      const date = itemDate(item);
       const dateKey = format(date, 'yyyy-MM-dd');
       const displayDate = format(date, 'dd MMMM', { locale: ru });
 
       if (!groupsMap.has(dateKey)) {
         groupsMap.set(dateKey, { dateKey, displayDate, items: [] });
       }
+
       groupsMap.get(dateKey)!.items.push(item);
     }
 
-    return Array.from(groupsMap.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-  }, [visibleItems]);
+    const groups = Array.from(groupsMap.values());
+
+    return groups.sort((a, b) => {
+      return showOverdueOnly
+        ? b.dateKey.localeCompare(a.dateKey)
+        : a.dateKey.localeCompare(b.dateKey);
+    });
+  }, [visibleItems, showOverdueOnly]);
 
   const hasMore = displayedCount < allFilteredItems.length;
 
   useEffect(() => {
     if (!loaderRef.current || !hasMore) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -197,6 +229,7 @@ export default function HomePage() {
       },
       { threshold: 1.0 }
     );
+
     observer.observe(loaderRef.current);
     return () => observer.disconnect();
   }, [hasMore]);
@@ -230,19 +263,32 @@ export default function HomePage() {
         >
           Посты
         </button>
+
         <button
           onClick={handleTasksClick}
           className={`${styles.statsRowTasks} ${showTasks ? styles.active : ''}`}
         >
           Задачи
         </button>
+
         <button
           onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
-          className={`${styles.filterButton} ${showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
-            }`}
+          className={`${styles.filterButton} ${
+            showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
+          }`}
         >
           Не готовые
         </button>
+
+        <button
+          onClick={() => setShowOverdueOnly(!showOverdueOnly)}
+          className={`${styles.filterButton} ${
+            showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive
+          }`}
+        >
+          Просроченные
+        </button>
+
         <div className={styles.roleDropdown} ref={roleDropdownRef}>
           <button
             onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
@@ -254,6 +300,7 @@ export default function HomePage() {
               className={styles.filterIcon}
             />
           </button>
+
           {isRoleDropdownOpen && (
             <div className={styles.roleDropdownMenu}>
               <button
@@ -262,7 +309,9 @@ export default function HomePage() {
               >
                 Все посты
               </button>
+
               <div className={styles.menuDivider}></div>
+
               {ROLE_FILTERS.map((role) => (
                 <button
                   key={role.id}
@@ -281,17 +330,19 @@ export default function HomePage() {
           )}
         </div>
       </div>
+
       <div className={styles.container}>
         <div className={styles.list}>
           {visibleGroups.map((group) => (
             <div key={group.dateKey} className={styles.dayGroup}>
               <div className={styles.dayHeader}>{group.displayDate}</div>
+
               {group.items.map((item) => {
                 if (item.type === 'post') {
                   return <PostCard key={`post-${item.post_id}`} post={item} />;
-                } else {
-                  return <TaskCard key={`task-${item.task_id}`} task={item} />;
                 }
+
+                return <TaskCard key={`task-${item.task_id}`} task={item} />;
               })}
             </div>
           ))}

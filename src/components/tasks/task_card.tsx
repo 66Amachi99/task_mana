@@ -17,10 +17,14 @@ const PRIORITY_MAP: Record<number, { class: string; label: string }> = {
 
 const getStatusClass = (status: string): string => {
   switch (status) {
-    case 'Поставлена': return styles.statusAssigned;
-    case 'В работе': return styles.statusInProgress;
-    case 'Выполнена': return styles.statusDone;
-    default: return styles.statusDefault;
+    case 'Поставлена':
+      return styles.statusAssigned;
+    case 'В работе':
+      return styles.statusInProgress;
+    case 'Выполнена':
+      return styles.statusDone;
+    default:
+      return styles.statusDefault;
   }
 };
 
@@ -50,14 +54,17 @@ export const TaskCard = ({ task }: TaskCardProps) => {
   const firstTag = task.tags && task.tags.length > 0 ? task.tags[0] : null;
   const isCompleted = task.task_status === 'Выполнена';
 
-  // Если выполнена — зеленый градиент, если нет и есть тег — радиальный, иначе ничего
   const bgGradient = isCompleted
     ? 'linear-gradient(90deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 255, 0, 0.15) 100%)'
     : firstTag
-    ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
-    : undefined;
+      ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
+      : undefined;
 
-  const priorityInfo = PRIORITY_MAP[task.priority] || { class: styles.priorityDefault, label: 'Обычный' };
+  const priorityInfo = PRIORITY_MAP[task.priority] || {
+    class: styles.priorityDefault,
+    label: 'Обычный',
+  };
+
   const statusClass = getStatusClass(task.task_status);
 
   return (
@@ -88,7 +95,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
 
             {task.tags && task.tags.length > 0 && (
               <div className={styles.tagsContainer}>
-                {task.tags.map(tag => (
+                {task.tags.map((tag) => (
                   <span
                     key={tag.tag_id}
                     className={styles.tag}
@@ -120,7 +127,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
           <div className={styles.assigneesRow}>
             <User className="w-4 h-4 text-gray-500" />
             <span className={styles.assigneesLabel}>Исполнители:</span>
-            {task.assignees.map(assignee => (
+            {task.assignees.map((assignee) => (
               <span
                 key={assignee.user_id}
                 className={styles.assigneeChip}

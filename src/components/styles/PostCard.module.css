@@ -184,19 +184,28 @@
 
 }
 
-.responsibleText {
-  font-size: 0.75rem;
+.responsibleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.responsibleLabel {
   color: #ffffff80;
 }
 
-@media (min-width: 768px) {
-  .responsibleText {
-    font-size: 16px; /* md:text-sm */
-  }
-}
-
-.responsibleName {
+.responsibleChip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 8px 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 16px;
   font-weight: 500;
+  height: 27px;
+  color: #ffffff;
 }
 
 .feedbackBlock {

@@ -30,6 +30,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  position: relative;
 }
 
 /* Календарь (левая панель) */
@@ -48,7 +49,7 @@
 
 @media (min-width: 1024px) {
   .calendarWrapperWithSidebar {
-    width: calc(100% - min(33.333333vw, 440px));
+    width: calc(100% - 440px);
   }
 }
 
@@ -65,28 +66,39 @@
   flex-direction: column;
   overflow: hidden;
   height: 100%;
-  transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
   flex-shrink: 0;
+  width: 440px;
+  min-width: 440px;
   max-width: 440px;
+  transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+  will-change: transform, opacity;
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 10;
 }
 
 .sidebarOpen {
-  width: 100%;
-  max-width: 440px;
+  transform: translateX(0);
   opacity: 1;
+  pointer-events: auto;
 }
 
 .sidebarClosed {
-  width: 0;
-  max-width: 0;
+  transform: translateX(100%);
   opacity: 0;
-  visibility: hidden;
+  pointer-events: none;
 }
 
-@media (min-width: 1024px) {
-  .sidebarOpen {
-    width: min(33.333333vw, 440px);
-    max-width: 440px;
+@media (max-width: 1023px) {
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .sidebarClosed {
+    transform: translateX(100%);
   }
 }
 
@@ -97,8 +109,7 @@
   flex-direction: column;
   height: 100%;
   width: 100%;
-  min-width: 0;
-  max-width: 440px;
+  box-sizing: border-box;
   overflow: hidden;
 }
 
@@ -138,7 +149,8 @@
   border: 1px solid #ffffff10;
   border-radius: 10px;
   cursor: pointer;
-  white-space: nowrap;  
+  white-space: nowrap;
+  background-color: transparent;
 }
 
 .statsRowPosts.active,
@@ -170,7 +182,7 @@
   scale: 1.1;
 }
 
-/* Кнопка фильтра (для "Не готовые" в сайдбаре) */
+/* Кнопка фильтра */
 .filterButton {
   display: flex;
   align-items: center;
@@ -183,7 +195,7 @@
   border: 1px solid #ffffff10;
   border-radius: 10px;
   cursor: pointer;
-  white-space: nowrap;  
+  white-space: nowrap;
 }
 
 .filterButtonActive {
@@ -224,6 +236,8 @@
 
 /* ===== КАРТОЧКА В САЙДБАРЕ ===== */
 .sidebarCard {
+  width: 100%;
+  box-sizing: border-box;
   padding: 1rem;
   border-radius: 20px;
   cursor: pointer;
@@ -250,9 +264,10 @@
   font-weight: 500;
   line-height: 1.4;
   margin: 0;
+  word-break: break-word;
 }
 
-/* Описание (только для задач) */
+/* Описание */
 .sidebarCardDescription {
   font-family: 'RF Dewi', sans-serif;
   font-size: 16px;
@@ -321,7 +336,7 @@
   color: #6b7280;
 }
 
-/* Дропдаун для фильтра по ролям в сайдбаре */
+/* Дропдаун для фильтра по ролям */
 .roleDropdown {
   position: relative;
   display: flex;

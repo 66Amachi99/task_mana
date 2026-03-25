@@ -2,7 +2,7 @@
 
 import { PostDetailsButton } from '../ui/post_details_button';
 import { getStatusColor } from '../../lib/post-status';
-import { ExternalLink, CheckCircle, Globe } from 'lucide-react';
+import { ExternalLink, CheckCircle, Globe, User } from 'lucide-react';
 import styles from '../styles/PostCard.module.css';
 
 interface PostWithRelations {
@@ -227,9 +227,13 @@ export function PostCard({ post }: PostCardProps) {
 
       {post.user && (
         <div className={styles.responsibleBlock}>
-          <p className={styles.responsibleText}>
-            Ответственный: <span className={styles.responsibleName}>{post.user.user_login}</span>
-          </p>
+          <div className={styles.responsibleRow}>
+            <User className="w-4 h-4 text-gray-500" />
+            <span className={styles.responsibleLabel}>Ответственный:</span>
+            <span className={styles.responsibleChip}>
+              {post.user.user_login}
+            </span>
+          </div>
         </div>
       )}
 
