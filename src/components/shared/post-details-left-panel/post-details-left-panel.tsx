@@ -351,7 +351,6 @@ export const PostDetailsLeftPanel = ({
       {/* Задачи в виде кнопок */}
       {isEditing && (
         <div>
-          <h4 className={styles.tasksTitle}>Необходимые задачи</h4>
           <div className={styles.taskButtons}>
             {taskButtons.map(btn => (
               <button

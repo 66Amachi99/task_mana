@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { Download, Lock } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useGalleryStore } from '@/store/useGalleryStore';
 import { FileUploader } from '../file-uploader/file-uploader';
 import styles from './Gallery.module.css';
@@ -18,6 +18,7 @@ interface GalleryProps {
   onRemovePendingFile?: (taskId: number, fileName: string) => void;
   uploadingFileNames?: string[];
   pendingFiles?: File[];
+  forceDisabled?: boolean;
 }
 
 export const Gallery = ({
@@ -31,6 +32,7 @@ export const Gallery = ({
   onRemovePendingFile,
   uploadingFileNames = [],
   pendingFiles = [],
+  forceDisabled = false,
 }: GalleryProps) => {
   const cachedFiles = useGalleryStore(
     useShallow((state) => (folderPath ? state.cache[folderPath] || [] : []))
@@ -88,7 +90,6 @@ export const Gallery = ({
       <div className={styles.taskHeader}>
         <h4 className={styles.taskLabel}>
           {taskLabel}
-          {!canEdit && <Lock className={styles.lockIcon} />}
         </h4>
 
         {cachedFiles.length > 0 && (
@@ -109,7 +110,7 @@ export const Gallery = ({
         onFilesSelected={onFilesSelected}
         onDeleteFile={handleDelete}
         onRemovePendingFile={onRemovePendingFile}
-        readOnly={!canEdit}
+        readOnly={!canEdit || forceDisabled}
         multiple={multiple}
         uploadingFileNames={uploadingFileNames}
         postId={0}

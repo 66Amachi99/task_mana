@@ -1,4 +1,3 @@
-
 .container {
   margin-top: 12px;
   position: relative;
@@ -11,6 +10,10 @@
   transition: all 0.2s;
 }
 
+.readOnlyContainer {
+  cursor: not-allowed;
+}
+
 .scrollWrapper {
   position: relative;
   overflow-x: auto;
@@ -21,7 +24,11 @@
   user-select: none;
   touch-action: pan-x;
   cursor: default;
-  padding: 0; 
+  padding: 0;
+}
+
+.readOnlyCursor {
+  cursor: not-allowed;
 }
 
 .scrollWrapper {
@@ -142,6 +149,10 @@
 .uploadCard:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+.uploadCardDisabled {
+  cursor: not-allowed;
 }
 
 .uploadButton {

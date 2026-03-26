@@ -2,7 +2,9 @@
 
 import { useRef, useEffect, useState } from 'react';
 import {
-  Lock, ExternalLink, Trash2, Copy
+  ExternalLink, Trash2, Copy,
+  Check,
+  CheckCheck
 } from 'lucide-react';
 import { COMMENT_STATUS, TaskWithComments, CommentData } from '../post-details-window/post-details-window';
 import { useUser } from '@/hooks/use-roles';
@@ -37,11 +39,18 @@ interface PostDetailsRightPanelProps {
 
 const fileSupportTaskIds = [5, 6, 7];
 
-const AutoResizeTextarea = ({ value, onChange, placeholder, disabled }: {
+const AutoResizeTextarea = ({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  className = '',
+}: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
   disabled?: boolean;
+  className?: string;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -59,17 +68,24 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, disabled }: {
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={styles.commentTextarea}
+      className={`${styles.commentTextarea} ${className}`}
       rows={1}
     />
   );
 };
 
-const TaskTextarea = ({ value, onChange, placeholder, disabled }: {
+const TaskTextarea = ({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  className = '',
+}: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
   disabled?: boolean;
+  className?: string;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -87,17 +103,24 @@ const TaskTextarea = ({ value, onChange, placeholder, disabled }: {
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={styles.taskTextarea}
+      className={`${styles.taskTextarea} ${className}`}
       rows={1}
     />
   );
 };
 
-const CommentItem = ({ comment, onStatusChange, onDelete, canDelete }: {
+const CommentItem = ({
+  comment,
+  onStatusChange,
+  onDelete,
+  canDelete,
+  canChangeCommentStatus,
+}: {
   comment: CommentData;
   onStatusChange: (commentId: number, newStatus: string) => void;
   onDelete: (commentId: number) => Promise<void>;
   canDelete: boolean;
+  canChangeCommentStatus: boolean;
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -111,7 +134,9 @@ const CommentItem = ({ comment, onStatusChange, onDelete, canDelete }: {
     }
   };
 
-  const canChangeStatus = comment.status === COMMENT_STATUS.NEW || comment.status === COMMENT_STATUS.COMPLETED;
+  const canChangeStatus =
+    canChangeCommentStatus &&
+    (comment.status === COMMENT_STATUS.NEW || comment.status === COMMENT_STATUS.COMPLETED);
 
   const handleStatusClick = async () => {
     if (!canChangeStatus) return;
@@ -154,8 +179,9 @@ const CommentItem = ({ comment, onStatusChange, onDelete, canDelete }: {
               onClick={handleStatusClick}
               disabled={isUpdating}
               variant="base"
+              icon={comment.status === COMMENT_STATUS.NEW ? Check : CheckCheck}
             >
-              {isUpdating ? '...' : (comment.status === COMMENT_STATUS.NEW ? '✓ Выполнено' : '✓ Подтвердить')}
+              {isUpdating ? '...' : null}
             </ActionButton>
           )}
           {canDelete && (
@@ -201,7 +227,7 @@ export const PostDetailsRightPanel = ({
   isEditing,
   isActionLoading
 }: PostDetailsRightPanelProps) => {
-  const { canAddComment, canDeleteComment } = useUser();
+  const { user, canAddComment, canDeleteComment } = useUser();
   const [addingCommentFor, setAddingCommentFor] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -237,8 +263,12 @@ export const PostDetailsRightPanel = ({
             const hasLink = originalLink.trim() !== '';
             const userCanEdit = canEditPostTask(task.role);
             const userCanAddComment = canAddComment ? canAddComment(task.role) : userCanEdit;
+            const userCanChangeCommentStatus = !!user && (canAddComment ? canAddComment(task.role) : userCanEdit);
             const supportsFiles = fileSupportTaskIds.includes(task.id);
             const rowClass = task.role === 'text' ? styles.taskRowTop : styles.taskRowCenter;
+
+            const isTaskInteractionDisabled = isEditing || !userCanEdit || !user;
+            const isCommentInteractionDisabled = isEditing || !userCanAddComment || !user;
 
             const folderPath = (() => {
               if (!task.link) return null;
@@ -251,7 +281,7 @@ export const PostDetailsRightPanel = ({
                 {supportsFiles ? (
                   <Gallery
                     folderPath={folderPath}
-                    canEdit={userCanEdit && !isEditing}
+                    canEdit={!isTaskInteractionDisabled}
                     multiple={task.id !== 5}
                     taskId={task.id}
                     taskLabel={task.label}
@@ -260,6 +290,7 @@ export const PostDetailsRightPanel = ({
                     onRemovePendingFile={onRemovePendingFile}
                     uploadingFileNames={uploadingFilesByTask[task.id] || []}
                     pendingFiles={pendingFiles[task.id] || []}
+                    forceDisabled={isTaskInteractionDisabled}
                   />
                 ) : (
                   <>
@@ -268,7 +299,6 @@ export const PostDetailsRightPanel = ({
                         <div className={styles.taskHeader}>
                           <h4 className={styles.taskLabel}>
                             {task.label}
-                            {!userCanEdit && <Lock className={styles.lockIcon} />}
                           </h4>
 
                           {task.link && (
@@ -283,18 +313,13 @@ export const PostDetailsRightPanel = ({
                         </div>
 
                         <div className={rowClass}>
-                          {userCanEdit ? (
-                            <TaskTextarea
-                              value={task.link}
-                              onChange={e => onLinkChange(task.id, e.target.value)}
-                              placeholder="Введите текст задачи..."
-                              disabled={isSaving || isActionLoading}
-                            />
-                          ) : (
-                            <div className={styles.viewOnlyField}>
-                              {task.link || 'Нет доступа к редактированию'}
-                            </div>
-                          )}
+                          <TaskTextarea
+                            value={task.link}
+                            onChange={e => onLinkChange(task.id, e.target.value)}
+                            placeholder="Введите текст задачи..."
+                            disabled={isTaskInteractionDisabled || isSaving || isActionLoading}
+                            className={isTaskInteractionDisabled ? styles.disabledLikeEdit : ''}
+                          />
                         </div>
                       </>
                     ) : (
@@ -302,7 +327,6 @@ export const PostDetailsRightPanel = ({
                         <div className={styles.taskHeader}>
                           <h4 className={styles.taskLabel}>
                             {task.label}
-                            {!userCanEdit && <Lock className={styles.lockIcon} />}
                           </h4>
 
                           {hasLink && (
@@ -320,20 +344,14 @@ export const PostDetailsRightPanel = ({
 
                         <div className={rowClass}>
                           <div className={styles.taskInputCol}>
-                            {userCanEdit ? (
-                              <input
-                                type="text"
-                                value={task.link}
-                                onChange={e => onLinkChange(task.id, e.target.value)}
-                                placeholder="Вставьте ссылку..."
-                                className={styles.inputLink}
-                                disabled={isSaving || isActionLoading}
-                              />
-                            ) : (
-                              <div className={styles.viewOnlyField}>
-                                {task.link || 'Нет доступа к редактированию'}
-                              </div>
-                            )}
+                            <input
+                              type="text"
+                              value={task.link}
+                              onChange={e => onLinkChange(task.id, e.target.value)}
+                              placeholder="Вставьте ссылку..."
+                              className={`${styles.inputLink} ${isTaskInteractionDisabled ? styles.disabledLikeEdit : ''}`}
+                              disabled={isTaskInteractionDisabled || isSaving || isActionLoading}
+                            />
                           </div>
                         </div>
                       </>
@@ -341,28 +359,27 @@ export const PostDetailsRightPanel = ({
                   </>
                 )}
 
-                {userCanAddComment && (
-                  <div className={styles.addCommentField}>
-                    <AutoResizeTextarea
-                      value={task.newCommentText}
-                      onChange={e => onNewCommentChange(task.id, e.target.value)}
-                      placeholder="Добавить комментарий..."
-                      disabled={isSaving || isActionLoading || isAdding}
-                    />
+                <div className={styles.addCommentField}>
+                  <AutoResizeTextarea
+                    value={task.newCommentText}
+                    onChange={e => onNewCommentChange(task.id, e.target.value)}
+                    placeholder="Добавить комментарий..."
+                    disabled={isCommentInteractionDisabled || isSaving || isActionLoading || isAdding}
+                    className={isCommentInteractionDisabled ? styles.disabledLikeEdit : ''}
+                  />
 
-                    {task.newCommentText.trim() && (
-                      <div className={styles.addCommentButtonWrapper}>
-                        <ActionButton
-                          onClick={() => handleAddCommentClick(task.id)}
-                          disabled={isSaving || isActionLoading || isAdding}
-                          variant="fit"
-                        >
-                          {isAdding && addingCommentFor === task.id ? 'Отправка...' : 'Отправить'}
-                        </ActionButton>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  {!isCommentInteractionDisabled && task.newCommentText.trim() && (
+                    <div className={styles.addCommentButtonWrapper}>
+                      <ActionButton
+                        onClick={() => handleAddCommentClick(task.id)}
+                        disabled={isSaving || isActionLoading || isAdding}
+                        variant="fit"
+                      >
+                        {isAdding && addingCommentFor === task.id ? 'Отправка...' : 'Отправить'}
+                      </ActionButton>
+                    </div>
+                  )}
+                </div>
 
                 {task.comments.length > 0 && (
                   <div className={styles.commentsSection}>
@@ -372,7 +389,8 @@ export const PostDetailsRightPanel = ({
                         comment={comment}
                         onStatusChange={onCommentStatusChange}
                         onDelete={onDeleteComment}
-                        canDelete={canDeleteComment(comment)}
+                        canDelete={!isEditing && canDeleteComment(comment)}
+                        canChangeCommentStatus={!isEditing && userCanChangeCommentStatus}
                       />
                     ))}
                   </div>

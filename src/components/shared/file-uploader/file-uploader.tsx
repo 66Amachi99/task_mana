@@ -79,14 +79,16 @@ export const FileUploader = ({
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [deletingPaths, setDeletingPaths] = useState<Set<string>>(new Set());
 
-  // Для drag-scroll
-  const [isPointerDown, setIsPointerDown] = useState(false);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const hasUploadingFiles = uploadingFileNames.length > 0;
-  const showUploadArea = !readOnly && (multiple || (existingFiles.length === 0 && pendingFiles.length === 0));
+  const hasAnyFiles = existingFiles.length > 0 || pendingFiles.length > 0;
+
+  const showUploadArea = !readOnly && (multiple || !hasAnyFiles);
+
+  const showReadOnlyUploadPlaceholder =
+    readOnly && (multiple || !hasAnyFiles);
 
   const pendingPreviews = useMemo(() => {
     return pendingFiles.map(file => ({
@@ -153,7 +155,6 @@ export const FileUploader = ({
     onFilesCleared(taskId);
   };
 
-  // ✅ Возвращаем простой обработчик колеса мыши без ошибок
   const handleWheel = useCallback((e: React.WheelEvent) => {
     if (scrollRef.current && e.deltaY !== 0) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -166,8 +167,6 @@ export const FileUploader = ({
 
       e.preventDefault();
       e.stopPropagation();
-
-      // Используем обычный scrollLeft вместо scrollBy для большей стабильности
       scrollRef.current.scrollLeft += e.deltaY * 2;
     }
   }, []);
@@ -177,7 +176,7 @@ export const FileUploader = ({
   };
 
   const handleDeleteClick = async (filePath: string) => {
-    if (!onDeleteFile) return;
+    if (!onDeleteFile || readOnly) return;
     setDeletingPaths(prev => new Set(prev).add(filePath));
     try {
       await onDeleteFile(filePath);
@@ -192,11 +191,9 @@ export const FileUploader = ({
     }
   };
 
-  // Простая логика для drag-scroll (свайп мышкой)
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!scrollRef.current || e.button !== 0) return;
 
-    // Если жмем на кнопку или ссылку — не начинаем драг
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) return;
 
@@ -209,13 +206,13 @@ export const FileUploader = ({
     const handleMouseMove = (ev: MouseEvent) => {
       if (!scrollRef.current) return;
       const x = ev.pageX;
-      const walk = (x - startX) * 1.5; // Скорость прокрутки
+      const walk = (x - startX) * 1.5;
       scrollRef.current.scrollLeft = scrollLeft - walk;
     };
 
     const handleMouseUp = () => {
       if (scrollRef.current) {
-        scrollRef.current.style.cursor = '';
+        scrollRef.current.style.cursor = readOnly ? 'not-allowed' : '';
         scrollRef.current.style.userSelect = '';
       }
       document.removeEventListener('mousemove', handleMouseMove);
@@ -228,7 +225,7 @@ export const FileUploader = ({
 
   return (
     <div
-      className={`${styles.container} ${isDragOver ? styles.dragOver : ''}`}
+      className={`${styles.container} ${isDragOver ? styles.dragOver : ''} ${readOnly ? styles.readOnlyContainer : ''}`}
       onDragOver={(e) => {
         if (!readOnly && !hasUploadingFiles) {
           e.preventDefault();
@@ -245,9 +242,8 @@ export const FileUploader = ({
         }
       }}
     >
-      {/* ✅ Добавил onWheel обратно и убрал сложную логику с слушателями */}
       <div
-        className={styles.scrollWrapper}
+        className={`${styles.scrollWrapper} ${readOnly ? styles.readOnlyCursor : ''}`}
         ref={scrollRef}
         onMouseDown={handleMouseDown}
         onWheel={handleWheel}
@@ -310,11 +306,11 @@ export const FileUploader = ({
                         src={url}
                         alt={file.name}
                         className={`${styles.image} ${isUploadingFile
-                            ? styles.imageUploading
-                            : isLoaded
-                              ? styles.imageLoaded
-                              : styles.imageLoading
-                          }`}
+                          ? styles.imageUploading
+                          : isLoaded
+                            ? styles.imageLoaded
+                            : styles.imageLoading
+                        }`}
                         onLoad={() => handleImageLoad(key)}
                         onError={() => handleImageLoad(key)}
                         draggable={false}
@@ -356,12 +352,27 @@ export const FileUploader = ({
               />
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  if (!readOnly) fileInputRef.current?.click();
+                }}
                 className={styles.uploadButton}
-                disabled={hasUploadingFiles}
+                disabled={hasUploadingFiles || readOnly}
               >
                 <Upload size={24} />
                 <span>{hasUploadingFiles ? 'Загрузка...' : 'Загрузить'}</span>
+              </button>
+            </div>
+          )}
+
+          {showReadOnlyUploadPlaceholder && (
+            <div className={`${styles.uploadCard} ${styles.uploadCardDisabled}`}>
+              <button
+                type="button"
+                className={`${styles.uploadButton} ${styles.uploadButtonDisabled}`}
+                disabled
+              >
+                <Upload size={24} />
+                <span>Загрузка недоступна</span>
               </button>
             </div>
           )}
