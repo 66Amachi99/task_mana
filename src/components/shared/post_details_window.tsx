@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import { useUser } from '../../hooks/use-roles';
 import { PostDetailsLeftPanel } from './post_details_left_panel';
 import { PostDetailsRightPanel } from './post_details_right_panel';
-import { usePost, useUpdatePost, usePatchPost, useDeletePost } from '@/hooks/usePosts';
+import { usePost, useUpdatePost, useSilentUpdatePost, usePatchPost, useDeletePost } from '@/hooks/usePosts';
 import { useAddComment, useUpdateCommentStatus, useDeleteComment } from '@/hooks/usePosts';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -266,10 +266,12 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const tagDropdownRef = useRef<HTMLDivElement>(null);
   const datePickerRef = useRef<HTMLDivElement>(null);
   const overlayPointerDownRef = useRef(false);
+  const initializedPostIdRef = useRef<number | null>(null);
 
   const isAdminOrSMM = !!(user?.admin_role || user?.SMM_role);
 
   const updatePost = useUpdatePost();
+  const silentUpdatePost = useSilentUpdatePost();
   const patchPost = usePatchPost();
   const deletePostMut = useDeletePost();
   const addCommentMut = useAddComment();
@@ -284,7 +286,9 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     if (!post) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [post]);
 
   useEffect(() => {
@@ -310,43 +314,44 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
 
     const tasksFromPost = buildTasksFromPost(post);
     const social = extractSocialLinks(post);
+    const isFirstInitForThisPost = initializedPostIdRef.current !== post.post_id;
 
-    setTasks(tasksFromPost);
-    setOriginalTasks(cloneTasks(tasksFromPost));
-    setSocialLinks(social);
-    setOriginalSocialLinks({ ...social });
-    setEditedDeadline(post.post_deadline ? new Date(post.post_deadline) : null);
-    setEditedTitle(post.post_title || '');
-    setEditedDescription(post.post_description || '');
-    setEditedTzLink(post.tz_link || '');
-    setSelectedTasks(TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false));
-    setSelectedTags(post.tags || []);
     setLocalIsPublished(post.is_published);
     setLocalApprovedBy(post.approved_by || null);
     setLocalSocialLinks(social);
-  }, [post]);
 
-  useEffect(() => {
-    if (!isEditing || !post) return;
+    if (isFirstInitForThisPost) {
+      initializedPostIdRef.current = post.post_id;
 
-    setTasks(prevTasks =>
-      TASK_CONFIG
-        .filter(cfg => selectedTasks[cfg.id - 1])
-        .map(cfg =>
-          prevTasks.find(t => t.id === cfg.id) ?? {
-            id: cfg.id,
-            name: cfg.name,
-            label: cfg.label,
-            link: '',
-            required: true,
-            role: cfg.role,
-            linkKey: cfg.linkKey,
-            comments: [],
-            newCommentText: '',
-          },
-        ),
-    );
-  }, [selectedTasks, isEditing, post]);
+      setTasks(tasksFromPost);
+      setOriginalTasks(cloneTasks(tasksFromPost));
+      setSocialLinks(social);
+      setOriginalSocialLinks({ ...social });
+      setEditedDeadline(post.post_deadline ? new Date(post.post_deadline) : null);
+      setEditedTitle(post.post_title || '');
+      setEditedDescription(post.post_description || '');
+      setEditedTzLink(post.tz_link || '');
+      setSelectedTasks(TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false));
+      setSelectedTags(post.tags || []);
+      return;
+    }
+
+    if (!isEditing) {
+      setTasks(tasksFromPost);
+      setOriginalTasks(cloneTasks(tasksFromPost));
+      setSocialLinks(social);
+      setOriginalSocialLinks({ ...social });
+      setEditedDeadline(post.post_deadline ? new Date(post.post_deadline) : null);
+      setEditedTitle(post.post_title || '');
+      setEditedDescription(post.post_description || '');
+      setEditedTzLink(post.tz_link || '');
+      setSelectedTasks(TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false));
+      setSelectedTags(post.tags || []);
+      return;
+    }
+
+    setOriginalTasks(cloneTasks(tasksFromPost));
+  }, [post, isEditing]);
 
   const filteredTags = useMemo(
     () =>
@@ -424,16 +429,16 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
         prev.map(t => (t.id === taskId ? { ...t, link: taskLink } : t)),
       );
 
-      await updatePost.mutateAsync({
+      setOriginalTasks(prev =>
+        prev.map(t => (t.id === taskId ? { ...t, link: taskLink } : t)),
+      );
+
+      await silentUpdatePost.mutateAsync({
         postId: post.post_id,
         data: {
           [task.linkKey]: taskLink,
         },
       });
-
-      setOriginalTasks(prev =>
-        prev.map(t => (t.id === taskId ? { ...t, link: taskLink } : t)),
-      );
 
       setPendingFiles(prev => {
         const current = prev[taskId] || [];
@@ -479,7 +484,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     editedTitle,
     editedDeadline,
     setImagesToCache,
-    updatePost,
+    silentUpdatePost,
   ]);
 
   const handleFilesCleared = useCallback((taskId: number) => {
@@ -645,8 +650,16 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       setIsSaving(false);
     }
   }, [
-    post, editedTitle, editedDescription, editedTzLink, editedDeadline,
-    selectedTasks, selectedTags, tasks, updatePost, renameCacheKey,
+    post,
+    editedTitle,
+    editedDescription,
+    editedTzLink,
+    editedDeadline,
+    selectedTasks,
+    selectedTags,
+    tasks,
+    updatePost,
+    renameCacheKey,
   ]);
 
   const handleSaveChanges = useCallback(async () => {

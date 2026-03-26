@@ -283,10 +283,6 @@ export async function PUT(request: NextRequest) {
         }
       }
 
-      if (existingPost.approved_by_id) {
-        updateData.approved_by_id = null;
-      }
-
       const updatedPost = await prisma.post.update({
         where: { post_id: Number(postId) },
         data: updateData,

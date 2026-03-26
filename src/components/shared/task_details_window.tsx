@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { X, Calendar, User, Edit, Trash2, Save, Users } from 'lucide-react';
+import { X, Calendar, User, Edit, Trash2, Save, Users, Edit2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-roles';
 import { Task } from '../../../types/task';
 import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
@@ -735,7 +735,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                   disabled={isLoading.action}
                   className={styles.button}
                 >
-                  <Edit className="w-4 h-4" /> Изменить
+                  <Edit2 className="w-4 h-4" /> Изменить
                 </button>
                 {canDelete && (
                   <button

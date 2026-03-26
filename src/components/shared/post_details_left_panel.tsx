@@ -449,7 +449,7 @@ export const PostDetailsLeftPanel = ({
             className={`${styles.button} ${styles.buttonBlue}`}
           >
             <Save className="w-4 h-4" />
-            Сохранить изменения
+            Сохранить
           </button>
         )}
 
@@ -459,7 +459,7 @@ export const PostDetailsLeftPanel = ({
             className={`${styles.button} ${styles.buttonGray}`}
           >
             <Edit2 className="w-4 h-4" />
-            Редактировать
+            Изменить
           </button>
         )}
 

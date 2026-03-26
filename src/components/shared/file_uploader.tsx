@@ -111,7 +111,7 @@ export const FileUploader = ({
   const showInvalidFilesAlert = (invalidFiles: File[]) => {
     if (invalidFiles.length === 0) return;
     const names = invalidFiles.map(file => file.name).join(', ');
-    alert(`Допускается загрузка только изображений разрешённых форматов.\n\nОтклонены файлы: ${names}`);
+    alert(`Допускается только загрузка изображений.\n\nОтклонены файлы: ${names}`);
   };
 
   const processFiles = (files: File[]) => {

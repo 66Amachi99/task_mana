@@ -100,6 +100,13 @@ export default function HomePage() {
 
   const loading = postsLoading || tasksLoading;
 
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
   const handlePostsClick = () => {
     if (showPosts) {
       if (showTasks) {
@@ -111,6 +118,8 @@ export default function HomePage() {
     } else {
       setShowPosts(true);
     }
+
+    scrollToTop();
   };
 
   const handleTasksClick = () => {
@@ -124,6 +133,18 @@ export default function HomePage() {
     } else {
       setShowTasks(true);
     }
+
+    scrollToTop();
+  };
+
+  const handleIncompleteClick = () => {
+    setShowIncompleteOnly((prev) => !prev);
+    scrollToTop();
+  };
+
+  const handleOverdueClick = () => {
+    setShowOverdueOnly((prev) => !prev);
+    scrollToTop();
   };
 
   const isPostCompleted = (status: string) => ['Завершен', 'Завершено'].includes(status);
@@ -237,6 +258,7 @@ export default function HomePage() {
   const handleRoleSelect = (role: string | null) => {
     setRoleFilter(role);
     setIsRoleDropdownOpen(false);
+    scrollToTop();
   };
 
   if (loading && allPosts.length === 0 && allTasks.length === 0) {
@@ -272,7 +294,7 @@ export default function HomePage() {
         </button>
 
         <button
-          onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
+          onClick={handleIncompleteClick}
           className={`${styles.filterButton} ${
             showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
           }`}
@@ -281,7 +303,7 @@ export default function HomePage() {
         </button>
 
         <button
-          onClick={() => setShowOverdueOnly(!showOverdueOnly)}
+          onClick={handleOverdueClick}
           className={`${styles.filterButton} ${
             showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive
           }`}
@@ -291,7 +313,10 @@ export default function HomePage() {
 
         <div className={styles.roleDropdown} ref={roleDropdownRef}>
           <button
-            onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+            onClick={() => {
+              setIsRoleDropdownOpen(!isRoleDropdownOpen);
+              scrollToTop();
+            }}
             className={styles.roleDropdownButton}
           >
             <img

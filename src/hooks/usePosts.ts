@@ -130,11 +130,45 @@ export const useUpdatePost = () => {
   });
 };
 
+export const useSilentUpdatePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ postId, data }: { postId: number; data: any }) => {
+      const res = await fetch('/api/posts/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId, data }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Ошибка обновления поста');
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+};
+
 export const usePatchPost = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ postId, action, social, link }: { postId: number; action: string; social?: string; link?: string }) => {
+    mutationFn: async ({
+      postId,
+      action,
+      social,
+      link,
+    }: {
+      postId: number;
+      action: string;
+      social?: string;
+      link?: string;
+    }) => {
       const res = await fetch('/api/posts/update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -182,7 +216,15 @@ export const useAddComment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ postId, taskTypeId, text }: { postId: number; taskTypeId: number; text: string }) => {
+    mutationFn: async ({
+      postId,
+      taskTypeId,
+      text,
+    }: {
+      postId: number;
+      taskTypeId: number;
+      text: string;
+    }) => {
       const res = await fetch('/api/posts/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -196,7 +238,7 @@ export const useAddComment = () => {
 
       return res.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['post', variables.postId] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
