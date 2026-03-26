@@ -170,10 +170,6 @@
   white-space: nowrap;
 }
 
-.linkButton {
-  composes: panelButton;
-}
-
 .commentsSection {
   margin-top: 1rem;
   display: flex;
@@ -259,51 +255,6 @@
   margin-top: 2px;
 }
 
-.panelButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
-  color: #ffffff;
-  font-size: 16px;
-  height: 27px;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-}
-
-.panelButton:hover:not(:disabled) {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.20) 100%);
-}
-
-.panelButton:active:not(:disabled) {
-  transform: scale(0.96);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.3) 100%);
-}
-
-.panelButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.commentStatusButton {
-  composes: panelButton;
-  min-width: 110px;
-  font-size: 12px;
-}
-
-.addCommentButton {
-  composes: panelButton;
-}
-
-.addCommentButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .emptyState {
   text-align: center;
   padding: 2rem 0;
@@ -322,49 +273,12 @@
   flex-shrink: 0;
 }
 
-.commentDeleteButton {
-  background: none;
-  border: none;
-  color: #999;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  width: 24px;
-}
-
-.commentDeleteButton:hover {
-  color: #f00;
-  background: rgba(255, 0, 0, 0.1);
-}
-
 .taskHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
   min-height: 27px;
-}
-
-.copyButton,
-.downloadButton {
-  composes: panelButton;
-  gap: 4px;
-  height: 27px;
-  padding: 0 12px;
-  font-size: 14px;
-  white-space: nowrap;
-  position: relative;
-  overflow: hidden;
-}
-
-.copyButton span,
-.downloadButton span {
-  margin-left: 2px;
 }
 
 .galleryContainer {

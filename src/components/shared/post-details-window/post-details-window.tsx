@@ -238,6 +238,8 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     };
   }, [fetchedPost]);
 
+  const [savedTaskLinks, setSavedTaskLinks] = useState<Record<string, string | null>>({});
+
   const [tasks, setTasks] = useState<TaskWithComments[]>([]);
   const [originalTasks, setOriginalTasks] = useState<TaskWithComments[]>([]);
   const [socialLinks, setSocialLinks] = useState<SocialLinks>(EMPTY_SOCIAL);
@@ -316,6 +318,11 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     const social = extractSocialLinks(post);
     const isFirstInitForThisPost = initializedPostIdRef.current !== post.post_id;
 
+    const initialSavedLinks: Record<string, string | null> = {};
+    TASK_CONFIG.forEach(cfg => {
+      initialSavedLinks[cfg.linkKey] = (post[cfg.linkKey] as string) || null;
+    });
+
     setLocalIsPublished(post.is_published);
     setLocalApprovedBy(post.approved_by || null);
     setLocalSocialLinks(social);
@@ -333,6 +340,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       setEditedTzLink(post.tz_link || '');
       setSelectedTasks(TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false));
       setSelectedTags(post.tags || []);
+      setSavedTaskLinks(initialSavedLinks);
       return;
     }
 
@@ -347,6 +355,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       setEditedTzLink(post.tz_link || '');
       setSelectedTasks(TASK_CONFIG.map(cfg => (post[cfg.needsKey] as boolean) || false));
       setSelectedTags(post.tags || []);
+      setSavedTaskLinks(initialSavedLinks);
       return;
     }
 
@@ -378,9 +387,14 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   }, [tasks, originalTasks, socialLinks, originalSocialLinks, editedDeadline, post, uploadingFilesByTask]);
 
   const canShowApprove = useMemo(() => {
-    if (!canApprove || localApprovedBy || !post) return false;
-    return TASK_CONFIG.every(cfg => !post[cfg.needsKey] || (post[cfg.linkKey] as string)?.trim());
-  }, [canApprove, localApprovedBy, post]);
+    if (!canApprove || localApprovedBy) return false;
+
+    return TASK_CONFIG.every(cfg => {
+      const isRequired = selectedTasks[cfg.id - 1];
+      const hasContent = !!savedTaskLinks[cfg.linkKey]?.trim();
+      return !isRequired || hasContent;
+    });
+  }, [canApprove, localApprovedBy, selectedTasks, savedTaskLinks]);
 
   const handleFilesSelected = useCallback(async (taskId: number, files: File[]) => {
     if (!post || files.length === 0) return;
@@ -439,6 +453,11 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
           [task.linkKey]: taskLink,
         },
       });
+
+      setSavedTaskLinks(prev => ({
+        ...prev,
+        [task.linkKey]: taskLink,
+      }));
 
       setPendingFiles(prev => {
         const current = prev[taskId] || [];
@@ -513,24 +532,59 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   }, []);
 
   const handleDeleteFile = useCallback(
-    async (_taskId: number, folderPath: string, filePath: string) => {
+    async (taskId: number, folderPath: string, filePath: string) => {
       if (!post) return;
 
       try {
-        const res = await fetch('/api/disk/delete', {
+        const task = TASK_CONFIG.find(t => t.id === taskId);
+        if (!task) throw new Error('Задача не найдена');
+
+        const deleteRes = await fetch('/api/disk/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ path: filePath }),
         });
 
-        if (!res.ok) throw new Error('Ошибка удаления');
+        if (!deleteRes.ok) throw new Error('Ошибка удаления файла');
+
         removeImageFromCache(folderPath, filePath);
+
+        const listRes = await fetch('/api/disk/list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: folderPath }),
+        });
+
+        const listData = await listRes.json();
+        const remainingFiles = Array.isArray(listData.result) ? listData.result : [];
+
+        if (remainingFiles.length === 0) {
+          setTasks(prev =>
+            prev.map(t => (t.id === taskId ? { ...t, link: '' } : t)),
+          );
+
+          setOriginalTasks(prev =>
+            prev.map(t => (t.id === taskId ? { ...t, link: '' } : t)),
+          );
+
+          setSavedTaskLinks(prev => ({
+            ...prev,
+            [task.linkKey]: null,
+          }));
+
+          await silentUpdatePost.mutateAsync({
+            postId: post.post_id,
+            data: {
+              [task.linkKey]: null,
+            },
+          });
+        }
       } catch (error) {
         console.error('Ошибка удаления файла:', error);
         alert('Не удалось удалить файл');
       }
     },
-    [post, removeImageFromCache],
+    [post, removeImageFromCache, silentUpdatePost],
   );
 
   const handleTagSelect = useCallback((tag: Tag) => {
@@ -641,6 +695,16 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       }
 
       await updatePost.mutateAsync({ postId: post.post_id, data: updateData });
+
+      setSavedTaskLinks(() => {
+        const next: Record<string, string | null> = {};
+        TASK_CONFIG.forEach(cfg => {
+          const task = finalTasks.find(t => t.linkKey === cfg.linkKey);
+          next[cfg.linkKey] = task?.link || null;
+        });
+        return next;
+      });
+
       setOriginalTasks(cloneTasks(finalTasks));
       setIsEditing(false);
     } catch (error) {
@@ -677,6 +741,15 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       if (editedDeadline) data.post_deadline = editedDeadline.toISOString();
 
       await updatePost.mutateAsync({ postId: post.post_id, data });
+
+      setSavedTaskLinks(() => {
+        const next: Record<string, string | null> = {};
+        TASK_CONFIG.forEach(cfg => {
+          const task = tasks.find(t => t.linkKey === cfg.linkKey);
+          next[cfg.linkKey] = task?.link || null;
+        });
+        return next;
+      });
 
       setOriginalTasks(cloneTasks(tasks));
       setOriginalSocialLinks({ ...socialLinks });

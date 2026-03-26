@@ -22,12 +22,15 @@
 
 .buttonBase,
 .buttonGray,
-.buttonGreen,
 .buttonLightGray,
 .buttonRed,
 .publishButtonPublished,
 .publishButtonUnpublished {
   
+}
+
+.buttonFit {
+  width: fit-content;
 }
 
 .button:hover:not(:disabled),

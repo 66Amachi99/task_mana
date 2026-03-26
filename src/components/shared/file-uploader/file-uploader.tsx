@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { Upload, X, Loader2, Trash2 } from 'lucide-react';
 import { ImageItem } from '@/store/useGalleryStore';
 import styles from './FileUploader.module.css';
+import { ActionButton } from '@/components/ui/action-button/action-button';
 
 export interface PendingFile {
   file: File;
@@ -27,7 +28,7 @@ interface FileUploaderProps {
 }
 
 const ALLOWED_IMAGE_EXTENSIONS = new Set([
-  'pcx','dcx','wmf','emf','wpg','bpg','eprn','prm','ppm','pgm','pbm','pix','pct','pic','dib','psd','tiff','rpng','jif','vst','tga','bmp','jpg','apng','jpeg','heic','png','eps','webp','svgz','gif','svg','heif','prn','icns','xpm','abrn','tif','blk','avif',
+  'pcx', 'dcx', 'wmf', 'emf', 'wpg', 'bpg', 'eprn', 'prm', 'ppm', 'pgm', 'pbm', 'pix', 'pct', 'pic', 'dib', 'psd', 'tiff', 'rpng', 'jif', 'vst', 'tga', 'bmp', 'jpg', 'apng', 'jpeg', 'heic', 'png', 'eps', 'webp', 'svgz', 'gif', 'svg', 'heif', 'prn', 'icns', 'xpm', 'abrn', 'tif', 'blk', 'avif',
 ]);
 
 const ACCEPT_ATTR = Array.from(ALLOWED_IMAGE_EXTENSIONS)
@@ -77,10 +78,10 @@ export const FileUploader = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [deletingPaths, setDeletingPaths] = useState<Set<string>>(new Set());
-  
+
   // Для drag-scroll
   const [isPointerDown, setIsPointerDown] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -165,7 +166,7 @@ export const FileUploader = ({
 
       e.preventDefault();
       e.stopPropagation();
-      
+
       // Используем обычный scrollLeft вместо scrollBy для большей стабильности
       scrollRef.current.scrollLeft += e.deltaY * 2;
     }
@@ -194,24 +195,24 @@ export const FileUploader = ({
   // Простая логика для drag-scroll (свайп мышкой)
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!scrollRef.current || e.button !== 0) return;
-    
+
     // Если жмем на кнопку или ссылку — не начинаем драг
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) return;
 
     scrollRef.current.style.cursor = 'grabbing';
     scrollRef.current.style.userSelect = 'none';
-    
+
     const startX = e.pageX;
     const scrollLeft = scrollRef.current.scrollLeft;
-    
+
     const handleMouseMove = (ev: MouseEvent) => {
       if (!scrollRef.current) return;
       const x = ev.pageX;
       const walk = (x - startX) * 1.5; // Скорость прокрутки
       scrollRef.current.scrollLeft = scrollLeft - walk;
     };
-    
+
     const handleMouseUp = () => {
       if (scrollRef.current) {
         scrollRef.current.style.cursor = '';
@@ -220,7 +221,7 @@ export const FileUploader = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
@@ -277,14 +278,14 @@ export const FileUploader = ({
                 {!file.href && <div className={styles.placeholder}>Нет превью</div>}
 
                 {!readOnly && onDeleteFile && !isDeleting && !hasUploadingFiles && (
-                  <button
+                  <ActionButton
                     onClick={() => handleDeleteClick(file.path)}
+                    variant="base"
+                    icon={Trash2}
                     className={styles.deleteButton}
-                    title="Удалить"
                   >
-                    <X size={16} />
-                    <span className={styles.deleteText}>Удалить</span>
-                  </button>
+                    <></>
+                  </ActionButton>
                 )}
               </div>
             );
@@ -308,13 +309,12 @@ export const FileUploader = ({
                       <img
                         src={url}
                         alt={file.name}
-                        className={`${styles.image} ${
-                          isUploadingFile
+                        className={`${styles.image} ${isUploadingFile
                             ? styles.imageUploading
                             : isLoaded
-                            ? styles.imageLoaded
-                            : styles.imageLoading
-                        }`}
+                              ? styles.imageLoaded
+                              : styles.imageLoading
+                          }`}
                         onLoad={() => handleImageLoad(key)}
                         onError={() => handleImageLoad(key)}
                         draggable={false}

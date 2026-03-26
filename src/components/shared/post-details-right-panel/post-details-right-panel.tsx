@@ -8,6 +8,7 @@ import { COMMENT_STATUS, TaskWithComments, CommentData } from '../post-details-w
 import { useUser } from '@/hooks/use-roles';
 import { Gallery } from '../gallery/gallery';
 import styles from './PostDetailsRightPanel.module.css';
+import { ActionButton } from '../../ui/action-button/action-button';
 
 interface PostData {
   post_id: number;
@@ -149,24 +150,23 @@ const CommentItem = ({ comment, onStatusChange, onDelete, canDelete }: {
         </div>
         <div className={styles.commentActions}>
           {canChangeStatus && (
-            <button
+            <ActionButton
               onClick={handleStatusClick}
               disabled={isUpdating}
-              className={styles.commentStatusButton}
-              title={comment.status === COMMENT_STATUS.NEW ? 'Отметить как выполненное' : 'Подтвердить'}
+              variant="base"
             >
               {isUpdating ? '...' : (comment.status === COMMENT_STATUS.NEW ? '✓ Выполнено' : '✓ Подтвердить')}
-            </button>
+            </ActionButton>
           )}
           {canDelete && (
-            <button
+            <ActionButton
               onClick={handleDeleteClick}
               disabled={isDeleting}
-              className={styles.commentDeleteButton}
-              title="Удалить комментарий"
+              variant="base"
+              icon={Trash2}
             >
-              <Trash2 className="w-4 h-4" />
-            </button>
+              <></>
+            </ActionButton>
           )}
         </div>
       </div>
@@ -272,14 +272,13 @@ export const PostDetailsRightPanel = ({
                           </h4>
 
                           {task.link && (
-                            <button
+                            <ActionButton
                               onClick={() => navigator.clipboard.writeText(task.link)}
-                              className={styles.copyButton}
-                              title="Копировать текст"
+                              variant="base"
+                              icon={Copy}
                             >
-                              <Copy className="w-4 h-4" />
                               <span>Скопировать</span>
-                            </button>
+                            </ActionButton>
                           )}
                         </div>
 
@@ -308,13 +307,13 @@ export const PostDetailsRightPanel = ({
 
                           {hasLink && (
                             <div className={styles.linkContainer}>
-                              <button
+                              <ActionButton
                                 onClick={e => handleLinkClick(originalLink, e)}
-                                className={styles.linkButton}
-                                title="Открыть в новой вкладке"
+                                variant="base"
+                                icon={ExternalLink}
                               >
-                                <ExternalLink className="w-4 h-4" /> Открыть
-                              </button>
+                                Открыть
+                              </ActionButton>
                             </div>
                           )}
                         </div>
@@ -353,13 +352,13 @@ export const PostDetailsRightPanel = ({
 
                     {task.newCommentText.trim() && (
                       <div className={styles.addCommentButtonWrapper}>
-                        <button
+                        <ActionButton
                           onClick={() => handleAddCommentClick(task.id)}
                           disabled={isSaving || isActionLoading || isAdding}
-                          className={styles.addCommentButton}
+                          variant="fit"
                         >
                           {isAdding && addingCommentFor === task.id ? 'Отправка...' : 'Отправить'}
-                        </button>
+                        </ActionButton>
                       </div>
                     )}
                   </div>

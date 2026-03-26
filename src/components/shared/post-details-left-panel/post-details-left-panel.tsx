@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { CheckCircle, Globe, Edit2, X, Save, Trash2 } from 'lucide-react';
+import { CheckCircle, Globe, Edit2, X, Save, Trash2, ExternalLink } from 'lucide-react';
 import { SOCIAL_CONFIG, TASK_CONFIG } from '../post-details-window/post-details-window';
 import type { SocialLinks, Tag, PostData } from '../post-details-window/post-details-window';
 import { DatePicker } from '../../ui/date-picker/date_picker';
@@ -338,14 +338,13 @@ export const PostDetailsLeftPanel = ({
         />
       ) : (
         editedTzLink && (
-          <a
-            href={editedTzLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.tzLink}
+          <ActionButton
+            onClick={() => window.open(editedTzLink, '_blank', 'noopener, noreferrer')}
+            variant="fit"
+            icon={ExternalLink}
           >
             Открыть ТЗ
-          </a>
+          </ActionButton>
         )
       )}
 
@@ -468,7 +467,7 @@ export const PostDetailsLeftPanel = ({
             <ActionButton
               onClick={onSave}
               disabled={isSaving}
-              variant="green"
+              variant="base"
               icon={Save}
             >
               Сохранить
@@ -486,7 +485,7 @@ export const PostDetailsLeftPanel = ({
         {canApprove && !approvedBy && !isEditing && (
           <ActionButton
             onClick={onApprove}
-            variant="green"
+            variant="base"
             icon={CheckCircle}
           >
             Согласовать
