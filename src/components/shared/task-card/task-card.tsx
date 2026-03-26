@@ -77,7 +77,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
 
   const priorityInfo = PRIORITY_MAP[task.priority] || {
     class: styles.priorityDefault,
-    label: 'Обычный',
+    label: 'Не важно',
   };
 
   const statusClass = getStatusClass(task.task_status);

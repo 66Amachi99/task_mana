@@ -134,11 +134,7 @@
 
 .uploadCard {
   flex: 1 0 auto;
-  min-width: 100px;
   height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: rgba(255, 255, 255, 0.02);
   border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: 8px;
@@ -151,11 +147,8 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-.uploadCardDisabled {
-  cursor: not-allowed;
-}
-
 .uploadButton {
+  min-width: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -170,7 +163,7 @@
   transition: color 0.2s, opacity 0.2s;
 }
 
-.uploadButton:hover {
+.uploadButton:hover:not(:disabled) {
   color: white;
 }
 

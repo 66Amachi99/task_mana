@@ -423,7 +423,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
               <span className={styles.loader}>Загрузка...</span>
             )}
             {isDropdownOpen && filteredUsers.length > 0 && (
-              <div className={styles.dropdown}>
+              <div className={`${styles.dropdown} no-scrollbar`}>
                 {filteredUsers.map(user => (
                   <div
                     key={user.user_id}

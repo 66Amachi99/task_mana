@@ -359,20 +359,20 @@ export const FileUploader = ({
                 disabled={hasUploadingFiles || readOnly}
               >
                 <Upload size={24} />
-                <span>{hasUploadingFiles ? 'Загрузка...' : 'Загрузить'}</span>
+                <span>{hasUploadingFiles ? 'Загрузка' : 'Загрузить'}</span>
               </button>
             </div>
           )}
 
           {showReadOnlyUploadPlaceholder && (
-            <div className={`${styles.uploadCard} ${styles.uploadCardDisabled}`}>
+            <div className={`${styles.uploadCard}`}>
               <button
                 type="button"
-                className={`${styles.uploadButton} ${styles.uploadButtonDisabled}`}
+                className={`${styles.uploadButton}`}
                 disabled
               >
                 <Upload size={24} />
-                <span>Загрузка недоступна</span>
+                <span>Загрузить</span>
               </button>
             </div>
           )}

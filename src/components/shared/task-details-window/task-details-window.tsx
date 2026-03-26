@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { X, Calendar, User, Edit, Trash2, Save, Users, Edit2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-roles';
-import { Task } from '../../../types/task';
+import { Task } from '../../../../types/task';
 import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
 import { DatePicker } from '../../ui/date-picker/date_picker';
 import { useUpdateTask, usePatchTask, useDeleteTask } from '@/hooks/useTasks';
@@ -48,7 +48,7 @@ const PRIORITIES: Record<number, { label: string; className: string }> = {
   3: { label: 'Высокий', className: styles.priorityHigh },
 };
 
-const DEFAULT_PRIORITY = { label: 'Обычный', className: styles.priorityDefault };
+const DEFAULT_PRIORITY = { label: 'Не важно', className: styles.priorityDefault };
 
 const STATUS_CLASSES: Record<string, string> = {
   'Поставлена': styles.statusBadgeYellow,
@@ -561,7 +561,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                     value={formData.priority}
                     onChange={(val) => handleChange('priority', Number(val))}
                     options={[
-                      { value: 0, label: 'Обычный' },
+                      { value: 0, label: 'Не важно' },
                       { value: 1, label: 'Низкий' },
                       { value: 2, label: 'Средний' },
                       { value: 3, label: 'Высокий' }

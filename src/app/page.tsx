@@ -315,7 +315,6 @@ export default function HomePage() {
           <button
             onClick={() => {
               setIsRoleDropdownOpen(!isRoleDropdownOpen);
-              scrollToTop();
             }}
             className={styles.roleDropdownButton}
           >

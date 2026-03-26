@@ -234,7 +234,7 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
   }, [isClosing, onClose]);
 
   const priorityOptions = [
-    { id: '0', label: 'Обычный', color: 'rgba(255, 255, 255, 0.4)' },
+    { id: '0', label: 'Не важно', color: 'rgba(255, 255, 255, 0.4)' },
     { id: '1', label: 'Низкий', color: '#4ade80' },
     { id: '2', label: 'Средний', color: '#fbbf24' },
     { id: '3', label: 'Высокий', color: '#f87171' }
