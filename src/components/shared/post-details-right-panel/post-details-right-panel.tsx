@@ -4,10 +4,10 @@ import { useRef, useEffect, useState } from 'react';
 import {
   Lock, ExternalLink, Trash2, Copy
 } from 'lucide-react';
-import { COMMENT_STATUS, TaskWithComments, CommentData } from './post_details_window';
-import { useUser } from '../../hooks/use-roles';
-import { Gallery } from './gallery';
-import styles from '../styles/PostDetailsRightPanel.module.css';
+import { COMMENT_STATUS, TaskWithComments, CommentData } from '../post-details-window/post-details-window';
+import { useUser } from '@/hooks/use-roles';
+import { Gallery } from '../gallery/gallery';
+import styles from './PostDetailsRightPanel.module.css';
 
 interface PostData {
   post_id: number;

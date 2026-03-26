@@ -1,9 +1,11 @@
 'use client';
 
-import { TaskDetailsButton } from '../ui/task_details_button';
-import { Calendar, User } from 'lucide-react';
-import { Task } from '../../../types/task';
-import styles from '../styles/TaskCard.module.css';
+import { useState } from 'react';
+import { TaskDetailsWindow } from '../task-details-window/task-details-window';
+import { Calendar, Eye, User } from 'lucide-react';
+import { Task } from '../../../../types/task';
+import styles from './TaskCard.module.css';
+import { ActionButton } from '../../ui/action-button/action-button';
 
 interface TaskCardProps {
   task: Task;
@@ -51,8 +53,21 @@ const formatDate = (dateString?: string, allDay?: boolean): string => {
 };
 
 export const TaskCard = ({ task }: TaskCardProps) => {
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+
   const firstTag = task.tags && task.tags.length > 0 ? task.tags[0] : null;
   const isCompleted = task.task_status === 'Выполнена';
+
+  const handleOpenDetails = (taskId: number) => {
+    setSelectedTaskId(taskId);
+    setDetailsModalOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailsModalOpen(false);
+    setSelectedTaskId(null);
+  };
 
   const bgGradient = isCompleted
     ? 'linear-gradient(90deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 255, 0, 0.15) 100%)'
@@ -140,8 +155,21 @@ export const TaskCard = ({ task }: TaskCardProps) => {
       )}
 
       <div className={styles.footer}>
-        <TaskDetailsButton task={task} />
+        <ActionButton
+          variant="base"
+          icon={Eye}
+          onClick={() => handleOpenDetails(task.task_id)}
+        >
+          Подробнее
+        </ActionButton>
       </div>
+      
+      {detailsModalOpen && selectedTaskId && (
+        <TaskDetailsWindow
+          task={task}
+          onClose={handleCloseDetails}
+        />
+      )}
     </div>
   );
 };

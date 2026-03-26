@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback } from 'react';
 import { signOut } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
-import styles from '../styles/LogoutWindow.module.css';
+import styles from './LogoutWindow.module.css';
 
 interface LogoutWindowProps {
   onClose: () => void;

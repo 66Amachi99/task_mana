@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { X } from 'lucide-react';
-import { DatePicker } from '../ui/date_picker';
-import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
+import { DatePicker } from '../../ui/date-picker/date_picker';
+import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
 import { useCreateTask } from '@/hooks/useTasks';
-import styles from '../styles/TaskAddWindow.module.css';
+import styles from './TaskAddWindow.module.css';
 
 interface User {
   user_id: number;

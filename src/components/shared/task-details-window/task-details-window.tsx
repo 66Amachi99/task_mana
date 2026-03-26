@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { X, Calendar, User, Edit, Trash2, Save, Users, Edit2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-roles';
 import { Task } from '../../../types/task';
-import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
-import { DatePicker } from '../ui/date_picker';
+import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
+import { DatePicker } from '../../ui/date-picker/date_picker';
 import { useUpdateTask, usePatchTask, useDeleteTask } from '@/hooks/useTasks';
-import styles from '../styles/TaskDetailsWindow.module.css';
+import styles from './TaskDetailsWindow.module.css';
 
 interface TaskDetailsWindowProps {
   onClose: () => void;

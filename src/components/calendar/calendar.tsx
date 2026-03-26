@@ -17,7 +17,7 @@ import {
 import { ru } from 'date-fns/locale';
 import { CalendarItem, DayStats, CalendarPost, CalendarTask } from '../../../types/calendar';
 import { ROLE_FILTERS } from '@/hooks/use-roles';
-import styles from '../styles/Calendar.module.css';
+import styles from './Calendar.module.css';
 
 interface CalendarProps {
   itemsByDate: Map<string, CalendarItem[]>;

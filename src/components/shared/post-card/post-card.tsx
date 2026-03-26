@@ -1,9 +1,11 @@
 'use client';
 
-import { PostDetailsButton } from '../ui/post_details_button';
-import { getStatusColor } from '../../lib/post-status';
-import { ExternalLink, CheckCircle, Globe, User } from 'lucide-react';
-import styles from '../styles/PostCard.module.css';
+import { useState } from 'react';
+import { PostDetailsWindow } from '../post-details-window/post-details-window';
+import { getStatusColor } from '../../../lib/post-status';
+import { ExternalLink, CheckCircle, Globe, User, Eye } from 'lucide-react';
+import styles from './PostCard.module.css';
+import { ActionButton } from '../../ui/action-button/action-button';
 
 interface PostWithRelations {
   post_id: number;
@@ -85,10 +87,23 @@ const TASK_DEFINITIONS = [
 ] as const;
 
 export function PostCard({ post }: PostCardProps) {
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+
   if (!post) return null;
 
   const firstTag = post.tags && post.tags.length > 0 ? post.tags[0] : null;
   const isCompleted = post.post_status === 'Завершен';
+  
+  const handleOpenDetails = (postId: number) => {
+    setSelectedPostId(postId);
+    setDetailsModalOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailsModalOpen(false);
+    setSelectedPostId(null);
+  };
   
   const bgGradient = isCompleted
     ? 'linear-gradient(90deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 255, 0, 0.15) 100%)'
@@ -272,18 +287,30 @@ export function PostCard({ post }: PostCardProps) {
 
       <div className={styles.footer}>
         {post.tz_link && (
-          <button
+          <ActionButton
+            variant="base"
             onClick={(e) => handleTzLinkClick(post.tz_link, e)}
-            className={styles.Button}
-            title="Открыть техническое задание"
+            icon={ExternalLink}
           >
-            <ExternalLink className="w-4 h-4" />
             ТЗ
-          </button>
+          </ActionButton>
         )}
         
-        <PostDetailsButton post={post} />
+        <ActionButton
+          variant="base"
+          icon={Eye}
+          onClick={() => handleOpenDetails(post.post_id)}
+        >
+          Подробнее
+        </ActionButton>
       </div>
+      
+      {detailsModalOpen && selectedPostId && (
+        <PostDetailsWindow
+          postId={selectedPostId}
+          onClose={handleCloseDetails}
+        />
+      )}
     </div>
   );
 }

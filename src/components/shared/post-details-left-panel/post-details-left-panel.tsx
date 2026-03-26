@@ -2,13 +2,13 @@
 
 import { useMemo } from 'react';
 import { CheckCircle, Globe, Edit2, X, Save, Trash2 } from 'lucide-react';
-import { SOCIAL_CONFIG, TASK_CONFIG } from './post_details_window';
-import type { SocialLinks, Tag, PostData } from './post_details_window';
-import { DatePicker } from '../ui/date_picker';
-import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
-import styles from '../styles/PostDetailsLeftPanel.module.css';
+import { SOCIAL_CONFIG, TASK_CONFIG } from '../post-details-window/post-details-window';
+import type { SocialLinks, Tag, PostData } from '../post-details-window/post-details-window';
+import { DatePicker } from '../../ui/date-picker/date_picker';
+import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
+import styles from './PostDetailsLeftPanel.module.css';
 
-// ─── Типы ────────────────────────────────────────────────────────────────────
+import { ActionButton } from '../../ui/action-button/action-button';
 
 interface TagSelectorProps {
   selectedTags: Tag[];
@@ -429,13 +429,13 @@ export const PostDetailsLeftPanel = ({
             </p>
           </div>
           {canUnapprove && !isEditing && (
-            <button
+            <ActionButton
               onClick={onUnapprove}
-              className={`${styles.button} ${styles.buttonGray}`}
+              variant="gray"
               disabled={isActionLoading}
             >
               Снять согласование
-            </button>
+            </ActionButton>
           )}
         </div>
       )}
@@ -443,76 +443,75 @@ export const PostDetailsLeftPanel = ({
       {/* Кнопки действий */}
       <div className={styles.actions}>
         {!isEditing && (
-          <button
+          <ActionButton
             onClick={onSaveChanges}
             disabled={isDisabled || !hasChanges}
-            className={`${styles.button} ${styles.buttonBlue}`}
+            variant="base"
+            icon={Save}
           >
-            <Save className="w-4 h-4" />
             Сохранить
-          </button>
+          </ActionButton>
         )}
 
         {canEditPost && !isEditing && (
-          <button
+          <ActionButton
             onClick={onEditStart}
-            className={`${styles.button} ${styles.buttonGray}`}
+            variant="gray"
+            icon={Edit2}
           >
-            <Edit2 className="w-4 h-4" />
             Изменить
-          </button>
+          </ActionButton>
         )}
 
         {isEditing && (
           <>
-            <button
+            <ActionButton
               onClick={onSave}
               disabled={isSaving}
-              className={`${styles.button} ${styles.buttonGreen}`}
+              variant="green"
+              icon={Save}
             >
-              <Save className="w-4 h-4" />
               Сохранить
-            </button>
-            <button
+            </ActionButton>
+            <ActionButton
               onClick={onEditCancel}
-              className={`${styles.button} ${styles.buttonLightGray}`}
+              variant="lightGray"
+              icon={X}
             >
-              <X className="w-4 h-4" />
               Отмена
-            </button>
+            </ActionButton>
           </>
         )}
 
         {canApprove && !approvedBy && !isEditing && (
-          <button
+          <ActionButton
             onClick={onApprove}
-            className={`${styles.button} ${styles.buttonGreen}`}
+            variant="green"
+            icon={CheckCircle}
           >
-            <CheckCircle className="w-4 h-4" />
             Согласовать
-          </button>
+          </ActionButton>
         )}
 
         {canPublish && !isEditing && (
-          <button
+          <ActionButton
             onClick={onPublishToggle}
-            className={`${styles.button} ${
-              isPublished ? styles.publishButtonPublished : styles.publishButtonUnpublished
-            }`}
+            variant="publish"
+            icon={Globe}
+            isPublished={isPublished}
           >
-            <Globe className="w-4 h-4" />
             {isPublished ? 'Снять с публикации' : 'Опубликовать'}
-          </button>
+          </ActionButton>
         )}
 
         {canDelete && !isEditing && (
-          <button
+          <ActionButton
             onClick={onDelete}
-            className={`${styles.button} ${styles.buttonRed}`}
+            variant="red"
+            icon={Trash2}
           >
-            <Trash2 className="w-4 h-4" />
             Удалить
-          </button>
+          </ActionButton>
         )}
       </div>
     </div>

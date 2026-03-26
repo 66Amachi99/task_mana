@@ -1,0 +1,65 @@
+.galleryContainer {
+  width: 100%;
+}
+
+.taskHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  min-height: 27px;
+}
+
+.taskLabel {
+  font-weight: 500;
+  color: #ffffff;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lockIcon {
+  width: 1rem;
+  height: 1rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.downloadButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  color: #ffffff;
+  font-size: 14px;
+  height: 27px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  gap: 4px;
+  padding: 0 12px;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.downloadButton span {
+  margin-left: 2px;
+}
+
+.downloadButton:hover:not(:disabled) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.20) 100%);
+}
+
+.downloadButton:active:not(:disabled) {
+  transform: scale(0.96);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.3) 100%);
+}
+
+.downloadButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

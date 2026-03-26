@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { Search, X } from 'lucide-react';
-import { DatePicker } from '../ui/date_picker';
-import styles from '../styles/PostAddWindow.module.css';
-import { AutoResizeTextarea } from '../ui/auto_resize_textarea';
+import { DatePicker } from '../../ui/date-picker/date_picker';
+import styles from './PostAddWindow.module.css';
+import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
 import { useCreatePost } from '@/hooks/usePosts';
 
 interface User {
@@ -446,7 +446,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
             )}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div>
             <DatePicker
               value={deadline}
               onChange={setDeadline}

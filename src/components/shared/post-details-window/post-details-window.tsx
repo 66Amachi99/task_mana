@@ -2,15 +2,15 @@
 
 import { useState, useEffect, useCallback, useRef, useLayoutEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
-import { useUser } from '../../hooks/use-roles';
-import { PostDetailsLeftPanel } from './post_details_left_panel';
-import { PostDetailsRightPanel } from './post_details_right_panel';
+import { useUser } from '@/hooks/use-roles';
+import { PostDetailsLeftPanel } from '../post-details-left-panel/post-details-left-panel';
+import { PostDetailsRightPanel } from '../post-details-right-panel/post-details-right-panel';
 import { usePost, useUpdatePost, useSilentUpdatePost, usePatchPost, useDeletePost } from '@/hooks/usePosts';
 import { useAddComment, useUpdateCommentStatus, useDeleteComment } from '@/hooks/usePosts';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useGalleryStore } from '@/store/useGalleryStore';
-import styles from '../styles/PostDetailsWindow.module.css';
+import styles from './PostDetailsWindow.module.css';
 
 export const TASK_CONFIG = [
   { id: 1, name: 'mini_video_smm', label: 'Мини-видео', needsKey: 'post_needs_mini_video_smm', linkKey: 'post_done_link_mini_video_smm', role: 'smm' },

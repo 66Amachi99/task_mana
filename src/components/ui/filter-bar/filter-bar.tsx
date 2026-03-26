@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { ROLE_FILTERS } from '@/hooks/use-roles';
-import styles from '../styles/FilterBar.module.css';
+import styles from './FilterBar.module.css';
 
 type ViewMode = 'all' | 'posts' | 'tasks';
 

@@ -1,21 +1,21 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Header } from '@/components/layout/Header/Header';
+import { Header } from '@/components/header/header';
 import { Calendar } from '../../components/calendar/calendar';
-import { PostDetailsWindow } from '@/components/shared/post_details_window';
-import { TaskDetailsWindow } from '@/components/shared/task_details_window';
-import { PostAddWindow } from '@/components/shared/post_add_window';
-import { TaskAddWindow } from '@/components/shared/task_add_window';
+import { PostDetailsWindow } from '@/components/shared/post-details-window/post-details-window';
+import { TaskDetailsWindow } from '@/components/shared/task-details-window/task-details-window';
+import { PostAddWindow } from '@/components/shared/post-add-window/post-add-window';
+import { TaskAddWindow } from '@/components/shared/task-add-window/task-add-window';
 import { format } from 'date-fns';
 import { useUser } from '../../hooks/use-roles';
 import { CalendarPost, CalendarTask, CalendarItem } from '../../../types/calendar';
 import { X } from 'lucide-react';
 import { ru } from 'date-fns/locale';
-import styles from '../../components/styles/CalendarPage.module.css';
+import styles from './CalendarPage.module.css';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
-import { FilterBar } from '@/components/ui/filter_bar';
+import { FilterBar } from '@/components/ui/filter-bar/filter-bar';
 import { ROLE_FILTERS } from '@/hooks/use-roles';
 
 type CalendarViewMode = 'all' | 'posts' | 'tasks';

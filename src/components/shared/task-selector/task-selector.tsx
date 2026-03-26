@@ -1,5 +1,5 @@
 'use client';
-import styles from '../styles/TaskSelector.module.css';
+import styles from './TaskSelector.module.css';
 import clsx from 'clsx';
 
 interface TaskSelectorProps {

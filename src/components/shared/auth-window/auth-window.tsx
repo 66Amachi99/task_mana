@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { signIn } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
-import styles from '../styles/AuthWindow.module.css';
+import styles from './AuthWindow.module.css';
 
 interface AuthWindowProps {
   onClose: () => void;

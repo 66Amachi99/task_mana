@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { PostCard } from '../components/posts/post-card';
-import { TaskCard } from '../components/tasks/task_card';
-import { Header } from '../components/layout/Header/Header';
+import { PostCard } from '../components/shared/post-card/post-card';
+import { TaskCard } from '../components/shared/task-card/task-card';
+import { Header } from '../components/header/header';
 import { useUser } from '../hooks/use-roles';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';

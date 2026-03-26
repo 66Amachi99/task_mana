@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { ImageItem } from '@/store/useGalleryStore';
-import styles from '../styles/FileUploader.module.css';
+import styles from './FileUploader.module.css';
 
 export interface PendingFile {
   file: File;

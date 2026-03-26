@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/hooks/use-roles';
-import { AuthWindow } from '@/components/shared/auth_window';
-import { LogoutWindow } from '@/components/shared/logout_window';
-import { PostAddWindow } from '@/components/shared/post_add_window';
-import { TaskAddWindow } from '@/components/shared/task_add_window';
+import { AuthWindow } from '@/components/shared/auth-window/auth-window';
+import { LogoutWindow } from '@/components/shared/logout-window/logout-window';
+import { PostAddWindow } from '@/components/shared/post-add-window/post-add-window';
+import { TaskAddWindow } from '@/components/shared/task-add-window/task-add-window';
 import { User } from 'lucide-react';
-import styles from '../../styles/Header.module.css';
+import styles from './Header.module.css';
 
 interface HeaderProps {
   onOpenPostModal?: (initialDate?: Date) => void;
