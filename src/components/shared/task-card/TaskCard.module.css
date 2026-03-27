@@ -92,7 +92,7 @@
 .description {
   font-size: 16px;
   color: #ffffff80;
-  margin-top: 0.5rem;
+  padding: 6px 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -109,7 +109,8 @@
 .statusRow {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
@@ -118,6 +119,7 @@
   display: flex;
   align-items: center;  
   padding: 8px 10px;
+  margin-bottom: 6px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffffcc;
@@ -247,10 +249,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  margin-top: 1rem;
 }
 
 @media (min-width: 768px) {
   .footer {
-    margin-top: 1.5rem;
+   
   }
 }

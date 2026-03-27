@@ -10,10 +10,21 @@
   min-height: 27px;
 }
 
+.taskLabelWithIcon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.taskIcon {
+  width: 24px;
+  height: 24px;
+}
+
 .taskLabel {
-  font-weight: 500;
+  font-weight: 400;
   color: #ffffff;
-  font-size: 1rem;
+  font-size: 20px;
   display: flex;
   align-items: center;
   gap: 0.25rem;

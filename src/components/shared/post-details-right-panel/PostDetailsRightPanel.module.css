@@ -62,9 +62,9 @@
 }
 
 .taskLabel {
-  font-weight: 500;
+  font-weight: 400;
   color: #ffffff;
-  font-size: 1rem;
+  font-size: 20px;
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -173,10 +173,10 @@
 }
 
 .commentsSection {
-  margin-top: 1rem;
+  margin-top: 6px;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 6px;
 }
 
 .commentRed {
@@ -281,6 +281,17 @@
   align-items: center;
   margin-bottom: 8px;
   min-height: 27px;
+}
+
+.taskLabelWithIcon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.taskIcon {
+  width: 24px;
+  height: 24px;
 }
 
 .galleryContainer {

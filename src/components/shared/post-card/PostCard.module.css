@@ -1,7 +1,7 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 1rem; 
+  gap: 1rem;
 }
 
 @media (min-width: 768px) {
@@ -20,37 +20,47 @@
 
 @media (min-width: 768px) {
   .card {
-    padding: 1.5rem; /* md:p-6 */
+    padding: 1.5rem;
+    /* md:p-6 */
   }
 }
 
 .cardHeader {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem; /* gap-3 */
-  margin-bottom: 1rem; /* mb-4 */
+  gap: 0.75rem;
+  /* gap-3 */
+  margin-bottom: 1rem;
+  /* mb-4 */
 }
 
 @media (min-width: 768px) {
   .cardHeader {
-    flex-direction: row; /* md:flex-row */
-    justify-content: space-between; /* md:justify-between */
-    align-items: flex-start; /* md:items-start */
-    gap: 1rem; /* md:gap-4 */
+    flex-direction: row;
+    /* md:flex-row */
+    justify-content: space-between;
+    /* md:justify-between */
+    align-items: flex-start;
+    /* md:items-start */
+    gap: 1rem;
+    /* md:gap-4 */
   }
 }
 
 .cardTitleBlock {
   flex: 1;
-  min-width: 0; /* min-w-0 */
+  min-width: 0;
+  /* min-w-0 */
 }
 
 .titleRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.5rem;
+  /* gap-2 */
   flex-wrap: wrap;
-  margin-bottom: 0.5rem; /* mb-2 */
+  margin-bottom: 0.5rem;
+  /* mb-2 */
 }
 
 .title {
@@ -64,29 +74,34 @@
 
 @media (min-width: 768px) {
   .title {
-    font-size: 1.25rem; /* md:text-xl */
+    font-size: 1.25rem;
+    /* md:text-xl */
   }
 }
 
 .iconGroup {
   display: flex;
   align-items: center;
-  gap: 0.25rem; /* gap-1 */
+  gap: 0.25rem;
+  /* gap-1 */
 }
 
 .iconGreen {
-  color: #16a34a; /* text-green-600 */
+  color: #16a34a;
+  /* text-green-600 */
 }
 
 .iconBlue {
-  color: #2563eb; /* text-blue-600 */
+  color: #2563eb;
+  /* text-blue-600 */
 }
 
 .socialIcons {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  margin-left: 0.25rem; /* ml-1 */
+  margin-left: 0.25rem;
+  /* ml-1 */
 }
 
 .socialIconImg {
@@ -97,7 +112,7 @@
 .description {
   font-size: 16px;
   color: #ffffff80;
-  margin-top: 0.5rem;
+  padding: 6px 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -107,23 +122,28 @@
 
 @media (min-width: 768px) {
   .description {
-    font-size: 1rem; /* md:text-base */
+    font-size: 1rem;
+    /* md:text-base */
     -webkit-line-clamp: 3;
   }
 }
 
 .statusRow {
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem; /* gap-2 */
-  margin-top: 0.75rem; /* mt-3 */
+  align-items: flex-start;
+  gap: 0.5rem;
+  /* gap-2 */
+  margin-top: 0.75rem;
+  /* mt-3 */
 }
 
 .statusBadge {
   display: flex;
-  align-items: center;  
+  align-items: center;
   padding: 8px 10px;
+  margin-bottom: 6px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffffcc;
@@ -135,20 +155,23 @@
 
 @media (min-width: 768px) {
   .statusBadge {
-    padding: 0.25rem 0.75rem; /* md:px-3 */
-    font-size: 16px; /* md:text-sm */
+    padding: 0.25rem 0.75rem;
+    /* md:px-3 */
+    font-size: 16px;
+    /* md:text-sm */
   }
 }
 
 .tagsContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem; /* gap-1 */
+  gap: 0.25rem;
+  /* gap-1 */
 }
 
 .tag {
   display: flex;
-  align-items: center;  
+  align-items: center;
   padding: 8px 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffffcc;
@@ -161,28 +184,45 @@
 
 .dateColumn {
   text-align: left;
-  font-size: 0.75rem; /* text-xs */
+  font-size: 0.75rem;
+  /* text-xs */
   flex-shrink: 0;
 }
 
 @media (min-width: 768px) {
   .dateColumn {
-    text-align: right; /* md:text-right */
-    font-size: 16px; /* md:text-sm */
+    text-align: right;
+    /* md:text-right */
+    font-size: 16px;
+    /* md:text-sm */
   }
 }
 
-.dateText {
+.dateRow {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   color: #ffffff80;
 }
 
-.dateText + .dateText {
-  margin-top: 0.25rem; /* mt-1 */
+.dateRow+.dateRow {
+  margin-top: 0.25rem;
+  /* mt-1 */
 }
 
-.responsibleBlock {
-
+@media (min-width: 768px) {
+  .dateRow {
+    justify-content: flex-end;
+  }
 }
+
+.dateIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+  color: #9ca3af;
+}
+
+.responsibleBlock {}
 
 .responsibleRow {
   display: flex;
@@ -222,7 +262,8 @@
 
 @media (min-width: 768px) {
   .feedbackText {
-    font-size: 16px; /* md:text-sm */
+    font-size: 16px;
+    /* md:text-sm */
   }
 }
 
@@ -231,7 +272,8 @@
 }
 
 .tasksSection {
-  margin-top: 1rem; /* mt-4 */
+  margin-top: 1rem;
+  /* mt-4 */
 }
 
 .tasksTitle {
@@ -243,25 +285,29 @@
 
 @media (min-width: 768px) {
   .tasksTitle {
-    font-size: 1.125rem; /* md:text-lg */
+    font-size: 1.125rem;
+    /* md:text-lg */
   }
 }
 
 .tasksGrid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.5rem;
+  /* gap-2 */
 }
 
 @media (min-width: 640px) {
   .tasksGrid {
-    grid-template-columns: repeat(2, 1fr); /* sm:grid-cols-2 */
+    grid-template-columns: repeat(2, 1fr);
+    /* sm:grid-cols-2 */
   }
 }
 
 @media (min-width: 1024px) {
   .tasksGrid {
-    grid-template-columns: repeat(3, 1fr); /* lg:grid-cols-3 */
+    grid-template-columns: repeat(3, 1fr);
+    /* lg:grid-cols-3 */
   }
 }
 
@@ -281,41 +327,51 @@
 }
 
 .taskName {
-  font-size: 0.75rem; /* text-xs */
+  font-size: 0.75rem;
+  /* text-xs */
   font-weight: 500;
 }
 
 @media (min-width: 768px) {
   .taskName {
-    font-size: 16px; /* md:text-sm */
+    font-size: 16px;
+    /* md:text-sm */
   }
 }
 
 .taskStatus {
-  font-size: 0.75rem; /* text-xs */
-  padding: 0.25rem 0.5rem; /* px-2 py-1 */
-  border-radius: 0.25rem; /* rounded */
+  font-size: 0.75rem;
+  /* text-xs */
+  padding: 0.25rem 0.5rem;
+  /* px-2 py-1 */
+  border-radius: 0.25rem;
+  /* rounded */
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
-.taskStatusCompleted {
+.taskStatusIcon {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
-.taskStatusPending {
-}
+.taskStatusCompleted {}
+
+.taskStatusPending {}
 
 .footer {
-  margin-top: 1rem; /* mt-4 */
-  padding-top: 1rem; /* pt-4 */
+  margin-top: 1rem;
+  /* mt-4 */
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.5rem;
+  /* gap-2 */
 }
 
 @media (min-width: 768px) {
-  .footer {
-    margin-top: 1.5rem; /* md:mt-6 */
-  }
+  .footer {}
 }
 
 .Button {

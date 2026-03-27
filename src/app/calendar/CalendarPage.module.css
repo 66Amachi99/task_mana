@@ -128,8 +128,21 @@
 
 .dateTitle {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #ffffff;
+}
+
+.weekdayTitle {
+  font-size: 2rem;
+  font-weight: 400;
+  opacity: 0.6;
+  color: #ffffff;
+  margin-left: 0.5rem;
+}
+
+.dateContainer {
+  display: flex;
+  align-items: baseline;
 }
 
 .statsWrapper {
@@ -207,8 +220,8 @@
 }
 
 .filterIcon {
-  width: 1rem;
-  height: 1rem;
+  width: 20px;
+  height: 20px;
 }
 
 /* Список элементов в сайдбаре */

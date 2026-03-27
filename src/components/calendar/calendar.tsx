@@ -31,6 +31,8 @@ interface CalendarProps {
   onRoleFilterChange: (filter: string | null) => void;
   handlePostsClick: () => void;
   handleTasksClick: () => void;
+  posts: CalendarPost[];
+  tasks: CalendarTask[];
 }
 
 const getDayOfWeekShort = (date: Date): string => {
@@ -41,8 +43,15 @@ const getDayOfWeekShort = (date: Date): string => {
 const getDayStats = (items: CalendarItem[]): DayStats => {
   const posts = items.filter(item => item.type === 'post');
   const tasks = items.filter(item => item.type === 'task');
-  const postsCompleted = posts.filter(post => (post as CalendarPost).post_status === 'Завершен').length;
-  const tasksCompleted = tasks.filter(task => (task as CalendarTask).task_status === 'Выполнена').length;
+
+  const postsCompleted = posts.filter(
+    post => (post as CalendarPost).post_status === 'Завершен'
+  ).length;
+
+  const tasksCompleted = tasks.filter(
+    task => (task as CalendarTask).task_status === 'Выполнена'
+  ).length;
+
   return {
     total: items.length,
     completed: postsCompleted + tasksCompleted,
@@ -65,6 +74,8 @@ export const Calendar: React.FC<CalendarProps> = ({
   onRoleFilterChange,
   handlePostsClick,
   handleTasksClick,
+  posts,
+  tasks,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -76,6 +87,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         setIsRoleDropdownOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -91,7 +103,10 @@ export const Calendar: React.FC<CalendarProps> = ({
   const daysAfter = endDayOfWeek === 0 ? 0 : 7 - endDayOfWeek;
   const lastDisplayDate = addDays(monthEnd, daysAfter);
 
-  const displayDays = eachDayOfInterval({ start: firstDisplayDate, end: lastDisplayDate });
+  const displayDays = eachDayOfInterval({
+    start: firstDisplayDate,
+    end: lastDisplayDate,
+  });
 
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -100,22 +115,16 @@ export const Calendar: React.FC<CalendarProps> = ({
   const nextMonth = addMonths(currentMonth, 1);
 
   const monthlyCounts = useMemo(() => {
-    let postsCount = 0;
-    let tasksCount = 0;
+    const postsCount = posts.filter(post =>
+      isSameMonth(new Date(post.post_deadline), currentMonth)
+    ).length;
 
-    for (const [dateStr, items] of itemsByDate.entries()) {
-      const date = new Date(`${dateStr}T00:00:00`);
-
-      if (!isSameMonth(date, currentMonth)) continue;
-
-      for (const item of items) {
-        if (item.type === 'post') postsCount += 1;
-        if (item.type === 'task') tasksCount += 1;
-      }
-    }
+    const tasksCount = tasks.filter(task =>
+      isSameMonth(new Date(task.end_time), currentMonth)
+    ).length;
 
     return { postsCount, tasksCount };
-  }, [itemsByDate, currentMonth]);
+  }, [posts, tasks, currentMonth]);
 
   const getItemsForDay = (day: Date): CalendarItem[] => {
     const dateStr = format(day, 'yyyy-MM-dd');
@@ -138,6 +147,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         return task.icon;
       }
     }
+
     return null;
   };
 
@@ -159,13 +169,18 @@ export const Calendar: React.FC<CalendarProps> = ({
           <div className={styles.filterButtons}>
             <button
               onClick={handlePostsClick}
-              className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : styles.filterButtonInactive}`}
+              className={`${styles.filterButton} ${
+                showPosts ? styles.filterButtonActive : styles.filterButtonInactive
+              }`}
             >
               Постов {monthlyCounts.postsCount}
             </button>
+
             <button
               onClick={handleTasksClick}
-              className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : styles.filterButtonInactive}`}
+              className={`${styles.filterButton} ${
+                showTasks ? styles.filterButtonActive : styles.filterButtonInactive
+              }`}
             >
               Задач {monthlyCounts.tasksCount}
             </button>
@@ -184,20 +199,33 @@ export const Calendar: React.FC<CalendarProps> = ({
                 />
               </span>
             </button>
+
             {isRoleDropdownOpen && (
               <div className={styles.roleDropdownMenu}>
                 <button
-                  onClick={() => { onRoleFilterChange(null); setIsRoleDropdownOpen(false); }}
-                  className={`${styles.roleMenuItem} ${!selectedRoleFilter ? styles.roleMenuItemActive : ''}`}
+                  onClick={() => {
+                    onRoleFilterChange(null);
+                    setIsRoleDropdownOpen(false);
+                  }}
+                  className={`${styles.roleMenuItem} ${
+                    !selectedRoleFilter ? styles.roleMenuItemActive : ''
+                  }`}
                 >
                   Все посты
                 </button>
+
                 <div className={styles.menuDivider}></div>
+
                 {ROLE_FILTERS.map((role) => (
                   <button
                     key={role.id}
-                    onClick={() => { onRoleFilterChange(role.id); setIsRoleDropdownOpen(false); }}
-                    className={`${styles.roleMenuItem} ${selectedRoleFilter === role.id ? styles.roleMenuItemActive : ''}`}
+                    onClick={() => {
+                      onRoleFilterChange(role.id);
+                      setIsRoleDropdownOpen(false);
+                    }}
+                    className={`${styles.roleMenuItem} ${
+                      selectedRoleFilter === role.id ? styles.roleMenuItemActive : ''
+                    }`}
                   >
                     <div className="flex items-center gap-2">
                       <span className={styles.roleIcon}>
@@ -254,6 +282,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                 <span className={styles.dayNumber}>
                   {dayNumber} <span className={styles.dayWeekday}>{dayOfWeek}</span>
                 </span>
+
                 {filteredItems.length > 0 && (
                   <span
                     className={`${styles.dayStats} ${
@@ -270,7 +299,8 @@ export const Calendar: React.FC<CalendarProps> = ({
               <div className={`${styles.itemsContainer} ${styles.scrollable}`}>
                 {filteredItems.map((item, idx) => {
                   const isPost = item.type === 'post';
-                  const bgColor = item.tags && item.tags.length > 0 ? item.tags[0].color : undefined;
+                  const bgColor =
+                    item.tags && item.tags.length > 0 ? item.tags[0].color : undefined;
                   const postIcon = isPost ? getFirstTaskIcon(item as CalendarPost) : null;
 
                   return (
@@ -281,7 +311,11 @@ export const Calendar: React.FC<CalendarProps> = ({
                       title={isPost ? item.post_title : item.title}
                       onClick={(e) => {
                         e.stopPropagation();
-                        isPost ? onPostClick?.(item as CalendarPost) : onTaskClick?.(item as CalendarTask);
+                        if (isPost) {
+                          onPostClick?.(item as CalendarPost);
+                        } else {
+                          onTaskClick?.(item as CalendarTask);
+                        }
                       }}
                     >
                       {postIcon ? (

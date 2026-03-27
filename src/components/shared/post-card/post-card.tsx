@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { PostDetailsWindow } from '../post-details-window/post-details-window';
 import { getStatusColor } from '../../../lib/post-status';
-import { ExternalLink, CheckCircle, Globe, User, Eye } from 'lucide-react';
+import { ExternalLink, CheckCircle, Globe, User, Eye, Clock, Calendar } from 'lucide-react';
 import type { CalendarPost } from '@/types';
 import styles from './PostCard.module.css';
 import { ActionButton } from '../../ui/action-button/action-button';
@@ -145,9 +145,9 @@ export function PostCard({ post }: PostCardProps) {
           </p>
           
           <div className={styles.statusRow}>
-            <span className={`${styles.statusBadge} ${statusColor}`}>
+            <div className={`${styles.statusBadge} ${statusColor}`}>
               {postStatus}
-            </span>
+            </div>
             
             {post.tags && post.tags.length > 0 && (
               <div className={styles.tagsContainer}>
@@ -167,15 +167,17 @@ export function PostCard({ post }: PostCardProps) {
         </div>
         
         <div className={styles.dateColumn}>
-          <p className={styles.dateText}>
-            Создан: {post.post_date ? new Date(post.post_date).toLocaleDateString('ru-RU') : 'Не указана'}
-          </p>
-          <p className={styles.dateText}>
-            Дедлайн: {post.post_deadline ? new Date(post.post_deadline).toLocaleDateString('ru-RU') : 'Не указан'}
-          </p>
+          <div className={styles.dateRow}>
+            <Calendar className={styles.dateIcon} />
+            <span>Создан: {post.post_date ? new Date(post.post_date).toLocaleDateString('ru-RU') : 'Не указана'}</span>
+          </div>
+          <div className={styles.dateRow}>
+            <Calendar className={styles.dateIcon} />
+            <span>Дедлайн: {post.post_deadline ? new Date(post.post_deadline).toLocaleDateString('ru-RU') : 'Не указан'}</span>
+          </div>
         </div>
       </div>
-
+      
       {post.user && (
         <div className={styles.responsibleBlock}>
           <div className={styles.responsibleRow}>
@@ -212,7 +214,11 @@ export function PostCard({ post }: PostCardProps) {
                   <span className={`${styles.taskStatus} ${
                     task.isCompleted ? styles.taskStatusCompleted : styles.taskStatusPending
                   }`}>
-                    {task.isCompleted ? 'Выполнено' : 'Ожидает выполнения'}
+                    {task.isCompleted ? (
+                      <><CheckCircle className={styles.taskStatusIcon} /> Выполнено</>
+                    ) : (
+                      <><Clock className={styles.taskStatusIcon} /> Ожидает</>
+                    )}
                   </span>
                 </div>
               </div>

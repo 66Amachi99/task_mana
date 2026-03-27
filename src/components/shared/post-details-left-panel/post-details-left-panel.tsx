@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { CheckCircle, Globe, Edit2, X, Save, Trash2, ExternalLink } from 'lucide-react';
 import { SOCIAL_CONFIG, TASK_CONFIG } from '../post-details-window/post-details-window';
+import { getStatusColor } from '../../../lib/post-status';
 import type { SocialLinks, Tag, PostData } from '../post-details-window/post-details-window';
 import { DatePicker } from '../../ui/date-picker/date_picker';
 import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
@@ -248,6 +249,9 @@ export const PostDetailsLeftPanel = ({
     [selectedTasks],
   );
 
+  const postStatus = post.post_status || 'В работе';
+  const statusColor = getStatusColor(postStatus);
+
   return (
     <div className={styles.panel}>
       {/* Дедлайн */}
@@ -275,6 +279,13 @@ export const PostDetailsLeftPanel = ({
       ) : (
         <h2 className={styles.titleDisplay}>{editedTitle}</h2>
       )}
+
+      {/* Статус поста */}
+      <div className={styles.statusRow}>
+        <div className={`${styles.statusBadge} ${statusColor}`}>
+          {postStatus}
+        </div>
+      </div>
 
       {/* Теги */}
       {isEditing ? (

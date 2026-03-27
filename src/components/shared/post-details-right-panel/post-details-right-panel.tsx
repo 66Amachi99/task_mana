@@ -40,6 +40,16 @@ interface PostDetailsRightPanelProps {
 
 const fileSupportTaskIds = [5, 6, 7];
 
+const TASK_ICONS: Record<number, string> = {
+  1: '/icons/mini_video_icon.svg',
+  2: '/icons/video_icon.svg',
+  3: '/icons/text_icon.svg',
+  4: '/icons/photogallery_icon.svg',
+  5: '/icons/coverphoto_icon.svg',
+  6: '/icons/photocards_icon.svg',
+  7: '/icons/mini_photogallery.svg',
+};
+
 const AutoResizeTextarea = ({
   value,
   onChange,
@@ -286,6 +296,7 @@ export const PostDetailsRightPanel = ({
                     multiple={task.id !== 5}
                     taskId={task.id}
                     taskLabel={task.label}
+                    taskIcon={TASK_ICONS[task.id]}
                     onFilesSelected={onFilesSelected}
                     onDelete={(taskId, filePath) => onDeleteFile(taskId, folderPath!, filePath)}
                     onRemovePendingFile={onRemovePendingFile}
@@ -298,9 +309,18 @@ export const PostDetailsRightPanel = ({
                     {task.role === 'text' ? (
                       <>
                         <div className={styles.taskHeader}>
-                          <h4 className={styles.taskLabel}>
-                            {task.label}
-                          </h4>
+                          <div className={styles.taskLabelWithIcon}>
+                            {TASK_ICONS[task.id] && (
+                              <img
+                                src={TASK_ICONS[task.id]}
+                                alt={task.label}
+                                className={styles.taskIcon}
+                              />
+                            )}
+                            <h4 className={styles.taskLabel}>
+                              {task.label}
+                            </h4>
+                          </div>
 
                           {task.link && (
                             <ActionButton
@@ -326,9 +346,18 @@ export const PostDetailsRightPanel = ({
                     ) : (
                       <>
                         <div className={styles.taskHeader}>
-                          <h4 className={styles.taskLabel}>
-                            {task.label}
-                          </h4>
+                          <div className={styles.taskLabelWithIcon}>
+                            {TASK_ICONS[task.id] && (
+                              <img
+                                src={TASK_ICONS[task.id]}
+                                alt={task.label}
+                                className={styles.taskIcon}
+                              />
+                            )}
+                            <h4 className={styles.taskLabel}>
+                              {task.label}
+                            </h4>
+                          </div>
 
                           {hasLink && (
                             <div className={styles.linkContainer}>

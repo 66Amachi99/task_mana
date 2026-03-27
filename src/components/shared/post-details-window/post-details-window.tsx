@@ -16,7 +16,7 @@ import type { SocialKey, SocialLinks } from '@/types/config';
 import styles from './PostDetailsWindow.module.css';
 
 export { TASK_CONFIG, SOCIAL_CONFIG, FILE_SUPPORT_TASK_IDS, COMMENT_STATUS };
-export type { SocialKey, SocialLinks };
+  export type { SocialKey, SocialLinks, Tag };
 
 export interface TaskWithComments {
   id: number;

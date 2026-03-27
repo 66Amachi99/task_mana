@@ -13,6 +13,7 @@ interface GalleryProps {
   multiple?: boolean;
   taskId: number;
   taskLabel: string;
+  taskIcon?: string;
   onFilesSelected?: (taskId: number, files: File[]) => void | Promise<void>;
   onDelete?: (taskId: number, filePath: string) => Promise<void>;
   onRemovePendingFile?: (taskId: number, fileName: string) => void;
@@ -27,6 +28,7 @@ export const Gallery = ({
   multiple = true,
   taskId,
   taskLabel,
+  taskIcon,
   onFilesSelected,
   onDelete,
   onRemovePendingFile,
@@ -88,9 +90,14 @@ export const Gallery = ({
   return (
     <div className={styles.galleryContainer}>
       <div className={styles.taskHeader}>
-        <h4 className={styles.taskLabel}>
-          {taskLabel}
-        </h4>
+        <div className={styles.taskLabelWithIcon}>
+          {taskIcon && (
+            <img src={taskIcon} alt={taskLabel} className={styles.taskIcon} />
+          )}
+          <h4 className={styles.taskLabel}>
+            {taskLabel}
+          </h4>
+        </div>
 
         {cachedFiles.length > 0 && (
           <button

@@ -108,6 +108,28 @@
   flex-wrap: wrap;
 }
 
+.statusBadge {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffffcc;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  height: 27px;
+}
+
+/* Цвета статуса (адаптация из getStatusColor) */
+.statusBadge.bg-green-100 {
+  color: #16a34a;
+}
+
+.statusBadge.bg-yellow-100 {
+  color: #ca8a04;
+}
+
 .statusLabel {
   font-size: 16px;
   color: #6b7280;

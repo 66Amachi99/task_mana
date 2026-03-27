@@ -344,9 +344,8 @@ export default function CalendarPage() {
 
       <main className={styles.main}>
         <div className={styles.contentWrapper}>
-          <div className={`${styles.calendarWrapper} ${
-            isSidebarOpen ? styles.calendarWrapperWithSidebar : styles.calendarWrapperFull
-          }`}>
+          <div className={`${styles.calendarWrapper} ${isSidebarOpen ? styles.calendarWrapperWithSidebar : styles.calendarWrapperFull
+            }`}>
             <div className={styles.calendarContainer}>
               <Calendar
                 itemsByDate={calendarItemsByDate}
@@ -360,6 +359,8 @@ export default function CalendarPage() {
                 onRoleFilterChange={setCalendarRoleFilter}
                 handlePostsClick={handleCalendarPostsClick}
                 handleTasksClick={handleCalendarTasksClick}
+                posts={posts}
+                tasks={tasks}
               />
             </div>
             <div className={styles.calendarFilterBar}>
@@ -383,15 +384,19 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          <aside className={`${styles.sidebar} ${
-            isSidebarOpen ? styles.sidebarOpen : styles.sidebarClosed
-          }`}>
+          <aside className={`${styles.sidebar} ${isSidebarOpen ? styles.sidebarOpen : styles.sidebarClosed
+            }`}>
             <div className={styles.sidebarContent}>
               <div className={styles.sidebarHeader}>
                 <div className={styles.sidebarHeaderTitle}>
-                  <h2 className={styles.dateTitle}>
-                    {format(selectedDate, 'dd', { locale: ru })} {format(selectedDate, 'EEEE', { locale: ru }).replace(/^./, c => c.toUpperCase())}
-                  </h2>
+                  <div className={styles.dateContainer}>
+                    <h2 className={styles.dateTitle}>
+                      {format(selectedDate, 'dd', { locale: ru })}
+                    </h2>
+                    <span className={styles.weekdayTitle}>
+                      {format(selectedDate, 'EEEE', { locale: ru }).replace(/^./, c => c.toUpperCase())}
+                    </span>
+                  </div>
                   <button onClick={() => setIsSidebarOpen(false)} className={styles.closeButton}>
                     <X className={styles.closeIcon} />
                   </button>
@@ -413,9 +418,8 @@ export default function CalendarPage() {
 
                   <button
                     onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
-                    className={`${styles.filterButton} ${
-                      showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
-                    }`}
+                    className={`${styles.filterButton} ${showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
+                      }`}
                   >
                     Не готовые
                   </button>
