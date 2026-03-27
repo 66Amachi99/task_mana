@@ -7,36 +7,13 @@ import { DatePicker } from '../../ui/date-picker/date_picker';
 import styles from './PostAddWindow.module.css';
 import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
 import { useCreatePost } from '@/hooks/usePosts';
-
-interface User {
-  user_id: number;
-  user_login: string;
-  admin_role: boolean;
-  SMM_role: boolean;
-  designer_role: boolean;
-  coordinator_role: boolean;
-  photographer_role: boolean;
-}
-
-interface Tag {
-  tag_id: number;
-  name: string;
-  color: string;
-}
+import type { User, Tag } from '@/types';
+import { POST_TASK_ITEMS } from '@/types/config';
 
 interface PostAddWindowProps {
   onClose: () => void;
   initialDate?: Date;
 }
-
-const TASK_ITEMS = [
-  { id: 'post_needs_mini_video_smm', label: 'Мини-видео' },
-  { id: 'post_needs_video', label: 'Видео' },
-  { id: 'post_needs_cover_photo', label: 'Обложка' },
-  { id: 'post_needs_photo_cards', label: 'Фотокарточки' },
-  { id: 'post_needs_photogallery', label: 'Фотогалерея' },
-  { id: 'post_needs_mini_gallery', label: 'Мини-фотогалерея' },
-];
 
 export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
   const { user: currentUser } = useUser();
@@ -75,7 +52,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
   const [deadline, setDeadline] = useState<Date | null>(null);
 
   const [taskStates, setTaskStates] = useState(() =>
-    TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean)
+    POST_TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean)
   );
 
   const createPost = useCreatePost();
@@ -87,7 +64,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
   }, [isClosing, onClose]);
 
   useEffect(() => {
-    setTaskStates(TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean));
+    setTaskStates(POST_TASK_ITEMS.map(item => formData[item.id as keyof typeof formData] as boolean));
   }, [formData]);
 
   useEffect(() => {
@@ -183,7 +160,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
     const newStates = [...taskStates];
     newStates[index] = !newStates[index];
     setTaskStates(newStates);
-    const taskId = TASK_ITEMS[index].id;
+    const taskId = POST_TASK_ITEMS[index].id;
     setFormData(prev => ({ ...prev, [taskId]: newStates[index] }));
   };
 
@@ -456,7 +433,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
 
           <div className={styles.fieldGroup}>
             <div className={styles.taskButtonsContainer}>
-              {TASK_ITEMS.map((task, index) => (
+              {POST_TASK_ITEMS.map((task, index) => (
                 <button
                   key={task.id}
                   type="button"

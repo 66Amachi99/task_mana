@@ -243,7 +243,6 @@
   overflow-y: auto;
   margin: 5px;
   margin-bottom: 10px;
-  width: 100%;
 }
 
 .itemsContainer > * + * {
@@ -275,18 +274,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.2s;
   border-radius: 5px;
   color: white;
   background-color: transparent;
   margin-bottom: 2px;
+  margin-top: 0px;
   line-height: 1.2;
-  max-width: 96%;
   display: block;
+
+  transition: padding 0.2s ease;
+  border-left: 0px solid transparent;
 }
 
 .item:hover {
-  margin-inline: 2px;
+  padding-left: 8px;
+  border-left: 2px solid currentColor;
 }
 
 .scrollable {

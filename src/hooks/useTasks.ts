@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { Task } from '../../types/task';
+import type { Task, TasksResponse } from '@/types';
 
 const API_URL = '/api/tasks';
 

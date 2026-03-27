@@ -6,7 +6,8 @@ import {
   Check,
   CheckCheck
 } from 'lucide-react';
-import { COMMENT_STATUS, TaskWithComments, CommentData } from '../post-details-window/post-details-window';
+import { COMMENT_STATUS, TaskWithComments } from '../post-details-window/post-details-window';
+import type { Comment } from '@/types';
 import { useUser } from '@/hooks/use-roles';
 import { Gallery } from '../gallery/gallery';
 import styles from './PostDetailsRightPanel.module.css';
@@ -116,7 +117,7 @@ const CommentItem = ({
   canDelete,
   canChangeCommentStatus,
 }: {
-  comment: CommentData;
+  comment: Comment;
   onStatusChange: (commentId: number, newStatus: string) => void;
   onDelete: (commentId: number) => Promise<void>;
   canDelete: boolean;

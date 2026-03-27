@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { X, Calendar, User, Edit, Trash2, Save, Users, Edit2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-roles';
-import { Task } from '../../../../types/task';
+import type { Task, User as UserType, Tag } from '@/types';
 import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
 import { DatePicker } from '../../ui/date-picker/date_picker';
 import { useUpdateTask, usePatchTask, useDeleteTask } from '@/hooks/useTasks';
@@ -12,22 +12,6 @@ import styles from './TaskDetailsWindow.module.css';
 interface TaskDetailsWindowProps {
   onClose: () => void;
   task: Task | null;
-}
-
-interface Tag {
-  tag_id: number;
-  name: string;
-  color: string;
-}
-
-interface UserType {
-  user_id: number;
-  user_login: string;
-  admin_role: boolean;
-  SMM_role: boolean;
-  designer_role: boolean;
-  coordinator_role: boolean;
-  photographer_role: boolean;
 }
 
 interface FormData {

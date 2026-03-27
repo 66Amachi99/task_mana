@@ -6,23 +6,9 @@ import { X } from 'lucide-react';
 import { DatePicker } from '../../ui/date-picker/date_picker';
 import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
 import { useCreateTask } from '@/hooks/useTasks';
+import type { User, Tag } from '@/types';
+import { PRIORITY_LEVELS } from '@/types/config';
 import styles from './TaskAddWindow.module.css';
-
-interface User {
-  user_id: number;
-  user_login: string;
-  admin_role: boolean;
-  SMM_role: boolean;
-  designer_role: boolean;
-  coordinator_role: boolean;
-  photographer_role: boolean;
-}
-
-interface Tag {
-  tag_id: number;
-  name: string;
-  color: string;
-}
 
 interface TaskAddWindowProps {
   onClose: () => void;

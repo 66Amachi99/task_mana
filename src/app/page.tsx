@@ -7,46 +7,13 @@ import { Header } from '../components/header/header';
 import { useUser } from '../hooks/use-roles';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
-import { Task } from '../../types/task';
+import type { CalendarTask, CalendarPost } from '@/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ROLE_FILTERS } from '@/hooks/use-roles';
 import styles from '../components/styles/HomePage.module.css';
 
-interface PostWithRelations {
-  post_id: number;
-  post_title: string;
-  post_description: string | null;
-  post_status: string;
-  is_published: boolean;
-  tz_link?: string | null;
-  feedback_comment?: string | null;
-  post_needs_mini_video_smm: boolean;
-  post_needs_video: boolean;
-  post_needs_cover_photo: boolean;
-  post_needs_photo_cards: boolean;
-  post_needs_photogallery: boolean;
-  post_needs_mini_gallery: boolean;
-  post_needs_text: boolean;
-  post_done_link_mini_video_smm?: string | null;
-  post_done_link_video?: string | null;
-  post_done_link_cover_photo?: string | null;
-  post_done_link_photo_cards?: string | null;
-  post_done_link_photogallery?: string | null;
-  post_done_link_mini_gallery?: string | null;
-  post_done_link_text?: string | null;
-  post_date: Date | null;
-  post_deadline: Date;
-  responsible_person_id: number | null;
-  approved_by_id?: number | null;
-  user?: { user_login: string } | null;
-  approved_by?: { user_login: string } | null;
-  tags?: Array<{ tag_id: number; name: string; color: string }>;
-  type: 'post';
-  [key: string]: unknown;
-}
-
-type ContentItem = PostWithRelations | Task;
+type ContentItem = CalendarPost | CalendarTask;
 
 const ITEMS_PER_BATCH = 10;
 

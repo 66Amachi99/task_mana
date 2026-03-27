@@ -7,17 +7,15 @@
 }
 
 .container {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  display: flex;
+  padding: 1rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; 
   align-items: center;
-  justify-content: space-between;
 }
 
 /* Левая часть (пользователь) */
 .userSection {
+  justify-self: start;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   border-radius: 9999px;
   height: 60px;
@@ -100,6 +98,8 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 136px;
+  justify-content: flex-end;
 }
 
 .addButton {

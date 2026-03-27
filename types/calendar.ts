@@ -1,4 +1,4 @@
-import { Task } from './task';
+import type { Tag, UserPreview, Comment } from './index';
 
 export interface CalendarPost {
   post_id: number;
@@ -8,7 +8,7 @@ export interface CalendarPost {
   is_published: boolean;
   post_deadline: Date;
   post_date: Date | null;
-  
+
   post_needs_mini_video_smm: boolean;
   post_needs_video: boolean;
   post_needs_text: boolean;
@@ -16,7 +16,7 @@ export interface CalendarPost {
   post_needs_cover_photo: boolean;
   post_needs_photo_cards: boolean;
   post_needs_mini_gallery: boolean;
-  
+
   post_done_link_mini_video_smm?: string | null;
   post_done_link_video?: string | null;
   post_done_link_text?: string | null;
@@ -24,17 +24,17 @@ export interface CalendarPost {
   post_done_link_cover_photo?: string | null;
   post_done_link_photo_cards?: string | null;
   post_done_link_mini_gallery?: string | null;
-  
-  tags?: Array<{ tag_id: number; name: string; color: string }>;
-  comments?: Array<any>;
-  
+
+  tags?: Tag[];
+  comments?: Comment[];
+
   responsible_person_id: number | null;
-  user?: { user_login: string } | null;
-  approved_by?: { user_login: string } | null;
-  
+  user?: UserPreview | null;
+  approved_by?: UserPreview | null;
+
   tz_link?: string | null;
   feedback_comment?: string | null;
-  
+
   type: 'post';
   [key: string]: unknown;
 }
@@ -51,8 +51,8 @@ export interface CalendarTask {
   completed_task: string | null;
   created_at: string;
   assignees: Array<{ user_id: number; user_login: string }>;
-  tags: Array<{ tag_id: number; name: string; color: string }>;
-  created_by?: { user_login: string };
+  tags: Tag[];
+  created_by?: UserPreview;
   type: 'task';
   [key: string]: unknown;
 }

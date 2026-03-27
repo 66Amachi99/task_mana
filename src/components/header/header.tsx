@@ -20,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPostModal, 
   onOpenTaskModal 
 }) => {
-  const { user, canCreateTask } = useUser();
+  const { user, canCreateTask, loading } = useUser();
   const pathname = usePathname();
 
   const [showAuthWindow, setShowAuthWindow] = useState(false);
@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="header">
+      <header className={styles.header}>
         <div className={styles.container}>
           
           {/* Левая часть: пользователь */}
@@ -110,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Кнопки добавления */}
             <div className={styles.addButtons}>
-              {canAddPost && (
+              {canAddPost && !loading && (
                 <button
                   onClick={handlePostClick}
                   className={styles.addButton}
@@ -120,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {canCreateTask && (
+              {canCreateTask && !loading && (
                 <button
                   onClick={handleTaskClick}
                   className={styles.addButton}
@@ -133,8 +133,6 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
           </div>
-
-          <div className={styles.rightSpacer}></div>
         </div>
       </header>
 

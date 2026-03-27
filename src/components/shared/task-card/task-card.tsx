@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { TaskDetailsWindow } from '../task-details-window/task-details-window';
 import { Calendar, Eye, User } from 'lucide-react';
-import { Task } from '../../../../types/task';
+import type { Task } from '@/types';
 import styles from './TaskCard.module.css';
 import { ActionButton } from '../../ui/action-button/action-button';
 

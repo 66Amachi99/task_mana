@@ -10,47 +10,13 @@ import { useAddComment, useUpdateCommentStatus, useDeleteComment } from '@/hooks
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useGalleryStore } from '@/store/useGalleryStore';
+import type { Tag, Comment, PostWithRelations } from '@/types';
+import { TASK_CONFIG, SOCIAL_CONFIG, FILE_SUPPORT_TASK_IDS, isFileSupportTask, COMMENT_STATUS } from '@/types/config';
+import type { SocialKey, SocialLinks } from '@/types/config';
 import styles from './PostDetailsWindow.module.css';
 
-export const TASK_CONFIG = [
-  { id: 1, name: 'mini_video_smm', label: 'Мини-видео', needsKey: 'post_needs_mini_video_smm', linkKey: 'post_done_link_mini_video_smm', role: 'smm' },
-  { id: 2, name: 'video', label: 'Видео', needsKey: 'post_needs_video', linkKey: 'post_done_link_video', role: 'photographer' },
-  { id: 3, name: 'text', label: 'Текст', needsKey: 'post_needs_text', linkKey: 'post_done_link_text', role: 'text' },
-  { id: 4, name: 'photogallery', label: 'Фотогалерея', needsKey: 'post_needs_photogallery', linkKey: 'post_done_link_photogallery', role: 'photographer' },
-  { id: 5, name: 'cover_photo', label: 'Обложка', needsKey: 'post_needs_cover_photo', linkKey: 'post_done_link_cover_photo', role: 'designer' },
-  { id: 6, name: 'photo_cards', label: 'Фотокарточки', needsKey: 'post_needs_photo_cards', linkKey: 'post_done_link_photo_cards', role: 'designer' },
-  { id: 7, name: 'mini_gallery', label: 'Мини-фотогалерея', needsKey: 'post_needs_mini_gallery', linkKey: 'post_done_link_mini_gallery', role: 'smm' },
-] as const;
-
-export const SOCIAL_CONFIG = [
-  { key: 'telegram', label: 'Telegram', icon: '/icons/telegram.svg', placeholder: 'https://t.me/...', publishedKey: 'telegram_published' },
-  { key: 'vkontakte', label: 'VK', icon: '/icons/vk.svg', placeholder: 'https://vk.com/...', publishedKey: 'vkontakte_published' },
-  { key: 'max', label: 'MAX', icon: '/icons/max.svg', placeholder: 'https://max.ru/...', publishedKey: 'MAX_published' },
-] as const;
-
-export const COMMENT_STATUS = {
-  NEW: 'new',
-  COMPLETED: 'completed',
-  CONFIRMED: 'confirmed',
-} as const;
-
-const FILE_SUPPORT_TASK_IDS = [5, 6, 7];
-
-export type SocialKey = typeof SOCIAL_CONFIG[number]['key'];
-export type SocialLinks = Record<SocialKey, string>;
-
-export interface CommentData {
-  id: number;
-  text: string;
-  status: string;
-  created_at: string;
-  task_type_id?: number;
-  created_by_id: number;
-  created_by?: {
-    user_id: number;
-    user_login: string;
-  } | null;
-}
+export { TASK_CONFIG, SOCIAL_CONFIG, FILE_SUPPORT_TASK_IDS, COMMENT_STATUS };
+export type { SocialKey, SocialLinks };
 
 export interface TaskWithComments {
   id: number;
@@ -60,48 +26,14 @@ export interface TaskWithComments {
   required: boolean;
   role: string;
   linkKey: string;
-  comments: CommentData[];
+  comments: Comment[];
   newCommentText: string;
 }
 
-export interface Tag {
-  tag_id: number;
-  name: string;
-  color: string;
-}
-
-export interface PostData {
-  post_id: number;
-  post_title: string;
-  post_description: string | null;
-  tz_link?: string | null;
-  post_status: string;
-  is_published: boolean;
-  telegram_published?: string | null;
-  vkontakte_published?: string | null;
-  MAX_published?: string | null;
-  feedback_comment?: string | null;
-  post_needs_mini_video_smm: boolean;
-  post_needs_video: boolean;
-  post_needs_cover_photo: boolean;
-  post_needs_photo_cards: boolean;
-  post_needs_photogallery: boolean;
-  post_needs_mini_gallery: boolean;
-  post_needs_text: boolean;
-  post_done_link_mini_video_smm?: string | null;
-  post_done_link_video?: string | null;
-  post_done_link_cover_photo?: string | null;
-  post_done_link_photo_cards?: string | null;
-  post_done_link_photogallery?: string | null;
-  post_done_link_mini_gallery?: string | null;
-  post_done_link_text?: string | null;
+// Extended Post type for this component with Date types
+export interface PostData extends Omit<PostWithRelations, 'post_date' | 'post_deadline'> {
   post_date: Date | null;
   post_deadline: Date;
-  responsible_person_id: number | null;
-  user?: { user_login: string } | null;
-  approved_by?: { user_login: string } | null;
-  tags?: Tag[];
-  comments?: CommentData[];
   [key: string]: unknown;
 }
 
@@ -112,7 +44,7 @@ export interface PostDetailsWindowProps {
 
 const EMPTY_SOCIAL: SocialLinks = { telegram: '', vkontakte: '', max: '' };
 
-export const getCommentsForTask = (post: PostData | null, taskTypeId: number): CommentData[] => {
+export const getCommentsForTask = (post: PostData | null, taskTypeId: number): Comment[] => {
   if (!post?.comments) return [];
   return post.comments.filter(c => c.task_type_id === taskTypeId);
 };
@@ -400,7 +332,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     if (!post || files.length === 0) return;
 
     const task = TASK_CONFIG.find(t => t.id === taskId);
-    if (!task || !FILE_SUPPORT_TASK_IDS.includes(taskId)) return;
+    if (!task || !isFileSupportTask(taskId)) return;
 
     const isMultiple = taskId !== 5;
     const fileNames = files.map(f => f.name);
@@ -656,7 +588,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
         await renameFolderOnDisk(oldFolder, newFolder);
 
         TASK_CONFIG
-          .filter(t => FILE_SUPPORT_TASK_IDS.includes(t.id))
+          .filter(t => isFileSupportTask(t.id))
           .forEach(task => {
             renameCacheKey(`${oldFolder}/${task.name}`, `${newFolder}/${task.name}`);
           });
@@ -664,7 +596,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
 
       const finalTasks = folderRenamed
         ? tasks.map(task =>
-            FILE_SUPPORT_TASK_IDS.includes(task.id) && task.link
+            isFileSupportTask(task.id) && task.link
               ? { ...task, link: `/taskmanager/${newFolder}/${task.name}` }
               : task,
           )
@@ -686,7 +618,7 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
 
       if (folderRenamed) {
         TASK_CONFIG
-          .filter(t => FILE_SUPPORT_TASK_IDS.includes(t.id))
+          .filter(t => isFileSupportTask(t.id))
           .forEach(cfg => {
             if ((post[cfg.linkKey] as string)?.trim()) {
               updateData[cfg.linkKey] = `/taskmanager/${newFolder}/${cfg.name}`;

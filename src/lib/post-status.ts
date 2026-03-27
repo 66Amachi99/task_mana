@@ -1,20 +1,22 @@
-interface PostWithLinks {
-  post_status: string;
-  post_needs_mini_video_smm: boolean;
-  post_needs_video: boolean;
-  post_needs_text: boolean;
-  post_needs_photogallery: boolean;
-  post_needs_cover_photo: boolean;
-  post_needs_photo_cards: boolean;
-  post_needs_mini_gallery: boolean;
-  post_done_link_mini_video_smm?: string | null;
-  post_done_link_video?: string | null;
-  post_done_link_text?: string | null;
-  post_done_link_photogallery?: string | null;
-  post_done_link_cover_photo?: string | null;
-  post_done_link_photo_cards?: string | null;
-  post_done_link_mini_gallery?: string | null;
-}
+import type { Post } from '@/types';
+
+type PostWithLinks = Pick<Post, 
+  | 'post_status'
+  | 'post_needs_mini_video_smm'
+  | 'post_needs_video'
+  | 'post_needs_text'
+  | 'post_needs_photogallery'
+  | 'post_needs_cover_photo'
+  | 'post_needs_photo_cards'
+  | 'post_needs_mini_gallery'
+  | 'post_done_link_mini_video_smm'
+  | 'post_done_link_video'
+  | 'post_done_link_text'
+  | 'post_done_link_photogallery'
+  | 'post_done_link_cover_photo'
+  | 'post_done_link_photo_cards'
+  | 'post_done_link_mini_gallery'
+>;
 
 
 export const isPostCompleted = (post: PostWithLinks): boolean => {
