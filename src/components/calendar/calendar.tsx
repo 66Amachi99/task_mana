@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   format,
   startOfMonth,
@@ -16,8 +16,9 @@ import {
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { CalendarItem, DayStats, CalendarPost, CalendarTask } from '../../../types/calendar';
-import { ROLE_FILTERS } from '@/hooks/use-roles';
+import { RoleDropdown } from '../shared/role-dropdown/role-dropdown';
 import styles from './Calendar.module.css';
+import { FileText, Circle } from 'lucide-react';
 
 interface CalendarProps {
   itemsByDate: Map<string, CalendarItem[]>;
@@ -78,19 +79,6 @@ export const Calendar: React.FC<CalendarProps> = ({
   tasks,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
-  const roleDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
-        setIsRoleDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -169,77 +157,25 @@ export const Calendar: React.FC<CalendarProps> = ({
           <div className={styles.filterButtons}>
             <button
               onClick={handlePostsClick}
-              className={`${styles.filterButton} ${
-                showPosts ? styles.filterButtonActive : styles.filterButtonInactive
-              }`}
+              className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : styles.filterButtonInactive
+                }`}
             >
               Постов {monthlyCounts.postsCount}
             </button>
 
             <button
               onClick={handleTasksClick}
-              className={`${styles.filterButton} ${
-                showTasks ? styles.filterButtonActive : styles.filterButtonInactive
-              }`}
+              className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : styles.filterButtonInactive
+                }`}
             >
               Задач {monthlyCounts.tasksCount}
             </button>
+            <RoleDropdown
+              roleFilter={selectedRoleFilter}
+              onRoleSelect={onRoleFilterChange}
+            />
           </div>
 
-          <div className={styles.roleDropdown} ref={roleDropdownRef}>
-            <button
-              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-              className={styles.roleDropdownButton}
-            >
-              <span className={styles.roleDropdownText}>
-                <img
-                  src={isRoleDropdownOpen ? '/icons/filter_on.svg' : '/icons/filter.svg'}
-                  alt="filter"
-                  className={styles.filterIcon}
-                />
-              </span>
-            </button>
-
-            {isRoleDropdownOpen && (
-              <div className={styles.roleDropdownMenu}>
-                <button
-                  onClick={() => {
-                    onRoleFilterChange(null);
-                    setIsRoleDropdownOpen(false);
-                  }}
-                  className={`${styles.roleMenuItem} ${
-                    !selectedRoleFilter ? styles.roleMenuItemActive : ''
-                  }`}
-                >
-                  Все посты
-                </button>
-
-                <div className={styles.menuDivider}></div>
-
-                {ROLE_FILTERS.map((role) => (
-                  <button
-                    key={role.id}
-                    onClick={() => {
-                      onRoleFilterChange(role.id);
-                      setIsRoleDropdownOpen(false);
-                    }}
-                    className={`${styles.roleMenuItem} ${
-                      selectedRoleFilter === role.id ? styles.roleMenuItemActive : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={styles.roleIcon}>
-                        {role.id === 'smm' && '📹'}
-                        {role.id === 'photographer' && '📷'}
-                        {role.id === 'designer' && '✏️'}
-                      </span>
-                      <span>{role.label}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         <button onClick={handleNextMonth} className={styles.nextGroupButton}>
@@ -285,11 +221,10 @@ export const Calendar: React.FC<CalendarProps> = ({
 
                 {filteredItems.length > 0 && (
                   <span
-                    className={`${styles.dayStats} ${
-                      dayStats.completed === dayStats.total
-                        ? styles.dayStatsCompleted
-                        : styles.dayStatsIncomplete
-                    }`}
+                    className={`${styles.dayStats} ${dayStats.completed === dayStats.total
+                      ? styles.dayStatsCompleted
+                      : styles.dayStatsIncomplete
+                      }`}
                   >
                     {dayStats.completed}/{dayStats.total}
                   </span>
@@ -321,7 +256,9 @@ export const Calendar: React.FC<CalendarProps> = ({
                       {postIcon ? (
                         <img src={postIcon} alt="" className={styles.itemIcon} />
                       ) : (
-                        <span className={styles.itemIcon}>{isPost ? '📄' : '✓'}</span>
+                        <span className={styles.itemIcon}>
+                          {isPost ? <FileText size={14} /> : <Circle size={10} fill="currentColor" />}
+                        </span>
                       )}
                       {isPost ? item.post_title : item.title}
                     </div>

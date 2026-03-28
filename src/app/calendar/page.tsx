@@ -16,7 +16,7 @@ import styles from './CalendarPage.module.css';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
 import { FilterBar } from '@/components/ui/filter-bar/filter-bar';
-import { ROLE_FILTERS } from '@/hooks/use-roles';
+import { RoleDropdown } from '@/components/shared/role-dropdown/role-dropdown';
 
 type CalendarViewMode = 'all' | 'posts' | 'tasks';
 
@@ -65,9 +65,6 @@ export default function CalendarPage() {
 
   const { filterPostByRole } = useUser();
 
-  const [isSidebarRoleDropdownOpen, setIsSidebarRoleDropdownOpen] = useState(false);
-  const sidebarRoleDropdownRef = useRef<HTMLDivElement>(null);
-
   const { data: postsData, isLoading: postsLoading } = usePosts(1, 100);
   const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 100);
 
@@ -88,16 +85,6 @@ export default function CalendarPage() {
   }, [tasksData]);
 
   const loading = postsLoading || tasksLoading;
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (sidebarRoleDropdownRef.current && !sidebarRoleDropdownRef.current.contains(event.target as Node)) {
-        setIsSidebarRoleDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const calendarItemsByDate = useMemo(() => {
     const map = new Map<string, CalendarItem[]>();
@@ -405,13 +392,13 @@ export default function CalendarPage() {
                 <div className={styles.statsWrapper}>
                   <button
                     onClick={handleSidebarPostsClick}
-                    className={`${styles.statsRowPosts} ${sidebarShowPosts ? styles.active : ''}`}
+                    className={`${styles.filterButton} ${sidebarShowPosts ? styles.filterButtonActive : ''}`}
                   >
                     <span>Постов {dayStats.postsCount}</span>
                   </button>
                   <button
                     onClick={handleSidebarTasksClick}
-                    className={`${styles.statsRowTasks} ${sidebarShowTasks ? styles.active : ''}`}
+                    className={`${styles.filterButton} ${sidebarShowTasks ? styles.filterButtonActive : ''}`}
                   >
                     <span>Задач {dayStats.tasksCount}</span>
                   </button>
@@ -424,47 +411,10 @@ export default function CalendarPage() {
                     Не готовые
                   </button>
 
-                  <div className={styles.roleDropdown} ref={sidebarRoleDropdownRef}>
-                    <button
-                      onClick={() => setIsSidebarRoleDropdownOpen(!isSidebarRoleDropdownOpen)}
-                      className={styles.roleDropdownButton}
-                    >
-                      <span className={styles.roleDropdownText}>
-                        <img
-                          src={isSidebarRoleDropdownOpen ? '/icons/filter_on.svg' : '/icons/filter.svg'}
-                          alt="filter"
-                          className={styles.filterIcon}
-                        />
-                      </span>
-                    </button>
-                    {isSidebarRoleDropdownOpen && (
-                      <div className={styles.roleDropdownMenu}>
-                        <button
-                          onClick={() => { setSidebarRoleFilter(null); setIsSidebarRoleDropdownOpen(false); }}
-                          className={`${styles.roleMenuItem} ${!sidebarRoleFilter ? styles.roleMenuItemActive : ''}`}
-                        >
-                          Все посты
-                        </button>
-                        <div className={styles.menuDivider}></div>
-                        {ROLE_FILTERS.map((role) => (
-                          <button
-                            key={role.id}
-                            onClick={() => { setSidebarRoleFilter(role.id); setIsSidebarRoleDropdownOpen(false); }}
-                            className={`${styles.roleMenuItem} ${sidebarRoleFilter === role.id ? styles.roleMenuItemActive : ''}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className={styles.roleIcon}>
-                                {role.id === 'smm' && '📹'}
-                                {role.id === 'photographer' && '📷'}
-                                {role.id === 'designer' && '✏️'}
-                              </span>
-                              <span>{role.label}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <RoleDropdown
+                    roleFilter={sidebarRoleFilter}
+                    onRoleSelect={setSidebarRoleFilter}
+                  />
                 </div>
               </div>
 

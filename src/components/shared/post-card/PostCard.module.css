@@ -356,7 +356,9 @@
   height: 0.875rem;
 }
 
-.taskStatusCompleted {}
+.taskStatusCompleted {
+  color: #16a34ace;
+}
 
 .taskStatusPending {}
 

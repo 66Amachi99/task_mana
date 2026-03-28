@@ -4,13 +4,13 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import { PostCard } from '../components/shared/post-card/post-card';
 import { TaskCard } from '../components/shared/task-card/task-card';
 import { Header } from '../components/header/header';
-import { useUser } from '../hooks/use-roles';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
 import type { CalendarTask, CalendarPost } from '@/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ROLE_FILTERS } from '@/hooks/use-roles';
+import { useUser } from '../hooks/use-roles';
+import { RoleDropdown } from '../components/shared/role-dropdown/role-dropdown';
 import styles from '../components/styles/HomePage.module.css';
 
 type ContentItem = CalendarPost | CalendarTask;
@@ -23,8 +23,6 @@ export default function HomePage() {
   const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
-  const roleDropdownRef = useRef<HTMLDivElement>(null);
 
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_BATCH);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -37,17 +35,6 @@ export default function HomePage() {
   useEffect(() => {
     setDisplayedCount(ITEMS_PER_BATCH);
   }, [showPosts, showTasks, showIncompleteOnly, showOverdueOnly, roleFilter]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
-        setIsRoleDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const allPosts = useMemo(() => {
     return (postsData?.posts || []).map((post) => ({
@@ -224,7 +211,6 @@ export default function HomePage() {
 
   const handleRoleSelect = (role: string | null) => {
     setRoleFilter(role);
-    setIsRoleDropdownOpen(false);
     scrollToTop();
   };
 
@@ -248,14 +234,14 @@ export default function HomePage() {
       <div className={styles.filterWrapper}>
         <button
           onClick={handlePostsClick}
-          className={`${styles.statsRowPosts} ${showPosts ? styles.active : ''}`}
+          className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : ''}`}
         >
           Посты
         </button>
 
         <button
           onClick={handleTasksClick}
-          className={`${styles.statsRowTasks} ${showTasks ? styles.active : ''}`}
+          className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : ''}`}
         >
           Задачи
         </button>
@@ -278,48 +264,7 @@ export default function HomePage() {
           Просроченные
         </button>
 
-        <div className={styles.roleDropdown} ref={roleDropdownRef}>
-          <button
-            onClick={() => {
-              setIsRoleDropdownOpen(!isRoleDropdownOpen);
-            }}
-            className={styles.roleDropdownButton}
-          >
-            <img
-              src={isRoleDropdownOpen ? '/icons/filter_on.svg' : '/icons/filter.svg'}
-              alt="filter"
-              className={styles.filterIcon}
-            />
-          </button>
-
-          {isRoleDropdownOpen && (
-            <div className={styles.roleDropdownMenu}>
-              <button
-                onClick={() => handleRoleSelect(null)}
-                className={`${styles.roleMenuItem} ${!roleFilter ? styles.active : ''}`}
-              >
-                Все посты
-              </button>
-
-              <div className={styles.menuDivider}></div>
-
-              {ROLE_FILTERS.map((role) => (
-                <button
-                  key={role.id}
-                  onClick={() => handleRoleSelect(role.id)}
-                  className={`${styles.roleMenuItem} ${roleFilter === role.id ? styles.active : ''}`}
-                >
-                  <span className={styles.roleIcon}>
-                    {role.id === 'smm' && '📹'}
-                    {role.id === 'photographer' && '📷'}
-                    {role.id === 'designer' && '✏️'}
-                  </span>
-                  {role.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <RoleDropdown roleFilter={roleFilter} onRoleSelect={handleRoleSelect} />
       </div>
 
       <div className={styles.container}>

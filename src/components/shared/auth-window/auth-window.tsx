@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { signIn } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
+import { LogIn } from 'lucide-react';
+import { ActionButton } from '@/components/ui/action-button/action-button';
 import styles from './AuthWindow.module.css';
 
 interface AuthWindowProps {
@@ -25,8 +27,9 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
     setTimeout(onClose, 200);
   }, [isClosing, onClose]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!login || !password) return;
+    
     setIsLoading(true);
     setError('');
 
@@ -47,6 +50,12 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
       setError('Произошла ошибка при входе');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
     }
   };
 
@@ -71,43 +80,51 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
         onPointerDown={() => {
           overlayPointerDownRef.current = false;
         }}
+        onKeyDown={handleKeyDown}
       >
-        <h2 className={styles.title}>Вход в систему</h2>
+        <div className={styles.header}>
+          <img 
+            src="/icons/icon@8x.png" 
+            alt="t4sks" 
+            className={styles.logo}
+          />
+          <h2 className={styles.title}>t4sks</h2>
+        </div>
 
         {error && <div className={styles.error}>{error}</div>}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.form}>
           <div className={styles.field}>
-            <label className={styles.label}>Логин</label>
             <input
               type="text"
               value={login}
               onChange={(e) => setLogin(e.target.value)}
               className={styles.input}
-              required
+              placeholder="Логин"
             />
           </div>
 
           <div className={styles.passwordField}>
-            <label className={styles.label}>Пароль</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={styles.input}
-              required
+              placeholder="Пароль"
             />
           </div>
 
           <div className={styles.buttons}>
-            <button type="button" onClick={handleClose} className={styles.buttonCancel}>
-              Отмена
-            </button>
-            <button type="submit" disabled={isLoading} className={styles.buttonSubmit}>
+            <ActionButton
+              variant="base"
+              disabled={isLoading || !login || !password}
+              onClick={handleSubmit}
+              className={styles.submitButton}
+            >
               {isLoading ? 'Вход...' : 'Войти'}
-            </button>
+            </ActionButton>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
