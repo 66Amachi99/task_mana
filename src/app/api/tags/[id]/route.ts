@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 interface Props {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export async function GET(request: NextRequest, { params }: Props) {
+export async function GET(request: NextRequest, props: Props) {
   try {
+    const params = await props.params;
     const tagId = parseInt(params.id);
 
     if (isNaN(tagId)) {
