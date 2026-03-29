@@ -264,6 +264,7 @@ export const FileUploader = ({
                   <img
                     src={`/api/disk/download?path=${encodeURIComponent(file.path)}`}
                     alt={file.fileName}
+                    referrerPolicy="no-referrer"
                     className={`${styles.image} ${isLoaded ? styles.imageLoaded : styles.imageLoading}`}
                     onLoad={() => handleImageLoad(file.path)}
                     onError={() => handleImageLoad(file.path)}

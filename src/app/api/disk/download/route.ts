@@ -31,7 +31,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Не удалось получить ссылку' }, { status: 500 });
     }
 
-    return NextResponse.redirect(data.href);
+    // Редирект с политикой no-referrer чтобы Яндекс Диск не получил referer
+    return NextResponse.redirect(data.href, {
+      headers: {
+        'Referrer-Policy': 'no-referrer',
+      },
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Ошибка получения ссылки на скачивание:', err);
