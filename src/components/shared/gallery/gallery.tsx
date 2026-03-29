@@ -75,14 +75,22 @@ export const Gallery = ({
 
     for (const file of cachedFiles) {
       if (file.path) {
-        const a = document.createElement('a');
-        a.href = `/api/disk/download?path=${encodeURIComponent(file.path)}`;
-        a.download = file.fileName;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        await new Promise(resolve => setTimeout(resolve, 200));
+        try {
+          // Получаем временную ссылку на скачивание через API
+          const res = await fetch(`/api/disk/download?path=${encodeURIComponent(file.path)}`);
+          const data = await res.json();
+          
+          if (data.downloadUrl) {
+            // Открываем ссылку в новом окне - Яндекс Диск отдаст файл напрямую
+            window.open(data.downloadUrl, '_blank', 'noopener,noreferrer');
+            // Небольшая задержка между скачиваниями
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } else if (data.error) {
+            console.error(`Ошибка скачивания ${file.fileName}:`, data.error);
+          }
+        } catch (error) {
+          console.error(`Ошибка скачивания ${file.fileName}:`, error);
+        }
       }
     }
   }, [cachedFiles]);

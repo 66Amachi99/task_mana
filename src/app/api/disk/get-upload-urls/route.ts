@@ -2,11 +2,29 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+// Таймаут для запросов к Яндекс Диску (15 секунд - для загрузки чуть больше)
+const FETCH_TIMEOUT = 15000;
+
 const ALLOWED_IMAGE_EXTENSIONS = new Set([
   'pcx','dcx','wmf','emf','wpg','bpg','eprn','prm','ppm','pgm','pbm','pix','pct','pic','dib','psd','tiff','rpng','jif','vst','tga','bmp','jpg','apng','jpeg','heic','png','eps','webp','svgz','gif','svg','heif','prn','icns','xpm','abrn','tif','blk','avif',
 ]);
 
 const MAX_FILES_PER_REQUEST = 20;
+
+async function fetchWithTimeout(url: string, options: RequestInit, timeout: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 function getFileExtension(fileName: string): string {
   const parts = fileName.toLowerCase().split('.');
@@ -34,12 +52,13 @@ async function ensurePathExists(fullPath: string, token: string) {
     const encodedPart = encodeURIComponent(part);
     currentPath += `/${encodedPart}`;
 
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `https://cloud-api.yandex.net/v1/disk/resources?path=${currentPath}`,
       {
         method: 'PUT',
         headers: { Authorization: `OAuth ${token}` },
-      }
+      },
+      FETCH_TIMEOUT
     );
 
     if (res.status !== 201 && res.status !== 409) {
@@ -108,11 +127,12 @@ export async function POST(req: Request) {
       const fileName = encodeURIComponent(name);
       const diskPath = `${baseFolder}/${fileName}`;
 
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `https://cloud-api.yandex.net/v1/disk/resources/upload?path=${diskPath}&overwrite=true`,
         {
           headers: { Authorization: `OAuth ${TOKEN}` },
-        }
+        },
+        FETCH_TIMEOUT
       );
 
       const data = await res.json();
@@ -128,6 +148,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ results });
   } catch (error) {
     const err = error as Error;
+    if (err.name === 'AbortError') {
+      return NextResponse.json({ error: 'Превышено время ожидания ответа от Яндекс Диска' }, { status: 504 });
+    }
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -262,7 +262,7 @@ export const FileUploader = ({
 
                 {file.path && (
                   <img
-                    src={`/api/disk/download?path=${encodeURIComponent(file.path)}`}
+                    src={file.fileUrl || `/api/disk/download?path=${encodeURIComponent(file.path)}`}
                     alt={file.fileName}
                     referrerPolicy="no-referrer"
                     className={`${styles.image} ${isLoaded ? styles.imageLoaded : styles.imageLoading}`}

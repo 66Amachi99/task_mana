@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export interface ImageItem {
   fileName: string;
   path: string;
+  fileUrl: string | null; // Прямая ссылка на файл от Яндекс Диска
   href: string;
   created?: string;
   modified?: string;
