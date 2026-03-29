@@ -4,6 +4,7 @@
   left: 0;
   right: 0;
   z-index: 40;
+  pointer-events: none;
 }
 
 .container {
@@ -22,6 +23,8 @@
   display: flex;
   align-items: center;
   color: #ffffff80;
+  
+  pointer-events: auto;
 }
 
 .userButton {
@@ -51,6 +54,8 @@
 .middleGroup {
   display: flex;
   gap: 1rem;
+
+  pointer-events: auto;
 }
 
 /* Блок навигации (две иконки) */

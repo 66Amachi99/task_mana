@@ -54,6 +54,7 @@ export function useUser() {
 
   useEffect(() => {
     if (status === 'loading') {
+      // Don't reset user during loading - keep previous state to prevent UI flicker
       setLoading(true);
       return;
     }
@@ -74,6 +75,10 @@ export function useUser() {
     }
     setLoading(false);
   }, [session, status]);
+
+  // Derive loading state based on whether we have user data
+  // This ensures buttons don't flicker during navigation
+  const isLoading = loading && !user;
 
   const isDesigner = useMemo(() => user?.designer_role === true, [user?.designer_role]);
   const isSmm = useMemo(() => user?.SMM_role === true, [user?.SMM_role]);
@@ -153,7 +158,7 @@ export function useUser() {
 
   return {
     user,
-    loading,
+    loading: isLoading,
     isDesigner,
     isSmm,
     isCoordinator,

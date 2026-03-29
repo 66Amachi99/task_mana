@@ -1,15 +1,12 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { Header } from '@/components/header/header';
-import { Calendar } from '../../components/calendar/calendar';
+import { useState, useMemo, useEffect } from 'react';
+import { Calendar } from '@/components/calendar/calendar';
 import { PostDetailsWindow } from '@/components/shared/post-details-window/post-details-window';
 import { TaskDetailsWindow } from '@/components/shared/task-details-window/task-details-window';
-import { PostAddWindow } from '@/components/shared/post-add-window/post-add-window';
-import { TaskAddWindow } from '@/components/shared/task-add-window/task-add-window';
 import { format } from 'date-fns';
-import { useUser } from '../../hooks/use-roles';
-import { CalendarPost, CalendarTask, CalendarItem } from '../../../types/calendar';
+import { useUser } from '@/hooks/use-roles';
+import type { CalendarPost, CalendarTask, CalendarItem } from '@/types';
 import { X } from 'lucide-react';
 import { ru } from 'date-fns/locale';
 import styles from './CalendarPage.module.css';
@@ -17,6 +14,7 @@ import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
 import { FilterBar } from '@/components/ui/filter-bar/filter-bar';
 import { RoleDropdown } from '@/components/shared/role-dropdown/role-dropdown';
+import { useHeader } from '@/contexts/HeaderContext';
 
 type CalendarViewMode = 'all' | 'posts' | 'tasks';
 
@@ -60,10 +58,8 @@ export default function CalendarPage() {
   const [sidebarRoleFilter, setSidebarRoleFilter] = useState<string | null>(null);
   const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
 
-  const [showAddPostModal, setShowAddPostModal] = useState(false);
-  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
-
   const { filterPostByRole } = useUser();
+  const { openPostModal, openTaskModal } = useHeader();
 
   const { data: postsData, isLoading: postsLoading } = usePosts(1, 100);
   const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 100);
@@ -173,11 +169,11 @@ export default function CalendarPage() {
   };
 
   const handleOpenPostModal = () => {
-    setShowAddPostModal(true);
+    openPostModal(selectedDate);
   };
 
   const handleOpenTaskModal = () => {
-    setShowAddTaskModal(true);
+    openTaskModal(selectedDate);
   };
 
   const handleSidebarPostsClick = () => {
@@ -322,13 +318,6 @@ export default function CalendarPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.headerPlaceholder}>
-        <Header
-          onOpenPostModal={handleOpenPostModal}
-          onOpenTaskModal={handleOpenTaskModal}
-        />
-      </div>
-
       <main className={styles.main}>
         <div className={styles.contentWrapper}>
           <div className={`${styles.calendarWrapper} ${isSidebarOpen ? styles.calendarWrapperWithSidebar : styles.calendarWrapperFull
@@ -442,19 +431,6 @@ export default function CalendarPage() {
         <TaskDetailsWindow
           task={selectedItem.task}
           onClose={() => setSelectedItem(null)}
-        />
-      )}
-
-      {showAddPostModal && (
-        <PostAddWindow
-          onClose={() => setShowAddPostModal(false)}
-          initialDate={selectedDate}
-        />
-      )}
-      {showAddTaskModal && (
-        <TaskAddWindow
-          onClose={() => setShowAddTaskModal(false)}
-          initialDate={selectedDate}
         />
       )}
     </div>

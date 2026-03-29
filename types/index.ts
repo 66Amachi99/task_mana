@@ -122,6 +122,7 @@ export interface CalendarPost extends Omit<PostWithRelations, 'post_date' | 'pos
   user?: UserPreview | null;
   approved_by?: UserPreview | null;
   type: 'post';
+  [key: string]: unknown;
 }
 
 export interface PostsResponse {
@@ -192,3 +193,9 @@ export interface PostFormData {
   post_needs_mini_gallery: boolean;
   post_needs_text: boolean;
 }
+
+// ============================================================
+// CALENDAR TYPES (re-export from calendar.ts)
+// ============================================================
+
+export type { CalendarItem } from './calendar';

@@ -10,23 +10,15 @@ import { PostAddWindow } from '@/components/shared/post-add-window/post-add-wind
 import { TaskAddWindow } from '@/components/shared/task-add-window/task-add-window';
 import { User } from 'lucide-react';
 import styles from './Header.module.css';
+import { useHeader } from '@/contexts/HeaderContext';
 
-interface HeaderProps {
-  onOpenPostModal?: (initialDate?: Date) => void;
-  onOpenTaskModal?: (initialDate?: Date) => void;
-}
-
-export const Header: React.FC<HeaderProps> = ({ 
-  onOpenPostModal, 
-  onOpenTaskModal 
-}) => {
-  const { user, canCreateTask, loading } = useUser();
+export const Header: React.FC = () => {
+  const { user, canCreateTask } = useUser();
   const pathname = usePathname();
+  const { isPostModalOpen, isTaskModalOpen, postModalDate, taskModalDate, openPostModal, openTaskModal, closePostModal, closeTaskModal } = useHeader();
 
   const [showAuthWindow, setShowAuthWindow] = useState(false);
   const [showLogoutWindow, setShowLogoutWindow] = useState(false);
-  const [localShowPostModal, setLocalShowPostModal] = useState(false);
-  const [localShowTaskModal, setLocalShowTaskModal] = useState(false);
 
   const handleAuthClick = () => {
     if (user) {
@@ -34,22 +26,6 @@ export const Header: React.FC<HeaderProps> = ({
     } else {
       setShowAuthWindow(true);
     }
-  };
-
-  const handleLogoutConfirm = async () => {
-    setShowLogoutWindow(false);
-  };
-
-  const handleAuthSuccess = () => {
-    setShowAuthWindow(false);
-  };
-
-  const handlePostAdded = async () => {
-    setLocalShowPostModal(false);
-  };
-
-  const handleTaskAdded = async () => {
-    setLocalShowTaskModal(false);
   };
 
   const postIcon = pathname === '/' 
@@ -61,22 +37,6 @@ export const Header: React.FC<HeaderProps> = ({
     : '/icons/calendar_window_icon_no_clicked.svg';
 
   const canAddPost = user && (user.admin_role || user.SMM_role);
-
-  const handlePostClick = () => {
-    if (onOpenPostModal) {
-      onOpenPostModal();
-    } else {
-      setLocalShowPostModal(true);
-    }
-  };
-
-  const handleTaskClick = () => {
-    if (onOpenTaskModal) {
-      onOpenTaskModal();
-    } else {
-      setLocalShowTaskModal(true);
-    }
-  };
 
   return (
     <>
@@ -110,9 +70,9 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Кнопки добавления */}
             <div className={styles.addButtons}>
-              {canAddPost && !loading && (
+              {canAddPost && (
                 <button
-                  onClick={handlePostClick}
+                  onClick={() => openPostModal()}
                   className={styles.addButton}
                   title="Добавить пост"
                 >
@@ -120,9 +80,9 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {canCreateTask && !loading && (
+              {canCreateTask && (
                 <button
-                  onClick={handleTaskClick}
+                  onClick={() => openTaskModal()}
                   className={styles.addButton}
                   title="Добавить задачу"
                 >
@@ -133,6 +93,8 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
           </div>
+
+          <div className={styles.rightSpacer}></div>
         </div>
       </header>
 
@@ -142,11 +104,11 @@ export const Header: React.FC<HeaderProps> = ({
       {showLogoutWindow && (
         <LogoutWindow onClose={() => setShowLogoutWindow(false)} />
       )}
-      {!onOpenPostModal && localShowPostModal && (
-        <PostAddWindow onClose={() => setLocalShowPostModal(false)} />
+      {isPostModalOpen && (
+        <PostAddWindow onClose={closePostModal} initialDate={postModalDate} />
       )}
-      {!onOpenTaskModal && localShowTaskModal && (
-        <TaskAddWindow onClose={() => setLocalShowTaskModal(false)} />
+      {isTaskModalOpen && (
+        <TaskAddWindow onClose={closeTaskModal} initialDate={taskModalDate} />
       )}
     </>
   );

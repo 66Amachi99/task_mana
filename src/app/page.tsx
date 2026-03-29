@@ -1,17 +1,16 @@
 'use client';
 
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { PostCard } from '../components/shared/post-card/post-card';
-import { TaskCard } from '../components/shared/task-card/task-card';
-import { Header } from '../components/header/header';
+import { PostCard } from '@/components/shared/post-card/post-card';
+import { TaskCard } from '@/components/shared/task-card/task-card';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
 import type { CalendarTask, CalendarPost } from '@/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { useUser } from '../hooks/use-roles';
-import { RoleDropdown } from '../components/shared/role-dropdown/role-dropdown';
-import styles from '../components/styles/HomePage.module.css';
+import { useUser } from '@/hooks/use-roles';
+import { RoleDropdown } from '@/components/shared/role-dropdown/role-dropdown';
+import styles from './HomePage.module.css';
 
 type ContentItem = CalendarPost | CalendarTask;
 
@@ -222,9 +221,6 @@ export default function HomePage() {
             <p>Загрузка...</p>
           </div>
         </div>
-        <div className={styles.headerFixed}>
-          <Header />
-        </div>
       </div>
     );
   }
@@ -298,10 +294,6 @@ export default function HomePage() {
             </div>
           )}
         </div>
-      </div>
-
-      <div className={styles.headerFixed}>
-        <Header />
       </div>
     </div>
   );
