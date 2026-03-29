@@ -260,9 +260,9 @@ export const FileUploader = ({
               >
                 {!isLoaded && !isDeleting && <div className={styles.imageSkeleton} />}
 
-                {file.href && (
+                {file.path && (
                   <img
-                    src={file.href}
+                    src={`/api/disk/download?path=${encodeURIComponent(file.path)}`}
                     alt={file.fileName}
                     className={`${styles.image} ${isLoaded ? styles.imageLoaded : styles.imageLoading}`}
                     onLoad={() => handleImageLoad(file.path)}
@@ -271,7 +271,7 @@ export const FileUploader = ({
                   />
                 )}
 
-                {!file.href && <div className={styles.placeholder}>Нет превью</div>}
+                {!file.path && <div className={styles.placeholder}>Нет превью</div>}
 
                 {!readOnly && onDeleteFile && !isDeleting && !hasUploadingFiles && (
                   <ActionButton

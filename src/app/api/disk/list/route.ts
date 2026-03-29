@@ -30,7 +30,6 @@ export async function POST(req: Request) {
       .map((item: any) => ({
         fileName: item.name,
         path: item.path,
-        href: item.file,
         created: item.created,
         modified: item.modified,
       }))

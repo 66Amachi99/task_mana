@@ -74,9 +74,9 @@ export const Gallery = ({
     if (cachedFiles.length === 0) return;
 
     for (const file of cachedFiles) {
-      if (file.href) {
+      if (file.path) {
         const a = document.createElement('a');
-        a.href = file.href;
+        a.href = `/api/disk/download?path=${encodeURIComponent(file.path)}`;
         a.download = file.fileName;
         a.style.display = 'none';
         document.body.appendChild(a);
