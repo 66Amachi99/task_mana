@@ -1,0 +1,14 @@
+.textarea {
+  resize: none;
+  outline: none;
+  overflow: hidden;
+  border: 1px solid #ffffff10;
+  background-color: #ffffff02;
+  border-radius: 10px;
+  padding: 9px 10px;
+
+  min-height: 44px;  
+  
+  word-break: break-word;
+  white-space: pre-wrap;
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import styles from './auto-resize-textarea.module.css';
 
 interface AutoResizeTextareaProps {
   value: string;
@@ -33,7 +34,7 @@ export const AutoResizeTextarea = ({
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={`resize-none outline-none overflow-hidden ${className}`}
+      className={`${styles.textarea} ${className}`}
       rows={1}
     />
   );

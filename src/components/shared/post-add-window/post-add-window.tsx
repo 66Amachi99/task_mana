@@ -5,7 +5,7 @@ import { useUser } from '@/hooks/use-roles';
 import { Search, X } from 'lucide-react';
 import { DatePicker } from '../../ui/date-picker/date_picker';
 import styles from './PostAddWindow.module.css';
-import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
+import { AutoResizeTextarea } from '../../ui/auto-resize-textarea/auto-resize-textarea';
 import { useCreatePost } from '@/hooks/usePosts';
 import type { User, Tag } from '@/types';
 import { POST_TASK_ITEMS } from '@/types/config';
@@ -272,7 +272,7 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
       }}
     >
       <div
-        className={`${styles.container} ${isClosing ? styles.containerClosing : styles.containerOpening}`}
+        className={`${styles.container} ${isClosing ? styles.containerClosing : styles.containerOpening} no-scrollbar`}
         onClick={(e) => e.stopPropagation()}
         onPointerDown={() => {
           overlayPointerDownRef.current = false;
@@ -312,7 +312,6 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
               placeholder="Название поста..."
             />
           </div>
-
           <div className={styles.fieldGroup}>
             <AutoResizeTextarea
               value={formData.post_description}
@@ -438,9 +437,8 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
                   key={task.id}
                   type="button"
                   onClick={() => handleTaskToggle(index)}
-                  className={`${styles.taskButton} ${
-                    taskStates[index] ? styles.taskButtonSelected : styles.taskButtonDefault
-                  }`}
+                  className={`${styles.taskButton} ${taskStates[index] ? styles.taskButtonSelected : styles.taskButtonDefault
+                    }`}
                 >
                   {task.label}
                 </button>

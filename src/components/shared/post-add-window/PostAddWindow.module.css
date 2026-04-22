@@ -422,18 +422,6 @@
   cursor: not-allowed;
 }
 
-.descriptionTextarea {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #ffffff10;
-  border-radius: 0.5rem;
-  outline: none;
-  transition: border-color 0.2s;
-  background-color: #ffffff02;
-  color: #ffffff;
-  min-height: 44px;
-}
-
 .descriptionTextarea:focus {
   border-color: #ffffff30;
 }

@@ -16,8 +16,9 @@
 .modalContainer {
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   border-radius: 0.5rem;
-  width: 100%;
+  /* width: 100%; */
   max-width: 64rem;
   max-height: 90vh;
   overflow-y: auto;
@@ -36,13 +37,13 @@
 
 .modalForm {
   display: flex;
-  justify-content: center;
   flex-direction: column;
+  justify-content: center;
   gap: 18px;
   padding-left: 1.5rem;
   padding-right: 1.5rem;
-  width: 600px;
-  height: 800px;
+  min-width: 600px;
+  min-height: 800px;
 }
 
 .header {
@@ -316,16 +317,6 @@
   border-color: #ffffff30;
 }
 
-.autoTextarea {
-  border: 1px solid #ffffff10;
-  background-color: #ffffff02;
-  border-radius: 10px;
-  min-height: 44px;
-  padding-top: 9px;
-  padding-bottom: 9px;
-  padding-inline: 10px;
-}
-
 .assigneeChip,
 .tag {
   display: flex;
@@ -342,6 +333,13 @@
   background-color: #ffffff15;
   color: #ffffff;
 }
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 
 .tag {
   font-weight: 500;

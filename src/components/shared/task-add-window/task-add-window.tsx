@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { X } from 'lucide-react';
 import { DatePicker } from '../../ui/date-picker/date_picker';
-import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
+import { AutoResizeTextarea } from '../../ui/auto-resize-textarea/auto-resize-textarea';
 import { useCreateTask } from '@/hooks/useTasks';
 import type { User, Tag } from '@/types';
 import { PRIORITY_LEVELS } from '@/types/config';
@@ -363,13 +363,15 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
             <TagSelector selectedTags={selectedTags} availableTags={tags} onChange={setSelectedTags} onCreate={handleCreateTag} disabled={isSubmitting} />
           </div>
 
-          <AutoResizeTextarea
-            value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Описание..."
-            disabled={isSubmitting}
-            className={styles.autoTextarea}
-          />
+          <div className={styles.fieldGroup}>
+            <AutoResizeTextarea
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Описание..."
+              disabled={isSubmitting}
+              className={styles.autoTextarea}
+            />
+          </div>
 
           <div>
             <div className={styles.datesGrid}>

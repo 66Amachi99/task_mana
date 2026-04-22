@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { X, Calendar, User, Edit, Trash2, Save, Users, Edit2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-roles';
 import type { Task, User as UserType, Tag } from '@/types';
-import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
+import { AutoResizeTextarea } from '../../ui/auto-resize-textarea/auto-resize-textarea';
 import { DatePicker } from '../../ui/date-picker/date_picker';
 import { useUpdateTask, usePatchTask, useDeleteTask } from '@/hooks/useTasks';
 import styles from './TaskDetailsWindow.module.css';

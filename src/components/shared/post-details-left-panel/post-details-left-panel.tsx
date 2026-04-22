@@ -6,7 +6,7 @@ import { SOCIAL_CONFIG, TASK_CONFIG } from '../post-details-window/post-details-
 import { getStatusColor } from '../../../lib/post-status';
 import type { SocialLinks, Tag, PostData } from '../post-details-window/post-details-window';
 import { DatePicker } from '../../ui/date-picker/date_picker';
-import { AutoResizeTextarea } from '../../ui/auto-resize-textarea';
+import { AutoResizeTextarea } from '../../ui/auto-resize-textarea/auto-resize-textarea';
 import styles from './PostDetailsLeftPanel.module.css';
 
 import { ActionButton } from '../../ui/action-button/action-button';
