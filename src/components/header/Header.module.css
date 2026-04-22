@@ -14,7 +14,6 @@
   align-items: center;
 }
 
-/* Левая часть (пользователь) */
 .userSection {
   justify-self: start;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
@@ -23,7 +22,6 @@
   display: flex;
   align-items: center;
   color: #ffffff80;
-  
   pointer-events: auto;
 }
 
@@ -36,7 +34,7 @@
   height: 100%;
   border-radius: 9999px;
   transition: background-color 0.2s;
-    backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
   cursor: pointer;
 }
 
@@ -50,15 +48,12 @@
   font-weight: 500;
 }
 
-/* Центральная группа */
 .middleGroup {
   display: flex;
   gap: 1rem;
-
   pointer-events: auto;
 }
 
-/* Блок навигации (две иконки) */
 .navBlock {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
   padding-left: 0.5rem;
@@ -69,7 +64,7 @@
   align-items: center;
   gap: 1rem;
   border: 1px solid #ffffff10;
-    backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
 }
 
 .navLink {
@@ -98,12 +93,10 @@
   height: 2rem;
 }
 
-/* Кнопки добавления (пост/задача) */
 .addButtons {
   display: flex;
   align-items: center;
   gap: 1rem;
-  /* min-width: 136px; */
   justify-content: flex-end;
 }
 
@@ -131,7 +124,31 @@
   transform: translateY(-2px);
 }
 
-/* Пустой правый блок для симметрии */
-.rightSpacer {
-  width: 8rem;
+/* Секция админа справа */
+.adminSection {
+  justify-self: end;
+  pointer-events: auto;
+}
+
+.adminButton {
+  backdrop-filter: blur(15px);
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-radius: 9999px;
+  border: 1px solid #ffffff10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.adminButton:hover {
+  transform: translateY(-2px);
+}
+
+.adminIcon {
+  width: 32px;
+  height: 32px;
 }

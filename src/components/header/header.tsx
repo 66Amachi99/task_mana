@@ -13,7 +13,7 @@ import styles from './Header.module.css';
 import { useHeader } from '@/contexts/HeaderContext';
 
 export const Header: React.FC = () => {
-  const { user, canCreateTask } = useUser();
+  const { user, canCreateTask, isAdmin } = useUser();
   const pathname = usePathname();
   const { isPostModalOpen, isTaskModalOpen, postModalDate, taskModalDate, openPostModal, openTaskModal, closePostModal, closeTaskModal } = useHeader();
 
@@ -43,7 +43,6 @@ export const Header: React.FC = () => {
       <header className={styles.header}>
         <div className={styles.container}>
           
-          {/* Левая часть: пользователь */}
           <div className={styles.userSection}>
             <button onClick={handleAuthClick} className={styles.userButton}>
               <User className={styles.userIcon} />
@@ -54,7 +53,6 @@ export const Header: React.FC = () => {
           </div>
 
           <div className={styles.middleGroup}>
-            {/* Навигация */}
             <div className={styles.navBlock}>
               <Link href="/" className={styles.navLink}>
                 <button className={styles.navButton}>
@@ -68,7 +66,6 @@ export const Header: React.FC = () => {
               </Link>
             </div>
 
-            {/* Кнопки добавления */}
             <div className={styles.addButtons}>
               {canAddPost && (
                 <button
@@ -94,7 +91,15 @@ export const Header: React.FC = () => {
             </div>
           </div>
 
-          <div className={styles.rightSpacer}></div>
+          <div className={styles.adminSection}>
+            {isAdmin && (
+              <Link href="/admin">
+                <button className={styles.adminButton} title="Админ панель">
+                  <img src="/icons/admin.svg" alt="Admin" className={styles.adminIcon} />
+                </button>
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
