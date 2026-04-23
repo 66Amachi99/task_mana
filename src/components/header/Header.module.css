@@ -141,14 +141,15 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+
+.adminIcon {
+  width: 26px;
+  height: 26px;
   transition: transform 0.2s;
 }
 
-.adminButton:hover {
+.adminIcon:hover {
   transform: translateY(-2px);
-}
-
-.adminIcon {
-  width: 32px;
-  height: 32px;
 }

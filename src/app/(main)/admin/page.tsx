@@ -1,10 +1,12 @@
 'use client';
-import { useState } from 'react';
+
+import { useState, useMemo } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { useAdminUsers } from '@/hooks/use-admin-users';
-import UserTable from '@/components/admin/user-table';
-import UserForm from '@/components/admin/user-form';
-import DeleteModal from '@/components/admin/delete-modal';
+import { SearchInput } from '@/components/ui/search-input/search-input';
+import UserTable from '@/components/admin/user-table/user-table';
+import UserForm from '@/components/admin/user-form/user-form';
+import DeleteModal from '@/components/admin/user-form/delete-modal';
 import styles from './AdminPage.module.css';
 
 export default function AdminPage() {
@@ -14,6 +16,15 @@ export default function AdminPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [targetUser, setTargetUser] = useState<any>(null);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    return users.filter((u: any) => 
+      u.user_login.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [users, searchQuery]);
 
   if (userLoading || isLoading) return null;
   if (!isAdmin) return <div style={{ color: '#fff', padding: '100px', textAlign: 'center' }}>Нет доступа</div>;
@@ -54,14 +65,24 @@ export default function AdminPage() {
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Пользователи</h1>
+          
+          <SearchInput 
+            value={searchQuery} 
+            onChange={setSearchQuery} 
+            placeholder="Поиск по логину..." 
+          />
+
           <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleCreateClick}>
-            <svg className={styles.icon} viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <svg className={styles.icon} viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
             Добавить
           </button>
         </div>
 
         <UserTable 
-          users={users} 
+          users={filteredUsers} 
           onEdit={handleEdit} 
           onDelete={handleDeleteClick} 
         />

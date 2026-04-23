@@ -1,6 +1,6 @@
 'use client';
 import styles from './UserForm.module.css';
-import pageStyles from '@/app/admin/AdminPage.module.css';
+import pageStyles from '@/app/(main)/admin/AdminPage.module.css';
 
 export default function DeleteModal({ user, onClose, onConfirm }: any) {
   return (

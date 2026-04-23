@@ -28,7 +28,7 @@ export const Header: React.FC = () => {
     }
   };
 
-  const postIcon = pathname === '/' 
+  const postIcon = pathname === '/dashboard' 
     ? '/icons/post_window_icon_clicked.svg' 
     : '/icons/post_window_icon_no_clicked.svg';
 
@@ -54,7 +54,7 @@ export const Header: React.FC = () => {
 
           <div className={styles.middleGroup}>
             <div className={styles.navBlock}>
-              <Link href="/" className={styles.navLink}>
+              <Link href="/dashboard" className={styles.navLink}>
                 <button className={styles.navButton}>
                   <img src={postIcon} alt="Посты" className={styles.navIcon} />
                 </button>

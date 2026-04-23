@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import styles from './UserForm.module.css';
-import pageStyles from '@/app/admin/AdminPage.module.css';
+import pageStyles from '@/app/(main)/admin/AdminPage.module.css';
 
 export default function UserForm({ user, onClose, onSave }: any) {
   const [formData, setFormData] = useState({

@@ -1,6 +1,6 @@
 'use client';
 import styles from './UserTable.module.css';
-import pageStyles from '@/app/admin/AdminPage.module.css';
+import pageStyles from '@/app/(main)/admin/AdminPage.module.css';
 
 export default function UserTable({ users, onEdit, onDelete }: any) {
   return (

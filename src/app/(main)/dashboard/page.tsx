@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { PostCard } from '@/components/shared/post-card/post-card';
 import { TaskCard } from '@/components/shared/task-card/task-card';
+import { SearchInput } from '@/components/ui/search-input/search-input';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
 import type { CalendarTask, CalendarPost } from '@/types';
@@ -10,7 +11,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useUser } from '@/hooks/use-roles';
 import { RoleDropdown } from '@/components/shared/role-dropdown/role-dropdown';
-import styles from './HomePage.module.css';
+import styles from './DashboardPage.module.css';
 
 type ContentItem = CalendarPost | CalendarTask;
 
@@ -22,6 +23,7 @@ export default function HomePage() {
   const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_BATCH);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -33,7 +35,7 @@ export default function HomePage() {
 
   useEffect(() => {
     setDisplayedCount(ITEMS_PER_BATCH);
-  }, [showPosts, showTasks, showIncompleteOnly, showOverdueOnly, roleFilter]);
+  }, [showPosts, showTasks, showIncompleteOnly, showOverdueOnly, roleFilter, searchQuery]);
 
   const allPosts = useMemo(() => {
     return (postsData?.posts || []).map((post) => ({
@@ -71,7 +73,6 @@ export default function HomePage() {
     } else {
       setShowPosts(true);
     }
-
     scrollToTop();
   };
 
@@ -86,7 +87,6 @@ export default function HomePage() {
     } else {
       setShowTasks(true);
     }
-
     scrollToTop();
   };
 
@@ -144,6 +144,16 @@ export default function HomePage() {
       });
     }
 
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      items = items.filter((item) => {
+        if (item.type === 'post') {
+          return item.post_title.toLowerCase().includes(query);
+        }
+        return item.title.toLowerCase().includes(query);
+      });
+    }
+
     items.sort((a, b) => {
       const dateA = itemDate(a).getTime();
       const dateB = itemDate(b).getTime();
@@ -159,6 +169,7 @@ export default function HomePage() {
     showIncompleteOnly,
     showOverdueOnly,
     roleFilter,
+    searchQuery,
     filterPostByRole,
   ]);
 
@@ -182,11 +193,8 @@ export default function HomePage() {
     }
 
     const groups = Array.from(groupsMap.values());
-
     return groups.sort((a, b) => {
-      return showOverdueOnly
-        ? b.dateKey.localeCompare(a.dateKey)
-        : a.dateKey.localeCompare(b.dateKey);
+      return showOverdueOnly ? b.dateKey.localeCompare(a.dateKey) : a.dateKey.localeCompare(b.dateKey);
     });
   }, [visibleItems, showOverdueOnly]);
 
@@ -228,39 +236,48 @@ export default function HomePage() {
   return (
     <div className={styles.page}>
       <div className={styles.filterWrapper}>
-        <button
-          onClick={handlePostsClick}
-          className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : ''}`}
-        >
-          Посты
-        </button>
+        <div className={styles.filterGroup}>
+          <button
+            onClick={handlePostsClick}
+            className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : ''}`}
+          >
+            Посты
+          </button>
 
-        <button
-          onClick={handleTasksClick}
-          className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : ''}`}
-        >
-          Задачи
-        </button>
+          <button
+            onClick={handleTasksClick}
+            className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : ''}`}
+          >
+            Задачи
+          </button>
 
-        <button
-          onClick={handleIncompleteClick}
-          className={`${styles.filterButton} ${
-            showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
-          }`}
-        >
-          Не готовые
-        </button>
+          <button
+            onClick={handleIncompleteClick}
+            className={`${styles.filterButton} ${
+              showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
+            }`}
+          >
+            Не готовые
+          </button>
 
-        <button
-          onClick={handleOverdueClick}
-          className={`${styles.filterButton} ${
-            showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive
-          }`}
-        >
-          Просроченные
-        </button>
+          <button
+            onClick={handleOverdueClick}
+            className={`${styles.filterButton} ${
+              showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive
+            }`}
+          >
+            Просроченные
+          </button>
 
-        <RoleDropdown roleFilter={roleFilter} onRoleSelect={handleRoleSelect} />
+          <RoleDropdown roleFilter={roleFilter} onRoleSelect={handleRoleSelect} />
+        </div>
+
+        <SearchInput 
+          value={searchQuery} 
+          onChange={setSearchQuery} 
+          placeholder="Поиск по названию..." 
+          className={styles.mainSearch}
+        />
       </div>
 
       <div className={styles.container}>
@@ -268,12 +285,10 @@ export default function HomePage() {
           {visibleGroups.map((group) => (
             <div key={group.dateKey} className={styles.dayGroup}>
               <div className={styles.dayHeader}>{group.displayDate}</div>
-
               {group.items.map((item) => {
                 if (item.type === 'post') {
                   return <PostCard key={`post-${item.post_id}`} post={item} />;
                 }
-
                 return <TaskCard key={`task-${item.task_id}`} task={item} />;
               })}
             </div>
@@ -288,11 +303,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {hasMore && (
-            <div ref={loaderRef} className={styles.loader}>
-              Загрузка...
-            </div>
-          )}
+          {hasMore && <div ref={loaderRef} className={styles.loader}>Загрузка...</div>}
         </div>
       </div>
     </div>

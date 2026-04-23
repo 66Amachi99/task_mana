@@ -63,8 +63,6 @@
   padding: 2.5rem 0;
 }
 
-.dayGroup {}
-
 .dayHeader {
   text-align: center;
   font-size: 1.25rem;
@@ -98,9 +96,10 @@
   top: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between; /* Чтобы поиск улетел вправо */
+  gap: 16px;
   color: #ffffff;
-  z-index: 1;
+  z-index: 10;
   flex-wrap: wrap;
 }
 
@@ -109,11 +108,16 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-
   backdrop-filter: blur(20px);
-
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .filterButton {
@@ -136,4 +140,8 @@
 
 .filterButtonInactive {
   background-color: #ffffff02;
+}
+
+.mainSearch {
+  max-width: 250px;
 }
