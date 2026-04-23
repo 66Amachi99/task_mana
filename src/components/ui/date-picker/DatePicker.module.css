@@ -1,21 +1,22 @@
 .datePickerInput {
   width: 100%;
-  padding: 0.75rem 1rem;
-  background-color: #ffffff02;
+  height: 44px;
+  padding: 8px 10px;
   color: #fff;
-  border: 1px solid #ffffff10;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   font-size: 16px;
   outline: none;
 }
 
 .datePickerInput:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .calendar {
-  background: linear-gradient(90deg, rgba(41, 41, 41, 0.753) 0%, rgba(255, 255, 255, 0.171) 100%);
+  /* background: linear-gradient(90deg, rgba(41, 41, 41, 0.753) 0%, rgba(255, 255, 255, 0.171) 100%); */
+  background: linear-gradient(90deg, rgba(41, 41, 41, 0.856) 0%, rgba(82, 82, 82, 0.753) 100%);
   backdrop-filter: blur(10px);
   border: 1px solid #ffffff10;
   color: #fff;

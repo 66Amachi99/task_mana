@@ -280,12 +280,14 @@ export const PostDetailsLeftPanel = ({
         <h2 className={styles.titleDisplay}>{editedTitle}</h2>
       )}
 
-      {/* Статус поста */}
-      <div className={styles.statusRow}>
-        <div className={`${styles.statusBadge} ${statusColor}`}>
-          {postStatus}
+      {/* Статус поста — скрывается в режиме редактирования */}
+      {!isEditing && (
+        <div className={styles.statusRow}>
+          <div className={`${styles.statusBadge} ${statusColor}`}>
+            {postStatus}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Теги */}
       {isEditing ? (

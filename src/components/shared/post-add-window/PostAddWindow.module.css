@@ -104,12 +104,12 @@
 .textarea,
 .select {
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #ffffff10;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 0.5rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
-  background-color: #ffffff02;
+  border: 1px solid rgba(255, 255, 255, 0.1);  
   color: #ffffff;
   height: 2.75rem;
 }
@@ -140,11 +140,11 @@
 
 .searchInput {
   width: 100%;
-  padding: 0.5rem 2.5rem 0.5rem 2.5rem;
-  border: 1px solid #ffffff10;
+  padding: 8px 10px 10px 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1); 
   border-radius: 0.5rem;
   outline: none;
-  background-color: #ffffff02;
+  background: rgba(255, 255, 255, 0.02);
   color: #ffffff;
   height: 2.75rem;
 }
@@ -256,10 +256,10 @@
   gap: 0.5rem;
   height: 44px;
   align-items: center;
-  padding: 0 0.5rem;
-  border: 1px solid #ffffff10;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1); 
   border-radius: 0.5rem;
-  background-color: #ffffff02;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .tagSelectorContainer:focus-within {
@@ -310,7 +310,7 @@
 }
 
 .tagInput::placeholder {
-  color: #ffffff40;
+  /* color: #ffffff40; */
 }
 
 .tagInput:disabled {

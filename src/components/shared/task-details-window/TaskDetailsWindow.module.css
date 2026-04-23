@@ -54,8 +54,8 @@
   font-size: 1.25rem;
   font-weight: 600;
   color: #ffffff;
-  border: 1px solid #ffffff10;
-  background-color: #ffffff02;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   padding: 0.5rem 0.75rem;
   width: 100%;
@@ -71,7 +71,7 @@
 .closeButton {
   color: #ffffff60;
   border-radius: 9999px;
-  transition: color 0.2s, background-color 0.2s, transform 0.3s ease; 
+  transition: color 0.2s, background-color 0.2s, transform 0.3s ease;
   background: none;
   border: none;
   cursor: pointer;
@@ -165,7 +165,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  /* background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%); */
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   color: #ffffffb6;
@@ -273,14 +273,14 @@
   gap: 1rem;
   min-height: 44px;
   padding: 0.5rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1); 
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02); 
+  background: rgba(255, 255, 255, 0.02);
   color: #ffffff;
 }
 
 .tagSelectorInputContainer:focus-within {
-  border-color: rgba(255, 255, 255, 0.2); 
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tagSelectorInput {
@@ -362,10 +362,10 @@
 
 .descriptionTextarea {
   color: #ffffff;
-  background-color: #ffffff02;
-  border: 1px solid #ffffff10;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  padding: 0.75rem 1rem;
+  padding: 8px 10px;
   width: 100%;
   outline: none;
   resize: none;
@@ -388,8 +388,8 @@
 }
 
 .dateDisplay {
-  border: 1px solid #ffffff10;
-  background-color: #ffffff02;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   height: 44px;
   padding: 0.75rem;
@@ -419,8 +419,8 @@
 .checkbox {
   width: 1.25rem;
   height: 1.25rem;
-  border: 1px solid #ffffff10;
-  background-color: #ffffff02;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.5rem;
   cursor: pointer;
   appearance: none;
@@ -571,8 +571,7 @@
   composes: descriptionTextarea;
 }
 
-.saveResultButtonContainer {
-}
+.saveResultButtonContainer {}
 
 .saveResultButton {
   flex: 1;
@@ -671,6 +670,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -681,6 +681,7 @@
     transform: scale(0.95) translateY(10px);
     opacity: 0;
   }
+
   to {
     transform: scale(1) translateY(0);
     opacity: 1;
@@ -692,6 +693,7 @@
     transform: scale(1) translateY(0);
     opacity: 1;
   }
+
   to {
     transform: scale(0.95) translateY(10px);
     opacity: 0;
