@@ -1,14 +1,44 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
+import { 
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList
+} from 'recharts';
 import { Layers, CheckSquare, MessageSquare, AlertTriangle, Users, BarChart3, TrendingUp, Briefcase } from 'lucide-react';
 import styles from './StatsPage.module.css';
-import { ApexOptions } from 'apexcharts';
 
-const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
-const COLORS = ['#41A5F3', '#48C884', '#AB48BF', '#F7ADC4', '#FE4D3D', '#449627'];
+const THEME_COLORS = [
+  { fill: '#41A5F340', stroke: '#41A5F3' },
+  { fill: '#48C88440', stroke: '#48C884' },
+  { fill: '#AB48BF40', stroke: '#AB48BF' },
+  { fill: '#F7ADC440', stroke: '#F7ADC4' },
+  { fill: '#FE4D3D40', stroke: '#FE4D3D' },
+  { fill: '#44962740', stroke: '#449627' },
+];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    const color = data.payload?.stroke || data.stroke || data.fill || '#41A5F3';
+    const title = data.payload?.name || label || 'Данные';
+    const metricName = data.name || 'Значение';
+
+    return (
+      <div className={styles.customTooltip}>
+        <p className={styles.tooltipLabel}>{title}</p>
+        <div className={styles.tooltipDataRow}>
+          <span className={styles.tooltipMetricName}>{metricName}:</span>
+          <span className={styles.tooltipValue} style={{ color: color.length > 7 ? color.substring(0, 7) : color }}>
+            {data.value}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function StatsPage() {
   const [period, setPeriod] = useState<'week' | 'month' | 'all'>('week');
@@ -22,7 +52,7 @@ export default function StatsPage() {
   const sortedTeam = useMemo(() => {
     if (!data?.team) return [];
     return [...data.team]
-      .map(u => ({ ...u, total: u.posts + u.tasks }))
+      .map(u => ({ ...u, total: (u.posts || 0) + (u.tasks || 0) }))
       .sort((a, b) => b.total - a.total);
   }, [data?.team]);
 
@@ -31,52 +61,30 @@ export default function StatsPage() {
     return Math.max(...data.tags.map((t: any) => t.count));
   }, [data?.tags]);
 
+  const isPlatformEmpty = useMemo(() => {
+    if (!data?.platforms || !Array.isArray(data.platforms)) return true;
+    return data.platforms.every((p: any) => p.value === 0);
+  }, [data?.platforms]);
+
+  const platformData = useMemo(() => {
+    if (isPlatformEmpty) return [{ name: 'Нет данных', value: 1 }];
+    return data.platforms;
+  }, [data?.platforms, isPlatformEmpty]);
+
   if (isLoading || !data) return <div className={styles.loading}><div className={styles.spinner} /></div>;
-
-  const complexityOptions: ApexOptions = {
-    chart: { toolbar: { show: false }, background: 'transparent' },
-    theme: { mode: 'dark' },
-    colors: COLORS,
-    plotOptions: { bar: { horizontal: true, borderRadius: 10, distributed: true, barHeight: '55%' } },
-    grid: { show: false },
-    xaxis: { categories: ['Видео', 'SMM Видео', 'Обложки', 'Карточки', 'Галереи'], labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
-    yaxis: { labels: { show: true, style: { fontSize: '14pt', colors: '#ffffff' } } },
-    dataLabels: { enabled: true, style: { fontSize: '14pt', colors: ['#ffffff'] } },
-    legend: { show: false }
-  };
-
-  const platformOptions: ApexOptions = {
-    labels: ['Telegram', 'VK', 'MAX'],
-    colors: COLORS,
-    theme: { mode: 'dark' },
-    chart: { background: 'transparent' },
-    stroke: { show: false },
-    legend: { position: 'bottom', fontSize: '14pt', markers: { shape: 'circle' } },
-    plotOptions: { pie: { donut: { size: '70%', labels: { show: true, total: { show: true, label: 'Всего', color: '#fff', fontSize: '14pt' }, value: { fontSize: '20pt', color: '#fff' } } } } },
-    dataLabels: { enabled: false }
-  };
-
-  const frictionOptions: ApexOptions = {
-    chart: { toolbar: { show: false }, background: 'transparent' },
-    tooltip: { enabled: true, theme: 'dark', shared: true, intersect: false },
-    markers: { size: 0, hover: { size: 0 } },
-    stroke: { curve: 'smooth', width: 4, colors: ['#AB48BF'] },
-    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05 } },
-    theme: { mode: 'dark' },
-    xaxis: { categories: data?.friction?.labels || [], labels: { style: { fontSize: '10pt', colors: 'rgba(255,255,255,0.5)' } }, axisBorder: { show: false } },
-    yaxis: { show: true, labels: { style: { fontSize: '14pt', colors: '#ffffff' } } },
-    grid: { borderColor: 'rgba(255,255,255,0.05)', xaxis: { lines: { show: true } }, yaxis: { lines: { show: true } } },
-    dataLabels: { enabled: true, style: { fontSize: '12pt', colors: ['#AB48BF'] } }
-  };
 
   return (
     <div className={styles.page}>
       <div className={styles.container}>
         <header className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>Статистика предприятия</h1>
+          <h1 className={styles.pageTitle}>Статистика</h1>
           <div className={styles.filterGroup}>
             {(['week', 'month', 'all'] as const).map((p) => (
-              <button key={p} className={`${styles.filterButton} ${period === p ? styles.filterButtonActive : ''}`} onClick={() => setPeriod(p)}>
+              <button 
+                key={p} 
+                className={`${styles.filterButton} ${period === p ? styles.filterButtonActive : ''}`} 
+                onClick={() => setPeriod(p)}
+              >
                 {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Все время'}
               </button>
             ))}
@@ -84,107 +92,210 @@ export default function StatsPage() {
         </header>
 
         <div className={styles.mainLayout}>
-            {/* ЛЕВЫЙ СТОЛБЕЦ (1/3) */}
-            <div className={styles.leftColumn}>
-                <div className={`${styles.statCard} ${styles.areaPie}`}>
-                    <div className={styles.cardHeader}>
-                        <h3 className={styles.cardTitle}>Охват площадок</h3>
-                        <BarChart3 size={32} color="#41A5F3" />
-                    </div>
-                    <div className={styles.chartWrapper}>
-                        <Chart options={platformOptions} series={[data?.platforms?.telegram_published || 0, data?.platforms?.vkontakte_published || 0, data?.platforms?.MAX_published || 0]} type="donut" height="100%" />
-                    </div>
-                </div>
-
-                <div className={`${styles.statCard} ${styles.areaTeam}`}>
-                    <div className={styles.cardHeader}>
-                        <h3 className={styles.cardTitle}>Нагрузка на команду</h3>
-                        <Users size={32} color="#AB48BF" />
-                    </div>
-                    <div className={styles.tableWrapper}>
-                        <table className={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th>Сотрудник</th>
-                                    <th>Посты</th>
-                                    <th>Задачи</th>
-                                    <th>Всего</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sortedTeam.map((u: any) => (
-                                <tr key={u.login}>
-                                    <td className={styles.userNameInTable}>{u.login}</td>
-                                    <td>{u.posts}</td>
-                                    <td>{u.tasks}</td>
-                                    <td style={{ fontWeight: 800, color: '#41A5F3' }}>{u.total}</td>
-                                </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+          <div className={styles.leftColumn}>
+            {/* ОХВАТ ПЛОЩАДОК */}
+            <div className={`${styles.statCard} ${styles.areaPie}`}>
+              <div className={styles.cardHeader}>
+                <h3 className={styles.cardTitle}>Охват площадок</h3>
+                <BarChart3 size={32} color="#41A5F3" />
+              </div>
+              <div className={styles.chartWrapper}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={platformData}
+                      innerRadius="60%"
+                      outerRadius="85%"
+                      paddingAngle={5}
+                      dataKey="value"
+                      nameKey="name"
+                      isAnimationActive={true}
+                      stroke="none"
+                    >
+                      {isPlatformEmpty ? (
+                        <Cell fill="rgba(255,255,255,0.05)" />
+                      ) : (
+                        platformData.map((entry: any, index: number) => (
+                          <Cell 
+                            key={`cell-pie-${index}`} 
+                            fill={THEME_COLORS[index % THEME_COLORS.length].fill} 
+                            stroke={THEME_COLORS[index % THEME_COLORS.length].stroke}
+                            strokeWidth={2}
+                          />
+                        ))
+                      )}
+                    </Pie>
+                    {!isPlatformEmpty && <Tooltip content={<CustomTooltip />} cursor={false} />}
+                    <Legend 
+                        verticalAlign="bottom" 
+                        height={36}
+                        formatter={(value) => <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14pt' }}>{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
-            {/* ПРАВАЯ ЧАСТЬ (2/3) */}
-            <div className={styles.rightContent}>
-                <div className={styles.topRightSection}>
-                    <div className={styles.pulseGrid}>
-                        <PulseCard icon={Layers} label="Посты" value={data.pulse.activePosts} color="#48C884" />
-                        <PulseCard icon={CheckSquare} label="Задачи" value={data.pulse.activeTasks} color="#41A5F3" />
-                        <PulseCard icon={MessageSquare} label="Правки" value={data.pulse.totalComments} color="#AB48BF" />
-                        <PulseCard icon={AlertTriangle} label="Срок" value={data.pulse.overduePosts} color="#FE4D3D" />
-                    </div>
-
-                    <div className={`${styles.statCard} ${styles.areaFriction}`}>
-                        <div className={styles.cardHeader}>
-                            <h3 className={styles.cardTitle}>Индекс правок</h3>
-                            <TrendingUp size={32} color="#AB48BF" />
-                        </div>
-                        <div className={styles.chartWrapper}>
-                            <Chart options={frictionOptions} series={[{ name: 'Правки', data: data?.friction?.data || [] }]} type="area" height="100%" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className={styles.bottomRightSection}>
-                    <div className={`${styles.statCard} ${styles.areaComplexity}`}>
-                        <div className={styles.cardHeader}>
-                            <h3 className={styles.cardTitle}>Сложность контента</h3>
-                            <BarChart3 size={32} color="#449627" />
-                        </div>
-                        <div className={styles.chartWrapper}>
-                            <Chart options={complexityOptions} series={[{ name: 'Кол-во', data: [data?.complexity?.video || 0, data?.complexity?.mini_video || 0, data?.complexity?.cover || 0, data?.complexity?.cards || 0, data?.complexity?.gallery || 0] }]} type="bar" height="100%" />
-                        </div>
-                    </div>
-
-                    <div className={`${styles.statCard} ${styles.areaEmpty}`}>
-                        <div className={styles.cardHeader}>
-                            <h3 className={styles.cardTitle}>Активные проекты</h3>
-                            <Briefcase size={32} color="#F7ADC4" />
-                        </div>
-                        <div className={styles.projectList}>
-                          {data?.tags?.map((tag: any) => (
-                            <div key={tag.name} className={styles.projectItem}>
-                              <div className={styles.projectInfo}>
-                                <span className={styles.projectName}>{tag.name}</span>
-                                <span className={styles.projectCount}>{tag.count}</span>
-                              </div>
-                              <div className={styles.progressTrack}>
-                                <div 
-                                  className={styles.progressBar} 
-                                  style={{ 
-                                    width: `${(tag.count / maxProjectCount) * 100}%`,
-                                    backgroundColor: tag.color 
-                                  }} 
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                    </div>
-                </div>
+            {/* НАГРУЗКА КОМАНДЫ */}
+            <div className={`${styles.statCard} ${styles.areaTeam}`}>
+              <div className={styles.cardHeader}>
+                <h3 className={styles.cardTitle}>Нагрузка на команду</h3>
+                <Users size={32} color="#AB48BF" />
+              </div>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr><th>Сотрудник</th><th>Посты</th><th>Задачи</th><th>Всего</th></tr>
+                  </thead>
+                  <tbody>
+                    {sortedTeam.map((u: any) => (
+                      <tr key={u.login}>
+                        <td className={styles.userNameInTable}>{u.login}</td>
+                        <td>{u.posts}</td>
+                        <td>{u.tasks}</td>
+                        <td style={{ fontWeight: 800, color: '#41A5F3' }}>{u.total}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
+          </div>
+
+          <div className={styles.rightContent}>
+            <div className={styles.topRightSection}>
+              {/* ПУЛЬС */}
+              <div className={styles.pulseGrid}>
+                <PulseCard icon={Layers} label="Посты" value={data.pulse.activePosts} color="#48C884" />
+                <PulseCard icon={CheckSquare} label="Задачи" value={data.pulse.activeTasks} color="#41A5F3" />
+                <PulseCard icon={MessageSquare} label="Правки" value={data.pulse.totalComments} color="#AB48BF" />
+                <PulseCard icon={AlertTriangle} label="Дедлайны" value={data.pulse.overduePosts} color="#FE4D3D" />
+              </div>
+
+              {/* ИНДЕКС ПРАВОК */}
+              <div className={`${styles.statCard} ${styles.areaFriction}`}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>Индекс правок</h3>
+                  <TrendingUp size={32} color="#AB48BF" />
+                </div>
+                <div className={styles.chartWrapper}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={data.friction} margin={{ top: 30, right: 20, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorFriction" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#AB48BF" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="#AB48BF" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.3)', fontSize: '10pt'}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.5)', fontSize: '12pt'}} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area 
+                        type="monotone" 
+                        dataKey="value" 
+                        name="Правки"
+                        stroke="#AB48BF" 
+                        strokeWidth={3} 
+                        fillOpacity={1} 
+                        fill="url(#colorFriction)" 
+                      >
+                        <LabelList 
+                          dataKey="value" 
+                          position="top" 
+                          offset={15}
+                          fill="#F7ADC4" 
+                          fontSize="12pt" 
+                          fontWeight={400} 
+                        />
+                      </Area>
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.bottomRightSection}>
+              {/* СЛОЖНОСТЬ КОНТЕНТА */}
+              <div className={`${styles.statCard} ${styles.areaComplexity}`}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>Количество контента</h3>
+                  <BarChart3 size={32} color="#449627" />
+                </div>
+                <div className={styles.chartWrapper}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={data.complexity} 
+                      layout="vertical" 
+                      margin={{ left: 10, right: 60, top: 10, bottom: 10 }}
+                    >
+                      <XAxis type="number" hide />
+                      <YAxis 
+                        dataKey="name" 
+                        type="category" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{fill: '#fff', fontSize: '14pt'}} 
+                        width={120} 
+                      />
+                      <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(255,255,255,0.03)'}} />
+                      <Bar 
+                        dataKey="value" 
+                        name="Постов"
+                        barSize={22} 
+                        radius={[0, 10, 10, 0]}
+                      >
+                        <LabelList 
+                          dataKey="value" 
+                          position="right" 
+                          fill="#fff" 
+                          fontSize="14pt" 
+                          fontWeight={400} 
+                          offset={10} 
+                        />
+                        {data.complexity.map((entry: any, index: number) => (
+                          <Cell 
+                            key={`cell-bar-${index}`} 
+                            fill={THEME_COLORS[index % THEME_COLORS.length].fill} 
+                            stroke={THEME_COLORS[index % THEME_COLORS.length].stroke}
+                            strokeWidth={2}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* ТОП ПРОЕКТОВ */}
+              <div className={`${styles.statCard} ${styles.areaEmpty}`}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>Топ проектов</h3>
+                  <Briefcase size={32} color="#F7ADC4" />
+                </div>
+                <div className={styles.projectGrid}>
+                  {data.tags.map((tag: any) => (
+                    <div key={tag.name} className={styles.projectCard}>
+                      <div className={styles.projectHeader}>
+                        <span className={styles.projectName}>{tag.name}</span>
+                        <span className={styles.projectCount}>{tag.count}</span>
+                      </div>
+                      <div className={styles.projectBarTrack}>
+                        <div 
+                          className={styles.projectBarFill} 
+                          style={{ 
+                            width: `${(tag.count / maxProjectCount) * 100}%`, 
+                            backgroundColor: tag.color,
+                            border: `1px solid ${tag.color.replace('40', 'ff')}` 
+                          }} 
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -193,12 +304,12 @@ export default function StatsPage() {
 
 function PulseCard({ icon: Icon, label, value, color }: any) {
   return (
-    <div className={styles.pulseCardMini}>
+    <div className={styles.pulseCardMini} style={{ borderLeft: `4px solid ${color}` }}>
       <div className={styles.pulseCardLeft}>
         <Icon size={32} color={color} strokeWidth={2.5} />
         <div className={styles.pulseLabel}>{label}</div>
       </div>
-      <div className={styles.pulseValue} style={{color}}>{value}</div>
+      <div className={styles.pulseValue} style={{color: color}}>{value}</div>
     </div>
   );
 }
