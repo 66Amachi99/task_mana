@@ -1,0 +1,316 @@
+.page {
+    height: 100vh;
+    width: 100vw;
+    background-image: url('/images/background.webp');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: 14pt;
+}
+
+.container {
+    height: 100%;
+    width: 100%;
+    padding: 1.5rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-sizing: border-box;
+}
+
+.pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 50px;
+    flex-shrink: 0;
+}
+
+.pageTitle {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.mainLayout {
+    display: flex;
+    gap: 1.5rem;
+    flex: 1;
+    min-height: 0;
+}
+
+/* КОЛОНКИ */
+.leftColumn {
+    width: 33%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-height: 0;
+}
+
+.rightContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-height: 0;
+}
+
+.topRightSection {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-height: 0;
+}
+
+.bottomRightSection {
+    flex: 0.8;
+    display: flex;
+    gap: 1.5rem;
+    min-height: 0;
+}
+
+/* КАРТОЧКИ */
+.statCard {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.cardTitle {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+/* ПУЛЬС */
+.pulseGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.pulseCardMini {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 1.25rem 1.75rem;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pulseCardLeft {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+}
+
+.pulseLabel {
+    font-size: 2.2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.pulseValue {
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.areaPie {
+    height: 45%;
+}
+
+.areaTeam,
+.areaFriction,
+.areaComplexity,
+.areaEmpty {
+    flex: 1;
+    min-height: 0;
+}
+
+.chartWrapper {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+}
+
+/* ТАБЛИЦА С ЗАКРУГЛЕНИЯМИ */
+.tableWrapper {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.tableWrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table th {
+    text-align: left;
+    padding: 14px 15px;
+    font-size: 10pt;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    background: rgba(45, 45, 45, 0.95);
+    z-index: 2;
+}
+
+.table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 14pt;
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+.table tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.userNameInTable {
+    font-weight: 600;
+    color: #fff;
+}
+
+/* НОВЫЙ БЛОК ПРОЕКТОВ (РЕЙТИНГ) */
+.projectList {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.projectList::-webkit-scrollbar {
+    display: none;
+}
+
+.projectItem {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.projectInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.projectName {
+    font-size: 14pt;
+    font-weight: 600;
+    color: #fff;
+}
+
+.projectCount {
+    font-size: 12pt;
+    opacity: 0.6;
+    font-weight: 800;
+}
+
+.progressTrack {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progressBar {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+}
+
+/* ФИЛЬТРЫ */
+.filterGroup {
+    display: flex;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 5px;
+    border-radius: 14px;
+}
+
+.filterButton {
+    height: 32px;
+    padding: 0 18px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-size: 14pt;
+    transition: 0.2s;
+}
+
+.filterButtonActive {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #41A5F3;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    font-size: 14pt;
+}

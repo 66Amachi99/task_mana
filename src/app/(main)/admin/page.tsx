@@ -12,17 +12,17 @@ import styles from './AdminPage.module.css';
 export default function AdminPage() {
   const { isAdmin, loading: userLoading } = useUser();
   const { users, isLoading, createUser, updateUser, deleteUser } = useAdminUsers();
-  
+
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [targetUser, setTargetUser] = useState<any>(null);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredUsers = useMemo(() => {
-    if (!users) return [];
-    return users.filter((u: any) => 
-      u.user_login.toLowerCase().includes(searchQuery.toLowerCase())
+    if (!users || !Array.isArray(users)) return [];
+    return users.filter((u: any) =>
+      u.user_login?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [users, searchQuery]);
 
@@ -65,11 +65,11 @@ export default function AdminPage() {
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Пользователи</h1>
-          
-          <SearchInput 
-            value={searchQuery} 
-            onChange={setSearchQuery} 
-            placeholder="Поиск по логину..." 
+
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Поиск по логину..."
           />
 
           <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleCreateClick}>
@@ -81,26 +81,26 @@ export default function AdminPage() {
           </button>
         </div>
 
-        <UserTable 
-          users={filteredUsers} 
-          onEdit={handleEdit} 
-          onDelete={handleDeleteClick} 
+        <UserTable
+          users={filteredUsers}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
         />
       </div>
 
       {modalOpen && (
-        <UserForm 
-          user={targetUser} 
-          onClose={() => setModalOpen(false)} 
-          onSave={handleSave} 
+        <UserForm
+          user={targetUser}
+          onClose={() => setModalOpen(false)}
+          onSave={handleSave}
         />
       )}
 
       {deleteModalOpen && targetUser && (
-        <DeleteModal 
-          user={targetUser} 
-          onClose={() => setDeleteModalOpen(false)} 
-          onConfirm={confirmDelete} 
+        <DeleteModal
+          user={targetUser}
+          onClose={() => setDeleteModalOpen(false)}
+          onConfirm={confirmDelete}
         />
       )}
     </div>

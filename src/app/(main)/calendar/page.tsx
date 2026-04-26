@@ -46,7 +46,6 @@ const getCardBackground = (item: CalendarItem): string => {
 };
 
 export default function CalendarPage() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedItem, setSelectedItem] = useState<{ post?: CalendarPost; task?: CalendarTask } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -59,7 +58,7 @@ export default function CalendarPage() {
   const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
 
   const { filterPostByRole } = useUser();
-  const { openPostModal, openTaskModal } = useHeader();
+  const { selectedDate, setSelectedDate, openPostModal, openTaskModal } = useHeader();
 
   const { data: postsData, isLoading: postsLoading } = usePosts(1, 100);
   const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 100);
@@ -112,7 +111,8 @@ export default function CalendarPage() {
   }, [posts, tasks, calendarRoleFilter, filterPostByRole, calendarViewMode]);
 
   const rawDayItems = useMemo(() => {
-    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    const date = selectedDate || new Date();
+    const dateStr = format(date, 'yyyy-MM-dd');
     const postsForDay = posts.filter(p => format(p.post_deadline, 'yyyy-MM-dd') === dateStr);
     const tasksForDay = tasks.filter(t => format(t.end_time, 'yyyy-MM-dd') === dateStr);
     return [
@@ -159,6 +159,14 @@ export default function CalendarPage() {
     setShowIncompleteOnly(false);
   };
 
+  const handleOpenPostModal = () => {
+    openPostModal(selectedDate);
+  };
+
+  const handleOpenTaskModal = () => {
+    openTaskModal(selectedDate);
+  };
+
   const handleItemClick = (item: CalendarItem) => {
     if (item.type === 'post') setSelectedItem({ post: item });
     else setSelectedItem({ task: item });
@@ -166,14 +174,6 @@ export default function CalendarPage() {
 
   const handleViewModeChange = (mode: CalendarViewMode) => {
     setCalendarViewMode(mode);
-  };
-
-  const handleOpenPostModal = () => {
-    openPostModal(selectedDate);
-  };
-
-  const handleOpenTaskModal = () => {
-    openTaskModal(selectedDate);
   };
 
   const handleSidebarPostsClick = () => {
@@ -325,7 +325,7 @@ export default function CalendarPage() {
             <div className={styles.calendarContainer}>
               <Calendar
                 itemsByDate={calendarItemsByDate}
-                selectedDate={selectedDate}
+                selectedDate={selectedDate || new Date()}
                 onDateSelect={handleDateSelect}
                 onPostClick={(p) => handleItemClick(p)}
                 onTaskClick={(t) => handleItemClick(t)}
@@ -367,10 +367,10 @@ export default function CalendarPage() {
                 <div className={styles.sidebarHeaderTitle}>
                   <div className={styles.dateContainer}>
                     <h2 className={styles.dateTitle}>
-                      {format(selectedDate, 'dd', { locale: ru })}
+                      {format(selectedDate || new Date(), 'dd', { locale: ru })}
                     </h2>
                     <span className={styles.weekdayTitle}>
-                      {format(selectedDate, 'EEEE', { locale: ru }).replace(/^./, c => c.toUpperCase())}
+                      {format(selectedDate || new Date(), 'EEEE', { locale: ru }).replace(/^./, c => c.toUpperCase())}
                     </span>
                   </div>
                   <button onClick={() => setIsSidebarOpen(false)} className={styles.closeButton}>

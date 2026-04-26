@@ -9,9 +9,10 @@ import styles from './AuthWindow.module.css';
 
 interface AuthWindowProps {
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export const AuthWindow = ({ onClose }: AuthWindowProps) => {
+export const AuthWindow = ({ onClose, onSuccess }: AuthWindowProps) => {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -44,6 +45,7 @@ export const AuthWindow = ({ onClose }: AuthWindowProps) => {
         setError('Неверный логин или пароль');
       } else {
         queryClient.clear();
+        onSuccess?.();
         handleClose();
       }
     } catch {

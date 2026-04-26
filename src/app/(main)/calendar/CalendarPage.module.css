@@ -251,7 +251,7 @@
   padding: 1rem;
   border-radius: 20px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: scale 0.2s;
   background-size: cover;
   background-position: right top;
   background-repeat: no-repeat;
@@ -263,8 +263,7 @@
 }
 
 .sidebarCard:hover {
-  transform: translateX(2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  scale: 0.99;
 }
 
 /* Заголовок */

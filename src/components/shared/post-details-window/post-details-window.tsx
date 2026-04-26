@@ -184,8 +184,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const [selectedTasks, setSelectedTasks] = useState<boolean[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-  const [tagSearchQuery, setTagSearchQuery] = useState('');
-  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -197,7 +195,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   const [localApprovedBy, setLocalApprovedBy] = useState<{ user_login: string } | null>(null);
   const [localSocialLinks, setLocalSocialLinks] = useState<SocialLinks>(EMPTY_SOCIAL);
 
-  const tagDropdownRef = useRef<HTMLDivElement>(null);
   const datePickerRef = useRef<HTMLDivElement>(null);
   const overlayPointerDownRef = useRef(false);
   const initializedPostIdRef = useRef<number | null>(null);
@@ -228,7 +225,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (tagDropdownRef.current && !tagDropdownRef.current.contains(target)) setIsTagDropdownOpen(false);
       if (datePickerRef.current && !datePickerRef.current.contains(target)) setShowDatePicker(false);
     };
 
@@ -293,16 +289,6 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
 
     setOriginalTasks(cloneTasks(tasksFromPost));
   }, [post, isEditing]);
-
-  const filteredTags = useMemo(
-    () =>
-      availableTags.filter(
-        tag =>
-          tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
-          !selectedTags.some(t => t.tag_id === tag.tag_id),
-      ),
-    [availableTags, tagSearchQuery, selectedTags],
-  );
 
   const hasChanges = useMemo(() => {
     if (!post) return false;
@@ -519,19 +505,8 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
     [post, removeImageFromCache, silentUpdatePost],
   );
 
-  const handleTagSelect = useCallback((tag: Tag) => {
-    setSelectedTags(prev => (prev.some(t => t.tag_id === tag.tag_id) ? prev : [...prev, tag]));
-    setTagSearchQuery('');
-    setIsTagDropdownOpen(false);
-  }, []);
-
-  const handleTagRemove = useCallback((tagId: number) => {
-    setSelectedTags(prev => prev.filter(t => t.tag_id !== tagId));
-  }, []);
-
-  const handleCreateTag = useCallback(async () => {
-    const name = tagSearchQuery.trim();
-    if (!name) return;
+  const handleCreateTag = useCallback(async (name: string): Promise<Tag | null> => {
+    if (!name.trim()) return null;
 
     try {
       const res = await fetch('/api/tags', {
@@ -543,14 +518,13 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
       if (res.ok) {
         const newTag = await res.json();
         setAvailableTags(prev => [...prev, newTag]);
-        setSelectedTags(prev => [...prev, newTag]);
-        setTagSearchQuery('');
-        setIsTagDropdownOpen(false);
+        return newTag;
       }
     } catch (error) {
       console.error('Ошибка создания тега:', error);
     }
-  }, [tagSearchQuery]);
+    return null;
+  }, []);
 
   const handleTaskToggle = useCallback((taskId: number) => {
     setSelectedTasks(prev => {
@@ -876,15 +850,9 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
               selectedTasks={selectedTasks}
               onTaskToggle={handleTaskToggle}
               selectedTags={selectedTags}
-              onTagSelect={handleTagSelect}
-              onTagRemove={handleTagRemove}
-              onTagSearchChange={setTagSearchQuery}
-              tagSearchQuery={tagSearchQuery}
+              availableTags={availableTags}
+              onTagsChange={setSelectedTags}
               onTagCreate={handleCreateTag}
-              filteredTags={filteredTags}
-              showTagDropdown={isTagDropdownOpen}
-              setShowTagDropdown={setIsTagDropdownOpen}
-              tagDropdownRef={tagDropdownRef}
               deadlineValue={editedDeadline ?? new Date(post.post_deadline)}
               onDeadlineChange={setEditedDeadline}
               showDatePicker={showDatePicker}

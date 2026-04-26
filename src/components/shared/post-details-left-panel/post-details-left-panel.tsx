@@ -7,23 +7,10 @@ import { getStatusColor } from '../../../lib/post-status';
 import type { SocialLinks, Tag, PostData } from '../post-details-window/post-details-window';
 import { DatePicker } from '../../ui/date-picker/date_picker';
 import { AutoResizeTextarea } from '../../ui/auto-resize-textarea/auto-resize-textarea';
+import { TagSelector } from '../../ui/tag-selector/tag-selector';
 import styles from './PostDetailsLeftPanel.module.css';
 
 import { ActionButton } from '../../ui/action-button/action-button';
-
-interface TagSelectorProps {
-  selectedTags: Tag[];
-  onTagSelect: (tag: Tag) => void;
-  onTagRemove: (tagId: number) => void;
-  onSearchChange: (value: string) => void;
-  searchQuery: string;
-  onCreateTag: () => void | Promise<void>;
-  filteredTags: Tag[];
-  showDropdown: boolean;
-  setShowDropdown: (show: boolean) => void;
-  dropdownRef: React.RefObject<HTMLDivElement | null>;
-  disabled: boolean;
-}
 
 interface PostDetailsLeftPanelProps {
   post: PostData;
@@ -47,15 +34,10 @@ interface PostDetailsLeftPanelProps {
   onTaskToggle: (taskId: number) => void;
 
   selectedTags: Tag[];
-  onTagSelect: (tag: Tag) => void;
-  onTagRemove: (tagId: number) => void;
-  onTagSearchChange: (value: string) => void;
-  tagSearchQuery: string;
-  onTagCreate: () => Promise<void>;
-  filteredTags: Tag[];
-  showTagDropdown: boolean;
-  setShowTagDropdown: (show: boolean) => void;
-  tagDropdownRef: React.RefObject<HTMLDivElement | null>;
+  availableTags: Tag[];
+  onTagsChange: (tags: Tag[]) => void;
+  onTagCreate: (name: string) => Promise<Tag | null>;
+  isDisabled?: boolean;
 
   deadlineValue: Date;
   onDeadlineChange: (date: Date) => void;
@@ -105,82 +87,6 @@ function formatDeadline(date: Date | null): string {
   return `${day} ${month} ${weekday} ${hours}:${minutes}`;
 }
 
-// ─── Подкомпонент: TagSelector ───────────────────────────────────────────────
-
-const TagSelector = ({
-  selectedTags,
-  onTagSelect,
-  onTagRemove,
-  onSearchChange,
-  searchQuery,
-  onCreateTag,
-  filteredTags,
-  showDropdown,
-  setShowDropdown,
-  dropdownRef,
-  disabled,
-}: TagSelectorProps) => (
-  <div className={styles.tagSelector} ref={dropdownRef}>
-    <div className={styles.tagSelectorInputContainer}>
-      {selectedTags.map(tag => (
-        <span
-          key={tag.tag_id}
-          className={styles.tagChipEditable}
-          style={{ backgroundColor: tag.color }}
-        >
-          <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>
-          {tag.name}
-          <button
-            type="button"
-            onClick={() => onTagRemove(tag.tag_id)}
-            className={styles.tagRemoveButton}
-            disabled={disabled}
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </span>
-      ))}
-
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={e => {
-          onSearchChange(e.target.value);
-          setShowDropdown(true);
-        }}
-        onFocus={() => setShowDropdown(true)}
-        onBlur={() => setTimeout(() => setShowDropdown(false), 120)}
-        placeholder="Поиск тегов..."
-        disabled={disabled}
-        className={styles.tagSearchInput}
-      />
-    </div>
-
-    {showDropdown && (
-      <div className={`${styles.tagDropdown} no-scrollbar`}>
-        {filteredTags.length > 0 ? (
-          filteredTags.map(tag => (
-            <div
-              key={tag.tag_id}
-              onClick={() => onTagSelect(tag)}
-              className={styles.tagOption}
-            >
-              <span className={styles.tagColorDot} style={{ backgroundColor: tag.color }} />
-              {tag.name}
-            </div>
-          ))
-        ) : searchQuery.trim() ? (
-          <div onClick={onCreateTag} className={styles.createTagOption}>
-            + Создать &quot;{searchQuery}&quot;
-          </div>
-        ) : (
-          <div className={styles.noTagsMessage}>Введите текст для поиска</div>
-        )}
-      </div>
-    )}
-  </div>
-);
-
 // ─── Основной компонент ──────────────────────────────────────────────────────
 
 export const PostDetailsLeftPanel = ({
@@ -203,15 +109,9 @@ export const PostDetailsLeftPanel = ({
   selectedTasks,
   onTaskToggle,
   selectedTags,
-  onTagSelect,
-  onTagRemove,
-  onTagSearchChange,
-  tagSearchQuery,
+  availableTags,
+  onTagsChange,
   onTagCreate,
-  filteredTags,
-  showTagDropdown,
-  setShowTagDropdown,
-  tagDropdownRef,
   deadlineValue,
   onDeadlineChange,
   showDatePicker,
@@ -293,15 +193,9 @@ export const PostDetailsLeftPanel = ({
       {isEditing ? (
         <TagSelector
           selectedTags={selectedTags}
-          onTagSelect={onTagSelect}
-          onTagRemove={onTagRemove}
-          onSearchChange={onTagSearchChange}
-          searchQuery={tagSearchQuery}
-          onCreateTag={onTagCreate}
-          filteredTags={filteredTags}
-          showDropdown={showTagDropdown}
-          setShowDropdown={setShowTagDropdown}
-          dropdownRef={tagDropdownRef}
+          availableTags={availableTags}
+          onChange={onTagsChange}
+          onCreate={onTagCreate}
           disabled={isDisabled}
         />
       ) : (

@@ -126,9 +126,9 @@ export default function HomePage() {
     if (showOverdueOnly) {
       items = items.filter((item) => {
         if (item.type === 'post') {
-          return item.post_deadline < todayStart && !isPostCompleted(item.post_status);
+          return item.post_deadline < todayStart;
         }
-        return new Date(item.end_time) < todayStart && !isTaskCompleted(item.task_status);
+        return new Date(item.end_time) < todayStart;
       });
     } else {
       items = items.filter((item) => {

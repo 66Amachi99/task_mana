@@ -5,6 +5,8 @@ import { useUser } from '@/hooks/use-roles';
 import { X } from 'lucide-react';
 import { DatePicker } from '../../ui/date-picker/date_picker';
 import { AutoResizeTextarea } from '../../ui/auto-resize-textarea/auto-resize-textarea';
+import { TagSelector } from '../../ui/tag-selector/tag-selector';
+import { AssigneeSelector } from '../../ui/assignee-selector/assignee-selector';
 import { useCreateTask } from '@/hooks/useTasks';
 import type { User, Tag } from '@/types';
 import { PRIORITY_LEVELS } from '@/types/config';
@@ -25,169 +27,6 @@ const useOutsideClick = (callback: () => void) => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [callback]);
   return ref;
-};
-
-const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
-  selectedUsers: User[];
-  users: User[];
-  onChange: (users: User[]) => void;
-  disabled: boolean;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const ref = useOutsideClick(() => setIsOpen(false));
-
-  const filtered = users.filter(u =>
-    u.user_login.toLowerCase().includes(search.toLowerCase()) &&
-    !selectedUsers.some(selected => selected.user_id === u.user_id)
-  );
-
-  const handleSelect = (user: User) => {
-    onChange([...selectedUsers, user]);
-    setSearch('');
-  };
-
-  const handleRemove = (userId: number) => {
-    onChange(selectedUsers.filter(u => u.user_id !== userId));
-  };
-
-  return (
-    <div className={styles.relative} ref={ref}>
-      <div className={styles.tagSelectorContainer}>
-        {selectedUsers.map(user => (
-          <span key={user.user_id} className={styles.assigneeChip}>
-            {user.user_login}
-            <button
-              type="button"
-              onClick={() => handleRemove(user.user_id)}
-              disabled={disabled}
-              className={styles.assigneeChipRemove}
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </span>
-        ))}
-        <input
-          type="text"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
-          onFocus={() => setIsOpen(true)}
-          placeholder="Поиск исполнителей..."
-          disabled={disabled}
-          className={styles.tagInput}
-        />
-      </div>
-
-      {isOpen && filtered.length > 0 && (
-        <div className={`${styles.dropdown} no-scrollbar`}>
-          {filtered.map(user => (
-            <div
-              key={user.user_id}
-              onClick={() => handleSelect(user)}
-              className={styles.dropdownItem}
-            >
-              <div className={styles.dropdownItemName}>{user.user_login}</div>
-              <div className={styles.dropdownItemRoles}>
-                {[
-                  user.admin_role && 'Админ',
-                  user.coordinator_role && 'Координатор',
-                  user.designer_role && 'Дизайнер',
-                  user.SMM_role && 'SMM',
-                  user.photographer_role && 'Фотограф'
-                ].filter(Boolean).join(', ')}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
-  selectedTags: Tag[];
-  availableTags: Tag[];
-  onChange: (tags: Tag[]) => void;
-  onCreate: (name: string) => Promise<Tag | null>;
-  disabled: boolean;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const ref = useOutsideClick(() => setIsOpen(false));
-
-  const filtered = availableTags.filter(t =>
-    t.name.toLowerCase().includes(search.toLowerCase()) &&
-    !selectedTags.some(st => st.tag_id === t.tag_id)
-  );
-
-  const handleSelect = (tag: Tag) => {
-    onChange([...selectedTags, tag]);
-    setSearch('');
-    setIsOpen(false);
-  };
-
-  const handleCreate = async () => {
-    if (!search.trim()) return;
-    const newTag = await onCreate(search);
-    if (newTag) handleSelect(newTag);
-  };
-
-  return (
-    <div className={styles.relative} ref={ref}>
-      <div className={styles.tagSelectorContainer}>
-        {selectedTags.map(tag => (
-          <span
-            key={tag.tag_id}
-            className={styles.tag}
-            style={{ backgroundColor: tag.color }}
-          >
-            <span style={{ opacity: 0.4 }}>#</span>
-            {tag.name}
-            <button
-              type="button"
-              onClick={() => onChange(selectedTags.filter(t => t.tag_id !== tag.tag_id))}
-              disabled={disabled}
-              className={styles.tagRemove}
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </span>
-        ))}
-        <input
-          type="text"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
-          onFocus={() => setIsOpen(true)}
-          placeholder="Поиск или создание тега..."
-          disabled={disabled}
-          className={styles.tagInput}
-        />
-      </div>
-
-      {isOpen && (
-        <div className={`${styles.dropdown} no-scrollbar`}>
-          {filtered.length > 0 ? (
-            filtered.map(tag => (
-              <div
-                key={tag.tag_id}
-                onClick={() => handleSelect(tag)}
-                className={styles.tagOption}
-              >
-                <span className={styles.tagColorDot} style={{ backgroundColor: tag.color }} />
-                {tag.name}
-              </div>
-            ))
-          ) : search.trim() ? (
-            <div onClick={handleCreate} className={styles.createTagOption}>
-              + Создать "{search}"
-            </div>
-          ) : (
-            <div className={styles.noTagsMessage}>Введите текст для поиска</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
 };
 
 export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
@@ -407,7 +246,7 @@ export const TaskAddWindow = ({ onClose, initialDate }: TaskAddWindowProps) => {
           </div>
 
           <div className={styles.fieldGroup}>
-            <AssigneesSelector selectedUsers={selectedAssignees} users={users} onChange={setSelectedAssignees} disabled={isSubmitting || loadingUsers} />
+            <AssigneeSelector selectedUsers={selectedAssignees} users={users} onChange={setSelectedAssignees} disabled={isSubmitting || loadingUsers} />
           </div>
 
           <div className={styles.actions}>

@@ -26,6 +26,7 @@ export const LogoutWindow = ({ onClose }: LogoutWindowProps) => {
     await signOut({ redirect: false });
     queryClient.clear();
     handleClose();
+    window.location.href = '/';
   };
 
   return (

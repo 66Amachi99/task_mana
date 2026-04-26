@@ -15,7 +15,7 @@ import { useHeader } from '@/contexts/HeaderContext';
 export const Header: React.FC = () => {
   const { user, canCreateTask, isAdmin } = useUser();
   const pathname = usePathname();
-  const { isPostModalOpen, isTaskModalOpen, postModalDate, taskModalDate, openPostModal, openTaskModal, closePostModal, closeTaskModal } = useHeader();
+  const { isPostModalOpen, isTaskModalOpen, postModalDate, taskModalDate, openPostModal, openTaskModal, closePostModal, closeTaskModal, selectedDate } = useHeader();
 
   const [showAuthWindow, setShowAuthWindow] = useState(false);
   const [showLogoutWindow, setShowLogoutWindow] = useState(false);
@@ -28,15 +28,17 @@ export const Header: React.FC = () => {
     }
   };
 
-  const postIcon = pathname === '/dashboard' 
-    ? '/icons/post_window_icon_clicked.svg' 
-    : '/icons/post_window_icon_no_clicked.svg';
-
-  const calendarIcon = pathname === '/calendar' 
-    ? '/icons/calendar_window_icon_clicked.svg' 
-    : '/icons/calendar_window_icon_no_clicked.svg';
+  const icons = {
+    post: '/icons/post_window_icon_no_clicked.svg',
+    calendar: '/icons/calendar_window_icon_no_clicked.svg',
+    stats: '/icons/stats.svg'
+  };
 
   const canAddPost = user && (user.admin_role || user.SMM_role);
+
+  const getNavStyle = (path: string) => {
+    return pathname === path ? { opacity: 0.4 } : {};
+  };
 
   return (
     <>
@@ -55,13 +57,18 @@ export const Header: React.FC = () => {
           <div className={styles.middleGroup}>
             <div className={styles.navBlock}>
               <Link href="/dashboard" className={styles.navLink}>
-                <button className={styles.navButton}>
-                  <img src={postIcon} alt="Посты" className={styles.navIcon} />
+                <button className={styles.navButton} style={getNavStyle('/dashboard')}>
+                  <img src={icons.post} alt="Посты" className={styles.navIcon} />
                 </button>
               </Link>
               <Link href="/calendar" className={styles.navLink}>
-                <button className={styles.navButton}>
-                  <img src={calendarIcon} alt="Календарь" className={styles.navIcon} />
+                <button className={styles.navButton} style={getNavStyle('/calendar')}>
+                  <img src={icons.calendar} alt="Календарь" className={styles.navIcon} />
+                </button>
+              </Link>
+              <Link href="/stats" className={styles.navLink}>
+                <button className={styles.navButton} style={getNavStyle('/stats')} title="Статистика">
+                  <img src={icons.stats} alt="Статистика" className={styles.navIcon} />
                 </button>
               </Link>
             </div>
@@ -69,7 +76,7 @@ export const Header: React.FC = () => {
             <div className={styles.addButtons}>
               {canAddPost && (
                 <button
-                  onClick={() => openPostModal()}
+                  onClick={() => openPostModal(selectedDate)}
                   className={styles.addButton}
                   title="Добавить пост"
                 >
@@ -79,7 +86,7 @@ export const Header: React.FC = () => {
 
               {canCreateTask && (
                 <button
-                  onClick={() => openTaskModal()}
+                  onClick={() => openTaskModal(selectedDate)}
                   className={styles.addButton}
                   title="Добавить задачу"
                 >

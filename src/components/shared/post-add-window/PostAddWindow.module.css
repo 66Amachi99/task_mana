@@ -15,6 +15,7 @@
 .container {
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   border-radius: 0.5rem;
   width: 100%;
   max-width: 64rem;
@@ -36,9 +37,11 @@
 .form {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 18px;
   padding: 1.5rem;
   width: 600px;
+  min-height: 800px;
   max-width: 100%;
 }
 
@@ -244,116 +247,6 @@
 .userRoles {
   font-size: 0.75rem;
   color: #ffffff60;
-}
-
-.tagSelector {
-  position: relative;
-}
-
-.tagSelectorContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  height: 44px;
-  align-items: center;
-  padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1); 
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.tagSelectorContainer:focus-within {
-  border-color: #ffffff30;
-}
-
-.tagChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 500;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  background-color: var(--tag-color);
-  height: 27px;
-}
-
-.tagRemove {
-  background: none;
-  border: none;
-  color: #ffffff80;
-  cursor: pointer;
-  opacity: 0.7;
-  padding: 0;
-  margin-left: 0.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tagRemove:hover {
-  opacity: 1;
-  color: #ffffff;
-}
-
-.tagInput {
-  flex: 1;
-  min-width: 7.5rem;
-  outline: none;
-  font-size: 16px;
-  background: transparent;
-  border: none;
-  color: #ffffff;
-}
-
-.tagInput::placeholder {
-  /* color: #ffffff40; */
-}
-
-.tagInput:disabled {
-  cursor: not-allowed;
-}
-
-.tagDropdown {
-  composes: dropdown;
-}
-
-.tagOption {
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #ffffff;
-  height: 36px;
-}
-
-.tagOption:hover {
-  background-color: #ffffff10;
-}
-
-.tagColorDot {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 9999px;
-}
-
-.createTagOption {
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  color: #60a5fa;
-  transition: background-color 0.2s;
-  height: 36px;
-  display: flex;
-  align-items: center;
-}
-
-.createTagOption:hover {
-  background-color: #ffffff10;
 }
 
 .taskButtonsContainer {

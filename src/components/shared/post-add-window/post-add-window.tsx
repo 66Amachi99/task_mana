@@ -6,6 +6,7 @@ import { Search, X } from 'lucide-react';
 import { DatePicker } from '../../ui/date-picker/date_picker';
 import styles from './PostAddWindow.module.css';
 import { AutoResizeTextarea } from '../../ui/auto-resize-textarea/auto-resize-textarea';
+import { TagSelector } from '../../ui/tag-selector/tag-selector';
 import { useCreatePost } from '@/hooks/usePosts';
 import type { User, Tag } from '@/types';
 import { POST_TASK_ITEMS } from '@/types/config';
@@ -23,9 +24,6 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  const [tagSearchQuery, setTagSearchQuery] = useState('');
-  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
-  const tagDropdownRef = useRef<HTMLDivElement>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -101,9 +99,6 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
-      }
-      if (tagDropdownRef.current && !tagDropdownRef.current.contains(event.target as Node)) {
-        setIsTagDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -188,42 +183,24 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
     }
   };
 
-  const handleTagSelect = (tag: Tag) => {
-    if (!selectedTags.find(t => t.tag_id === tag.tag_id)) {
-      setSelectedTags([...selectedTags, tag]);
-    }
-    setTagSearchQuery('');
-    setIsTagDropdownOpen(false);
-  };
-
-  const handleTagRemove = (tagId: number) => {
-    setSelectedTags(selectedTags.filter(t => t.tag_id !== tagId));
-  };
-
-  const handleCreateTag = async () => {
-    if (!tagSearchQuery.trim()) return;
+  const handleCreateTag = async (name: string): Promise<Tag | null> => {
+    if (!name.trim()) return null;
     try {
       const response = await fetch('/api/tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tagSearchQuery }),
+        body: JSON.stringify({ name }),
       });
       if (response.ok) {
         const newTag = await response.json();
         setTags([...tags, newTag]);
-        setSelectedTags([...selectedTags, newTag]);
-        setTagSearchQuery('');
-        setIsTagDropdownOpen(false);
+        return newTag;
       }
     } catch (error) {
       console.error('Ошибка создания тега:', error);
     }
+    return null;
   };
-
-  const filteredTags = tags.filter(tag =>
-    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
-    !selectedTags.find(t => t.tag_id === tag.tag_id)
-  );
 
   const filteredUsers = users.filter(user =>
     user.user_login.toLowerCase().includes(searchQuery.toLowerCase())
@@ -323,54 +300,13 @@ export const PostAddWindow = ({ onClose, initialDate }: PostAddWindowProps) => {
           </div>
 
           <div className={styles.fieldGroup}>
-            <div className={styles.tagSelector} ref={tagDropdownRef}>
-              <div className={styles.tagSelectorContainer}>
-                {selectedTags.map(tag => (
-                  <span
-                    key={tag.tag_id}
-                    className={styles.tagChip}
-                    style={{ backgroundColor: tag.color }}
-                  >
-                    <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>
-                    {tag.name}
-                    <button
-                      type="button"
-                      onClick={() => handleTagRemove(tag.tag_id)}
-                      className={styles.tagRemove}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-                <input
-                  type="text"
-                  value={tagSearchQuery}
-                  onChange={(e) => { setTagSearchQuery(e.target.value); setIsTagDropdownOpen(true); }}
-                  onFocus={() => setIsTagDropdownOpen(true)}
-                  placeholder="Поиск или создание тега..."
-                  className={styles.tagInput}
-                />
-              </div>
-              {isTagDropdownOpen && (
-                <div className={`${styles.tagDropdown} no-scrollbar`}>
-                  {filteredTags.map(tag => (
-                    <div
-                      key={tag.tag_id}
-                      onClick={() => handleTagSelect(tag)}
-                      className={styles.tagOption}
-                    >
-                      <span className={styles.tagColorDot} style={{ backgroundColor: tag.color }} />
-                      {tag.name}
-                    </div>
-                  ))}
-                  {tagSearchQuery && filteredTags.length === 0 && (
-                    <div onClick={handleCreateTag} className={styles.createTagOption}>
-                      + Создать "{tagSearchQuery}"
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <TagSelector
+              selectedTags={selectedTags}
+              availableTags={tags}
+              onChange={setSelectedTags}
+              onCreate={handleCreateTag}
+              disabled={isSubmitting}
+            />
           </div>
 
           <div ref={dropdownRef} className={styles.dropdownWrapper}>

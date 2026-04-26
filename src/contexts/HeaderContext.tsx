@@ -11,6 +11,8 @@ interface HeaderContextType {
   taskModalDate: Date | undefined;
   isPostModalOpen: boolean;
   isTaskModalOpen: boolean;
+  selectedDate: Date | undefined;
+  setSelectedDate: (date: Date) => void;
 }
 
 const HeaderContext = createContext<HeaderContextType | null>(null);
@@ -20,6 +22,7 @@ export function HeaderProvider({ children }: { children: ReactNode }) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [postModalDate, setPostModalDate] = useState<Date | undefined>();
   const [taskModalDate, setTaskModalDate] = useState<Date | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
   const openPostModal = useCallback((initialDate?: Date) => {
     setPostModalDate(initialDate);
@@ -52,6 +55,8 @@ export function HeaderProvider({ children }: { children: ReactNode }) {
         taskModalDate,
         isPostModalOpen,
         isTaskModalOpen,
+        selectedDate,
+        setSelectedDate,
       }}
     >
       {children}

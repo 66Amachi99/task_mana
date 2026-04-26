@@ -6,8 +6,11 @@ import { useUser } from '@/hooks/use-roles';
 import type { Task, User as UserType, Tag } from '@/types';
 import { AutoResizeTextarea } from '../../ui/auto-resize-textarea/auto-resize-textarea';
 import { DatePicker } from '../../ui/date-picker/date_picker';
+import { TagSelector } from '../../ui/tag-selector/tag-selector';
+import { AssigneeSelector } from '../../ui/assignee-selector/assignee-selector';
 import { useUpdateTask, usePatchTask, useDeleteTask } from '@/hooks/useTasks';
 import styles from './TaskDetailsWindow.module.css';
+import { ActionButton } from '@/components/ui/action-button/action-button';
 
 interface TaskDetailsWindowProps {
   onClose: () => void;
@@ -94,170 +97,6 @@ const CustomSelect = ({ value, options, onChange, disabled }: {
             >
               {opt.label}
             </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const TagSelector = ({ selectedTags, availableTags, onChange, onCreate, disabled }: {
-  selectedTags: Tag[];
-  availableTags: Tag[];
-  onChange: (tags: Tag[]) => void;
-  onCreate: (name: string) => Promise<Tag | null>;
-  disabled: boolean;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const ref = useOutsideClick(() => setIsOpen(false));
-
-  const filtered = availableTags.filter(t =>
-    t.name.toLowerCase().includes(search.toLowerCase()) && !selectedTags.some(st => st.tag_id === t.tag_id)
-  );
-
-  const handleSelect = (tag: Tag) => {
-    onChange([...selectedTags, tag]);
-    setSearch('');
-    setIsOpen(false);
-  };
-
-  const handleCreate = async () => {
-    if (!search.trim()) return;
-    const newTag = await onCreate(search);
-    if (newTag) handleSelect(newTag);
-  };
-
-  return (
-    <div className={styles.tagSelector} ref={ref}>
-      <div className={styles.tagSelectorInputContainer}>
-        {selectedTags.map(tag => (
-          <span
-            key={tag.tag_id}
-            className={styles.tag}
-            style={{ backgroundColor: tag.color }}
-          >
-            <span style={{ opacity: 0.4, marginRight: '4px' }}>#</span>
-            {tag.name}
-            <button
-              type="button"
-              onClick={() => onChange(selectedTags.filter(t => t.tag_id !== tag.tag_id))}
-              disabled={disabled}
-              className={styles.tagRemove}
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </span>
-        ))}
-        <input
-          type="text"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
-          onFocus={() => setIsOpen(true)}
-          placeholder="Поиск тегов..."
-          disabled={disabled}
-          className={styles.tagSelectorInput}
-        />
-      </div>
-      {isOpen && (
-        <div className={`${styles.tagSelectorDropdown} no-scrollbar`}>
-          {filtered.length > 0 ? (
-            filtered.map(tag => (
-              <div
-                key={tag.tag_id}
-                onClick={() => handleSelect(tag)}
-                className={styles.tagOption}
-              >
-                <span className={styles.tagColorDot} style={{ backgroundColor: tag.color }} />
-                {tag.name}
-              </div>
-            ))
-          ) : search.trim() ? (
-            <div onClick={handleCreate} className={styles.createTagOption}>
-              + Создать "{search}"
-            </div>
-          ) : (
-            <div className={styles.noTagsMessage}>Введите текст для поиска</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const AssigneesSelector = ({ selectedUsers, users, onChange, disabled }: {
-  selectedUsers: UserType[];
-  users: UserType[];
-  onChange: (users: UserType[]) => void;
-  disabled: boolean;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const ref = useOutsideClick(() => setIsOpen(false));
-
-  const filtered = users.filter(u =>
-    u.user_login.toLowerCase().includes(search.toLowerCase()) &&
-    !selectedUsers.some(selected => selected.user_id === u.user_id)
-  );
-
-  const handleSelect = (user: UserType) => {
-    onChange([...selectedUsers, user]);
-    setSearch('');
-  };
-
-  const handleRemove = (userId: number) => {
-    onChange(selectedUsers.filter(u => u.user_id !== userId));
-  };
-
-  return (
-    <div className={styles.assigneesSelector} ref={ref}>
-      <div className={styles.tagSelectorInputContainer}>
-        {selectedUsers.map(user => (
-          <span
-            key={user.user_id}
-            className={styles.assigneeChip}
-          >
-            {user.user_login}
-            <button
-              type="button"
-              onClick={() => handleRemove(user.user_id)}
-              disabled={disabled}
-              className={styles.assigneeChipRemove}
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </span>
-        ))}
-        <input
-          type="text"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
-          onFocus={() => setIsOpen(true)}
-          placeholder="Поиск исполнителей..."
-          disabled={disabled}
-          className={styles.assigneeSearchInput}
-        />
-      </div>
-
-      {isOpen && filtered.length > 0 && (
-        <div className={styles.assigneeDropdown}>
-          {filtered.map(user => (
-            <div
-              key={user.user_id}
-              onClick={() => handleSelect(user)}
-              className={styles.assigneeOption}
-            >
-              <div className={styles.assigneeName}>{user.user_login}</div>
-              <div className={styles.assigneeRoles}>
-                {[
-                  user.admin_role && 'Админ',
-                  user.coordinator_role && 'Координатор',
-                  user.designer_role && 'Дизайнер',
-                  user.SMM_role && 'SMM',
-                  user.photographer_role && 'Фотограф'
-                ].filter(Boolean).join(', ')}
-              </div>
-            </div>
           ))}
         </div>
       )}
@@ -402,7 +241,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
     try {
       const result = await patchTask.mutateAsync({
         taskId: task.task_id,
-        completed_task: completedTaskInput.trim() || undefined,
+        completed_task: completedTaskInput.trim(),
       });
       if (result?.task) {
         const updatedTask = result.task;
@@ -665,7 +504,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                 Исполнители
               </div>
               {isEditing ? (
-                <AssigneesSelector
+                <AssigneeSelector
                   selectedUsers={formData.assignees}
                   users={users}
                   onChange={assignees => handleChange('assignees', assignees)}
@@ -692,20 +531,18 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                 placeholder="Введите результат выполнения..."
                 disabled={isSavingCompleted}
                 className={styles.resultTextarea}
-              />
+                />
 
-              {hasCompletedChanges && (
-                <div className={styles.saveResultButtonContainer}>
-                  <button
+                {hasCompletedChanges && (
+                  <ActionButton
+                    variant="base"
                     onClick={handleSaveCompleted}
                     disabled={isSavingCompleted}
-                    className={styles.saveResultButton}
                   >
                     <Save className="w-4 h-4" />
-                    {isSavingCompleted ? 'Сохранение...' : 'Сохранить результат'}
-                  </button>
-                </div>
-              )}
+                    {isSavingCompleted ? 'Сохранение...' : 'Сохранить'}
+                  </ActionButton>
+                )}
             </div>
           </div>
         </div>
@@ -714,43 +551,43 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
           <div className={styles.actions}>
             {!isEditing ? (
               <>
-                <button
+                <ActionButton
+                  variant="base"
                   onClick={() => setIsEditing(true)}
                   disabled={isLoading.action}
-                  className={styles.button}
                 >
                   <Edit2 className="w-4 h-4" /> Изменить
-                </button>
+                </ActionButton>
                 {canDelete && (
-                  <button
+                  <ActionButton
+                    variant="base"
                     onClick={handleDelete}
                     disabled={isLoading.action}
-                    className={`${styles.button} ${styles.buttonRed} ml-2`}
                   >
                     <Trash2 className="w-4 h-4" /> Удалить
-                  </button>
+                  </ActionButton>
                 )}
               </>
             ) : (
               <>
-                <button
+                <ActionButton
+                  variant="base"
                   onClick={handleSave}
                   disabled={isLoading.action || !hasChanges}
-                  className={`${styles.button} ${hasChanges ? styles.buttonGreen : styles.buttonGray}`}
                 >
                   <Save className="w-4 h-4" />
                   {isLoading.action ? 'Сохранение...' : 'Сохранить'}
-                </button>
-                <button
+                </ActionButton>
+                <ActionButton
+                  variant="base"
                   onClick={() => {
                     setFormData(initialData);
                     setIsEditing(false);
                   }}
                   disabled={isLoading.action}
-                  className={`${styles.button} ${styles.buttonCancel}`}
                 >
                   <X className="w-4 h-4" /> Отмена
-                </button>
+                </ActionButton>
               </>
             )}
           </div>
