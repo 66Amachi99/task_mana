@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { useAdminUsers } from '@/hooks/use-admin-users';
 import { SearchInput } from '@/components/ui/search-input/search-input';
+import { ActionButton } from '@/components/ui/action-button/action-button';
+import { Plus } from 'lucide-react';
 import UserTable from '@/components/admin/user-table/user-table';
 import UserForm from '@/components/admin/user-form/user-form';
 import DeleteModal from '@/components/admin/user-form/delete-modal';
@@ -66,19 +68,22 @@ export default function AdminPage() {
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Пользователи</h1>
 
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Поиск по логину..."
-          />
+          <div className={styles.headerActions}>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Поиск по логину..."
+            />
 
-          <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleCreateClick}>
-            <svg className={styles.icon} viewBox="0 0 24 24">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Добавить
-          </button>
+            <ActionButton 
+              variant="base" 
+              icon={Plus}
+              className={styles.btnPrimary} 
+              onClick={handleCreateClick}
+            >
+              Добавить
+            </ActionButton>
+          </div>
         </div>
 
         <UserTable

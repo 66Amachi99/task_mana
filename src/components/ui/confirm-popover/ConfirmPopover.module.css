@@ -1,0 +1,97 @@
+.popover {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: 0;
+    background-color: #585858e8;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+    animation: scaleIn 0.15s ease-out;
+}
+
+.title {
+    font-size: 0.85rem;
+    color: #fff;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.actions {
+    display: flex;
+    gap: 6px;
+}
+
+.cancelBtn,
+.confirmBtn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.cancelBtn {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.cancelBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.confirmBtn {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.confirmBtn:hover {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+.arrow {
+    position: absolute;
+    bottom: -5px;
+    right: 15px;
+    width: 10px;
+    height: 10px;
+    background-color: #585858e8;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transform: rotate(45deg);
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.loader {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    border-top-color: #ef4444;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

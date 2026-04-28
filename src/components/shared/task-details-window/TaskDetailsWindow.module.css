@@ -13,13 +13,23 @@
 }
 
 .modalContainer {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
   border-radius: 0.5rem;
   width: 100%;
-  max-width: 42rem;
+  max-width: 64rem;
   max-height: 90vh;
   display: flex;
-  flex-direction: column;
   overflow-y: auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 800px;
+  width: 600px;
 }
 
 .modalOpening {
@@ -36,7 +46,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0rem 1.5rem;
   flex-shrink: 0;
 }
 
@@ -85,14 +94,10 @@
 }
 
 .content {
-  flex: 1;
-  padding: 1rem 1.5rem;
-}
-
-.contentInner {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  padding: 10px 0px;
+  gap: 1rem;
 }
 
 .statusPriority {
@@ -168,7 +173,7 @@
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  color: #ffffffb6;
+  color: #ffffff;
   cursor: pointer;
   transition: all 0.2s;
   height: 44px;
@@ -261,7 +266,7 @@
 .descriptionPreviewText {
   font-size: 16px;
   font-weight: 400;
-  color: #ffffff60;
+  color: #ffffff80;
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -306,13 +311,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #ffffff60;
+  color: #ffffff;
 }
 
 .dateIcon {
   width: 1rem;
   height: 1rem;
-  color: #9ca3af;
+  color: #ffffff;
 }
 
 .dateText {
@@ -370,7 +375,7 @@
   gap: 0.25rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #6b7280;
+  color: #ffffff;
   margin-bottom: 0.5rem;
 }
 
@@ -404,7 +409,6 @@
 }
 
 .resultSection {
-  padding-top: 1rem;
 }
 
 .resultTextarea {
@@ -441,7 +445,6 @@
 }
 
 .footer {
-  padding: 0rem 1.5rem;
   flex-shrink: 0;
   display: flex;
   align-items: center;

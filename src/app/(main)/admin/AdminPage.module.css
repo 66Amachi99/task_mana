@@ -29,6 +29,12 @@
   padding-bottom: 8px;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -53,13 +59,14 @@
 }
 
 .btnPrimary {
-  background: linear-gradient(90deg, rgba(74, 101, 234, 0.25) 0%, rgba(74, 101, 234, 0.4) 100%);
-  border-color: rgba(74, 101, 234, 0.4);
-  color: #c0ccfa;
+  height: 32px !important; /* Кнопка Добавить 32px */
+  background: linear-gradient(90deg, rgba(74, 101, 234, 0.25) 0%, rgba(74, 101, 234, 0.4) 100%) !important;
+  border-color: rgba(74, 101, 234, 0.4) !important;
+  color: #c0ccfa !important;
 }
 
 .btnPrimary:hover {
-  background: linear-gradient(90deg, rgba(74, 101, 234, 0.35) 0%, rgba(74, 101, 234, 0.55) 100%);
+  background: linear-gradient(90deg, rgba(74, 101, 234, 0.35) 0%, rgba(74, 101, 234, 0.55) 100%) !important;
 }
 
 .icon {
@@ -71,13 +78,12 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
 .searchWrapper {
   position: relative;
-  flex: 1;
-  max-width: 400px;
-  margin: 0 20px;
   display: flex;
   align-items: center;
+  width: 260px;
 }
 
 .searchIcon {

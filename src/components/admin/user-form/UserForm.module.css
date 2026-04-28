@@ -52,7 +52,7 @@
 }
 
 .formGroup {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
 }
 
 .formLabel {
@@ -75,43 +75,56 @@
     outline: none;
 }
 
-.rolesGrid {
+/* Контейнер кнопок */
+.taskButtons {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 4px;
+    gap: 0.5rem;
 }
 
-.roleCheckbox {
-    display: none;
-}
-
-.roleCheckboxLabel {
-    display: inline-flex;
+.roleButtonBase {
+    display: flex;
     align-items: center;
-    height: 32px;
-    padding: 0 14px;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 8px 10px;
+    border: 1px solid #ffffff10;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.03);
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
+    color: #ffffff;
+    font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s;
+    height: 27px;
+    user-select: none;
+    outline: none;
 }
 
-.roleCheckbox:checked+.roleCheckboxLabel {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.16) 100%);
-    border-color: rgba(255, 255, 255, 0.22);
-    color: #fff;
+.taskButtonDefault {
+    composes: roleButtonBase;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+    color: #ffffffb6;
+}
+
+.taskButtonSelected {
+    composes: roleButtonBase;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.2) 100%);
+    color: #ffffff;
+    border-color: #ffffff10;
 }
 
 .modalActions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    margin-top: 1.5rem;
+    margin-top: 2rem;
     padding-top: 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.btnSave {
+    background: linear-gradient(90deg, rgba(74, 101, 234, 0.15) 0%, rgba(74, 101, 234, 0.3) 100%) !important;
+    border-color: rgba(74, 101, 234, 0.4) !important;
+    color: #c0ccfa !important;
+    user-select: none;
 }

@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList
 } from 'recharts';
 import { Layers, CheckSquare, MessageSquare, AlertTriangle, Users, BarChart3, TrendingUp, Briefcase } from 'lucide-react';
+import { Loading } from '@/components/ui/loading/loading';
 import styles from './StatsPage.module.css';
 
 const THEME_COLORS = [
@@ -81,7 +82,7 @@ export default function StatsPage() {
     return data.platforms;
   }, [data?.platforms, isPlatformEmpty]);
 
-  if (isLoading || !data) return <div className={styles.loading}><div className={styles.spinner} /></div>;
+  if (isLoading || !data) return <Loading text='Загрузка...'/>;
 
   return (
     <div className={styles.page}>
@@ -107,7 +108,7 @@ export default function StatsPage() {
               <div className={styles.chartWrapper}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={platformData} innerRadius="60%" outerRadius="85%" paddingAngle={5} dataKey="value" nameKey="name" isAnimationActive={true} stroke="none">
+                    <Pie data={platformData} innerRadius="60%" outerRadius="90%" paddingAngle={5} dataKey="value" nameKey="name" isAnimationActive={true} stroke="none">
                       {isPlatformEmpty ? (
                         <Cell fill="rgba(255,255,255,0.05)" />
                       ) : (
@@ -172,8 +173,8 @@ export default function StatsPage() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.3)', fontSize: '14pt'}} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.5)', fontSize: '14pt'}} />
+                      <XAxis dataKey="name" padding={{ left: 10, right: 0 }} tickMargin={10} axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.3)', fontSize: '14pt'}} />
+                      <YAxis axisLine={false} allowDecimals={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.5)', fontSize: '14pt'}} />
                       <Tooltip content={<CustomTooltip />} />
                       <Area type="monotone" dataKey="value" name="Правки" stroke="#AB48BF" strokeWidth={3} fillOpacity={1} fill="url(#colorFriction)">
                         <LabelList dataKey="value" position="top" offset={15} fill="#F7ADC4" fontSize="14pt" fontWeight={400} />
@@ -195,11 +196,11 @@ export default function StatsPage() {
                     <div className={styles.noDataOverlay}>Нет данных</div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data.complexity} layout="vertical" margin={{ left: 10, right: 60, top: 10, bottom: 10 }}>
+                      <BarChart data={data.complexity} layout="vertical" margin={{ left: 20, right: 60, top: 10, bottom: 10 }}>
                         <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#fff', fontSize: '14pt'}} width={120} />
+                        <YAxis dataKey="name" type="category" interval={0} axisLine={false} tickLine={false} tick={{fill: '#fff', fontSize: '14pt'}} width={120} />
                         <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
-                        <Bar dataKey="value" name="Постов" barSize={22} radius={[0, 10, 10, 0]}>
+                        <Bar dataKey="value" name="Постов" radius={[0, 10, 10, 0]}>
                           <LabelList dataKey="value" position="right" fill="#fff" fontSize="14pt" fontWeight={400} offset={10} />
                           {data.complexity.map((entry: any, index: number) => (
                             <Cell key={`cell-bar-${index}`} fill={THEME_COLORS[index % THEME_COLORS.length].fill} stroke={THEME_COLORS[index % THEME_COLORS.length].stroke} strokeWidth={2} />
@@ -216,7 +217,7 @@ export default function StatsPage() {
                   <h3 className={styles.cardTitle}>Топ проектов</h3>
                   <Briefcase size={32} color="#F7ADC4" />
                 </div>
-                <div className={styles.projectGrid}>
+                <div className={`${styles.projectGrid} no-scrollbar`}>
                   {isProjectsEmpty ? (
                     <div className={styles.noDataOverlayFull}>Нет активных проектов</div>
                   ) : (
@@ -244,9 +245,9 @@ export default function StatsPage() {
 
 function PulseCard({ icon: Icon, label, value, color }: any) {
   return (
-    <div className={styles.pulseCardMini} style={{ borderLeft: `4px solid ${color}` }}>
+    <div className={styles.pulseCardMini} style={{ borderLeft: `3px solid ${color}` }}>
       <div className={styles.pulseCardLeft}>
-        <Icon size={32} color={color} strokeWidth={2.5} />
+        <Icon size={26} color={color} strokeWidth={2.5} />
         <div className={styles.pulseLabel}>{label}</div>
       </div>
       <div className={styles.pulseValue} style={{color: color}}>{value}</div>

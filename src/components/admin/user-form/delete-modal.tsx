@@ -1,4 +1,6 @@
 'use client';
+import { ActionButton } from '@/components/ui/action-button/action-button';
+import { X, Trash2 } from 'lucide-react';
 import styles from './UserForm.module.css';
 import pageStyles from '@/app/(main)/admin/AdminPage.module.css';
 
@@ -9,7 +11,7 @@ export default function DeleteModal({ user, onClose, onConfirm }: any) {
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Удаление</h2>
           <button className={styles.modalClose} onClick={onClose}>
-            <svg className={pageStyles.icon} viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <X size={20} />
           </button>
         </div>
 
@@ -18,19 +20,21 @@ export default function DeleteModal({ user, onClose, onConfirm }: any) {
           Это действие нельзя отменить.
         </p>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-          <button className={pageStyles.btn} onClick={onClose}>Отмена</button>
-          <button 
-            className={pageStyles.btn} 
-            style={{ 
-              background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.25) 100%)',
-              borderColor: 'rgba(239, 68, 68, 0.35)',
-              color: '#fca5a5'
-            }}
+        <div className={styles.modalActions}>
+          <ActionButton 
+            variant="base" 
+            onClick={onClose}
+          >
+            Отмена
+          </ActionButton>
+          <ActionButton 
+            variant="red" 
+            icon={Trash2}
+            className={styles.btnConfirmDelete}
             onClick={onConfirm}
           >
             Удалить
-          </button>
+          </ActionButton>
         </div>
       </div>
     </div>

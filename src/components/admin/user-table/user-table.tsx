@@ -1,6 +1,7 @@
 'use client';
+import { ActionButton } from '@/components/ui/action-button/action-button';
+import { Pencil, Trash2 } from 'lucide-react';
 import styles from './UserTable.module.css';
-import pageStyles from '@/app/(main)/admin/AdminPage.module.css';
 
 export default function UserTable({ users, onEdit, onDelete }: any) {
   return (
@@ -28,12 +29,23 @@ export default function UserTable({ users, onEdit, onDelete }: any) {
               </td>
               <td>
                 <div className={styles.actionsCell}>
-                  <button className={pageStyles.btn} onClick={() => onEdit(user)}>
-                    <svg className={pageStyles.icon} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                  <button className={`${pageStyles.btn} ${styles.btnDanger}`} onClick={() => onDelete(user)}>
-                    <svg className={pageStyles.icon} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  </button>
+                  <ActionButton 
+                    variant="base" 
+                    icon={Pencil}
+                    onClick={() => onEdit(user)}
+                    className={styles.btnAction}
+                  >
+                    {""}
+                  </ActionButton>
+                  
+                  <ActionButton 
+                    variant="red" 
+                    icon={Trash2}
+                    onClick={() => onDelete(user)}
+                    className={`${styles.btnAction} ${styles.btnDanger}`}
+                  >
+                    {""}
+                  </ActionButton>
                 </div>
               </td>
             </tr>

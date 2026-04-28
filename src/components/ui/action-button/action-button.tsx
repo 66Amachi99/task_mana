@@ -3,7 +3,7 @@ import styles from './ActionButton.module.css';
 
 // ─── Типы ────────────────────────────────────────────────────────────────────
 
-type ButtonVariant = 'base' | 'fit' | 'gray' | 'lightGray' | 'red' | 'publish';
+type ButtonVariant = 'base' | 'fit' | 'del' | 'lightGray' | 'red' | 'publish';
 
 interface ActionButtonProps {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -34,7 +34,7 @@ export const ActionButton = ({
       : {
           base: styles.buttonBase,
           fit: styles.buttonFit,
-          gray: styles.buttonGray,
+          del: styles.buttonDel,
           lightGray: styles.buttonLightGray,
           red: styles.buttonRed,
         }[variant];

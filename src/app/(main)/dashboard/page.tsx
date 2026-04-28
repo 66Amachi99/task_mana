@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useUser } from '@/hooks/use-roles';
 import { RoleDropdown } from '@/components/shared/role-dropdown/role-dropdown';
+import { Loading } from '@/components/ui/loading/loading';
 import styles from './DashboardPage.module.css';
 
 type ContentItem = CalendarPost | CalendarTask;
@@ -222,15 +223,7 @@ export default function HomePage() {
   };
 
   if (loading && allPosts.length === 0 && allTasks.length === 0) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingContent}>
-          <div className={styles.loadingInner}>
-            <p>Загрузка...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <Loading text="Загрузка..." />;
   }
 
   return (

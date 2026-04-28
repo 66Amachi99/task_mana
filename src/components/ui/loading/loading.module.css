@@ -1,0 +1,116 @@
+.fullPage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Мягкий градиент на фоне вместо чистого черного */
+  background: radial-gradient(circle at center, #0a0a0a 0%, #000000 100%);
+  z-index: 10000; /* Гарантированно поверх всего, включая навбар */
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem; /* Увеличили отступ до текста */
+}
+
+/* --- НОВЫЙ СОВРЕМЕННЫЙ СПИННЕР --- */
+
+.modernLoader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Общие стили для колец */
+.modernLoader span {
+  position: absolute;
+  border-radius: 50%;
+  /* Ваш акцентный синий, но с легкой прозрачностью */
+  border: 2px solid rgba(65, 243, 95, 0.6);
+  /* Легкое свечение */
+  box-shadow: 0 0 15px rgba(65, 165, 243, 0.2), inset 0 0 10px rgba(65, 165, 243, 0.1);
+  will-change: transform, opacity;
+  animation: pulseRotate 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Тонкая настройка каждого кольца: размер, задержка и скорость */
+.modernLoader span:nth-child(1) {
+  width: 100%;
+  height: 100%;
+  animation-delay: -0.5s;
+  animation-duration: 2.5s;
+}
+
+.modernLoader span:nth-child(2) {
+  width: 70%;
+  height: 70%;
+  border-width: 2px;
+  animation-delay: -1s;
+  opacity: 0.7;
+}
+
+.modernLoader span:nth-child(3) {
+  width: 40%;
+  height: 40%;
+  border-width: 1px;
+  animation-delay: -1.5s;
+  animation-duration: 1.5s;
+  opacity: 0.5;
+}
+
+/* --- РАЗМЕРЫ КОНТЕЙНЕРА --- */
+
+.small { width: 30px; height: 30px; }
+.medium { width: 60px; height: 60px; }
+.large { width: 100px; height: 100px; }
+
+/* --- ТЕКСТ И АНИМАЦИЯ --- */
+
+.text {
+  font-size: 14pt;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase; /* Современный штрих */
+  animation: pulseText 2s ease-in-out infinite;
+}
+
+/* --- КЛЮЧЕВЫЕ КАДРЫ --- */
+
+/* Абстрактная пульсация с вращением */
+@keyframes pulseRotate {
+  0% {
+    transform: rotate(0deg) scale(0.8);
+    opacity: 0.1;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) scale(0.8);
+    opacity: 0.1;
+  }
+}
+
+/* Мягкая пульсация текста */
+@keyframes pulseText {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}

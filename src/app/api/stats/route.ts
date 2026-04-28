@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       prisma.comment.count({ where: { created_at: dateFilter } }),
       prisma.post.findMany({
         where: { created_at: dateFilter },
-        select: { post_needs_video: true, post_needs_mini_video_smm: true, post_needs_cover_photo: true, post_needs_photo_cards: true, post_needs_photogallery: true }
+        select: { post_needs_video: true, post_needs_mini_video_smm: true, post_needs_cover_photo: true, post_needs_photo_cards: true, post_needs_photogallery: true, post_needs_mini_gallery: true }
       }),
       prisma.post.aggregate({
         where: { created_at: dateFilter },
@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
         { name: 'Обложки', value: complexityData.filter(p => p.post_needs_cover_photo).length },
         { name: 'Карточки', value: complexityData.filter(p => p.post_needs_photo_cards).length },
         { name: 'Галереи', value: complexityData.filter(p => p.post_needs_photogallery).length },
+        { name: 'Мини-галереи', value: complexityData.filter(p => p.post_needs_mini_gallery).length },
       ],
       // Убеждаемся, что здесь массив объектов
       platforms: [

@@ -83,7 +83,7 @@ const CustomSelect = ({ value, options, onChange, disabled }: {
       >
         {selectedOption?.label}
         <svg className={`${styles.customSelectArrow} ${isOpen ? styles.open : ''}`} width="12" height="8" viewBox="0 0 12 8" fill="none">
-          <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
       {isOpen && (
@@ -350,27 +350,27 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
           overlayPointerDownRef.current = false;
         }}
       >
-        <div className={styles.header}>
-          {isEditing ? (
-            <input
-              type="text"
-              value={formData.title}
-              onChange={e => handleChange('title', e.target.value)}
-              className={styles.headerTitleInput}
-              placeholder="Название задачи"
-            />
-          ) : (
-            <h2 className={styles.headerTitle} title={formData.title}>
-              {formData.title}
-            </h2>
-          )}
-          <button onClick={handleClose} className={styles.closeButton}>
-            <X size={24} />
-          </button>
-        </div>
+        <div className={styles.form}>
+          <div className={styles.header}>
+            {isEditing ? (
+              <input
+                type="text"
+                value={formData.title}
+                onChange={e => handleChange('title', e.target.value)}
+                className={styles.headerTitleInput}
+                placeholder="Название задачи"
+              />
+            ) : (
+              <h2 className={styles.headerTitle} title={formData.title}>
+                {formData.title}
+              </h2>
+            )}
+            <button onClick={handleClose} className={styles.closeButton}>
+              <X size={24} />
+            </button>
+          </div>
 
-        <div className={`${styles.content} no-scrollbar`}>
-          <div className={styles.contentInner}>
+          <div className={`${styles.content} no-scrollbar`}>
             <div className={styles.statusPriority}>
               {isEditing ? (
                 <>
@@ -531,65 +531,65 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                 placeholder="Введите результат выполнения..."
                 disabled={isSavingCompleted}
                 className={styles.resultTextarea}
-                />
+              />
 
-                {hasCompletedChanges && (
-                  <ActionButton
-                    variant="base"
-                    onClick={handleSaveCompleted}
-                    disabled={isSavingCompleted}
-                  >
-                    <Save className="w-4 h-4" />
-                    {isSavingCompleted ? 'Сохранение...' : 'Сохранить'}
-                  </ActionButton>
-                )}
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.footer}>
-          <div className={styles.actions}>
-            {!isEditing ? (
-              <>
+              {hasCompletedChanges && (
                 <ActionButton
                   variant="base"
-                  onClick={() => setIsEditing(true)}
-                  disabled={isLoading.action}
-                >
-                  <Edit2 className="w-4 h-4" /> Изменить
-                </ActionButton>
-                {canDelete && (
-                  <ActionButton
-                    variant="base"
-                    onClick={handleDelete}
-                    disabled={isLoading.action}
-                  >
-                    <Trash2 className="w-4 h-4" /> Удалить
-                  </ActionButton>
-                )}
-              </>
-            ) : (
-              <>
-                <ActionButton
-                  variant="base"
-                  onClick={handleSave}
-                  disabled={isLoading.action || !hasChanges}
+                  onClick={handleSaveCompleted}
+                  disabled={isSavingCompleted}
                 >
                   <Save className="w-4 h-4" />
-                  {isLoading.action ? 'Сохранение...' : 'Сохранить'}
+                  {isSavingCompleted ? 'Сохранение...' : 'Сохранить'}
                 </ActionButton>
-                <ActionButton
-                  variant="base"
-                  onClick={() => {
-                    setFormData(initialData);
-                    setIsEditing(false);
-                  }}
-                  disabled={isLoading.action}
-                >
-                  <X className="w-4 h-4" /> Отмена
-                </ActionButton>
-              </>
-            )}
+              )}
+            </div>
+          </div>
+
+          <div className={styles.footer}>
+            <div className={styles.actions}>
+              {!isEditing ? (
+                <>
+                  <ActionButton
+                    variant="base"
+                    onClick={() => setIsEditing(true)}
+                    disabled={isLoading.action}
+                  >
+                    <Edit2 className="w-4 h-4" /> Изменить
+                  </ActionButton>
+                  {canDelete && (
+                    <ActionButton
+                      variant="base"
+                      onClick={handleDelete}
+                      disabled={isLoading.action}
+                    >
+                      <Trash2 className="w-4 h-4" /> Удалить
+                    </ActionButton>
+                  )}
+                </>
+              ) : (
+                <>
+                  <ActionButton
+                    variant="base"
+                    onClick={handleSave}
+                    disabled={isLoading.action || !hasChanges}
+                  >
+                    <Save className="w-4 h-4" />
+                    {isLoading.action ? 'Сохранение...' : 'Сохранить'}
+                  </ActionButton>
+                  <ActionButton
+                    variant="base"
+                    onClick={() => {
+                      setFormData(initialData);
+                      setIsEditing(false);
+                    }}
+                    disabled={isLoading.action}
+                  >
+                    <X className="w-4 h-4" /> Отмена
+                  </ActionButton>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

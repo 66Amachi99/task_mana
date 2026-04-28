@@ -13,6 +13,7 @@ import styles from './CalendarPage.module.css';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
 import { FilterBar } from '@/components/ui/filter-bar/filter-bar';
+import { Loading } from '@/components/ui/loading/loading';
 import { RoleDropdown } from '@/components/shared/role-dropdown/role-dropdown';
 import { useHeader } from '@/contexts/HeaderContext';
 
@@ -308,12 +309,7 @@ export default function CalendarPage() {
   };
 
   if (loading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinner} />
-        <span className={styles.loadingText}>Загрузка...</span>
-      </div>
-    );
+    return <Loading text="Загрузка..." />;
   }
 
   return (

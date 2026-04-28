@@ -12,6 +12,7 @@ import { useUser } from '@/hooks/use-roles';
 import { Gallery } from '../gallery/gallery';
 import styles from './PostDetailsRightPanel.module.css';
 import { ActionButton } from '../../ui/action-button/action-button';
+import { ConfirmPopover } from '@/components/ui/confirm-popover/confirm-popover';
 
 interface PostData {
   post_id: number;
@@ -135,6 +136,7 @@ const CommentItem = ({
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -167,16 +169,27 @@ const CommentItem = ({
     }
   };
 
-  const handleDeleteClick = async () => {
+  const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
       await onDelete(comment.id);
     } catch (error) {
       console.error('Ошибка при удалении:', error);
-    } finally {
       setIsDeleting(false);
+      setShowConfirm(false);
     }
   };
+
+  // const handleDeleteClick = async () => {
+  //   setIsDeleting(true);
+  //   try {
+  //     await onDelete(comment.id);
+  //   } catch (error) {
+  //     console.error('Ошибка при удалении:', error);
+  //   } finally {
+  //     setIsDeleting(false);
+  //   }
+  // };
 
   return (
     <div className={getStatusClass(comment.status)}>
@@ -185,6 +198,14 @@ const CommentItem = ({
           <p className={styles.commentText}>{comment.text}</p>
         </div>
         <div className={styles.commentActions}>
+          {showConfirm && (
+            <ConfirmPopover
+              onConfirm={handleDeleteConfirm}
+              onCancel={() => setShowConfirm(false)}
+              isDeleting={isDeleting}
+            />
+          )}
+
           {canChangeStatus && (
             <ActionButton
               onClick={handleStatusClick}
@@ -192,12 +213,15 @@ const CommentItem = ({
               variant="base"
               icon={comment.status === COMMENT_STATUS.NEW ? Check : CheckCheck}
             >
-              {isUpdating ? '...' : null}
+              {isUpdating ? '' : null}
             </ActionButton>
           )}
           {canDelete && (
             <ActionButton
-              onClick={handleDeleteClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowConfirm(true);
+              }}
               disabled={isDeleting}
               variant="base"
               icon={Trash2}

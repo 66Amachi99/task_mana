@@ -277,7 +277,7 @@ export const FileUploader = ({
                 {!readOnly && onDeleteFile && !isDeleting && !hasUploadingFiles && (
                   <ActionButton
                     onClick={() => handleDeleteClick(file.path)}
-                    variant="base"
+                    variant="del"
                     icon={Trash2}
                     className={styles.deleteButton}
                   >
