@@ -61,10 +61,20 @@ export default function StatsPage() {
     return Math.max(...data.tags.map((t: any) => t.count));
   }, [data?.tags]);
 
+  // ПРОВЕРКИ НА ПУСТОТУ
   const isPlatformEmpty = useMemo(() => {
     if (!data?.platforms || !Array.isArray(data.platforms)) return true;
     return data.platforms.every((p: any) => p.value === 0);
   }, [data?.platforms]);
+
+  const isComplexityEmpty = useMemo(() => {
+    if (!data?.complexity || !Array.isArray(data.complexity)) return true;
+    return data.complexity.every((c: any) => c.value === 0);
+  }, [data?.complexity]);
+
+  const isProjectsEmpty = useMemo(() => {
+    return !data?.tags || data.tags.length === 0;
+  }, [data?.tags]);
 
   const platformData = useMemo(() => {
     if (isPlatformEmpty) return [{ name: 'Нет данных', value: 1 }];
@@ -80,11 +90,7 @@ export default function StatsPage() {
           <h1 className={styles.pageTitle}>Статистика</h1>
           <div className={styles.filterGroup}>
             {(['week', 'month', 'all'] as const).map((p) => (
-              <button 
-                key={p} 
-                className={`${styles.filterButton} ${period === p ? styles.filterButtonActive : ''}`} 
-                onClick={() => setPeriod(p)}
-              >
+              <button key={p} className={`${styles.filterButton} ${period === p ? styles.filterButtonActive : ''}`} onClick={() => setPeriod(p)}>
                 {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Все время'}
               </button>
             ))}
@@ -93,7 +99,6 @@ export default function StatsPage() {
 
         <div className={styles.mainLayout}>
           <div className={styles.leftColumn}>
-            {/* ОХВАТ ПЛОЩАДОК */}
             <div className={`${styles.statCard} ${styles.areaPie}`}>
               <div className={styles.cardHeader}>
                 <h3 className={styles.cardTitle}>Охват площадок</h3>
@@ -102,41 +107,22 @@ export default function StatsPage() {
               <div className={styles.chartWrapper}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie
-                      data={platformData}
-                      innerRadius="60%"
-                      outerRadius="85%"
-                      paddingAngle={5}
-                      dataKey="value"
-                      nameKey="name"
-                      isAnimationActive={true}
-                      stroke="none"
-                    >
+                    <Pie data={platformData} innerRadius="60%" outerRadius="85%" paddingAngle={5} dataKey="value" nameKey="name" isAnimationActive={true} stroke="none">
                       {isPlatformEmpty ? (
                         <Cell fill="rgba(255,255,255,0.05)" />
                       ) : (
                         platformData.map((entry: any, index: number) => (
-                          <Cell 
-                            key={`cell-pie-${index}`} 
-                            fill={THEME_COLORS[index % THEME_COLORS.length].fill} 
-                            stroke={THEME_COLORS[index % THEME_COLORS.length].stroke}
-                            strokeWidth={2}
-                          />
+                          <Cell key={`cell-pie-${index}`} fill={THEME_COLORS[index % THEME_COLORS.length].fill} stroke={THEME_COLORS[index % THEME_COLORS.length].stroke} strokeWidth={2} />
                         ))
                       )}
                     </Pie>
                     {!isPlatformEmpty && <Tooltip content={<CustomTooltip />} cursor={false} />}
-                    <Legend 
-                        verticalAlign="bottom" 
-                        height={36}
-                        formatter={(value) => <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14pt' }}>{value}</span>}
-                    />
+                    <Legend verticalAlign="bottom" height={36} formatter={(value) => <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14pt' }}>{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* НАГРУЗКА КОМАНДЫ */}
             <div className={`${styles.statCard} ${styles.areaTeam}`}>
               <div className={styles.cardHeader}>
                 <h3 className={styles.cardTitle}>Нагрузка на команду</h3>
@@ -164,7 +150,6 @@ export default function StatsPage() {
 
           <div className={styles.rightContent}>
             <div className={styles.topRightSection}>
-              {/* ПУЛЬС */}
               <div className={styles.pulseGrid}>
                 <PulseCard icon={Layers} label="Посты" value={data.pulse.activePosts} color="#48C884" />
                 <PulseCard icon={CheckSquare} label="Задачи" value={data.pulse.activeTasks} color="#41A5F3" />
@@ -172,7 +157,6 @@ export default function StatsPage() {
                 <PulseCard icon={AlertTriangle} label="Дедлайны" value={data.pulse.overduePosts} color="#FE4D3D" />
               </div>
 
-              {/* ИНДЕКС ПРАВОК */}
               <div className={`${styles.statCard} ${styles.areaFriction}`}>
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle}>Индекс правок</h3>
@@ -188,26 +172,11 @@ export default function StatsPage() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.3)', fontSize: '10pt'}} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.5)', fontSize: '12pt'}} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.3)', fontSize: '14pt'}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.5)', fontSize: '14pt'}} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Area 
-                        type="monotone" 
-                        dataKey="value" 
-                        name="Правки"
-                        stroke="#AB48BF" 
-                        strokeWidth={3} 
-                        fillOpacity={1} 
-                        fill="url(#colorFriction)" 
-                      >
-                        <LabelList 
-                          dataKey="value" 
-                          position="top" 
-                          offset={15}
-                          fill="#F7ADC4" 
-                          fontSize="12pt" 
-                          fontWeight={400} 
-                        />
+                      <Area type="monotone" dataKey="value" name="Правки" stroke="#AB48BF" strokeWidth={3} fillOpacity={1} fill="url(#colorFriction)">
+                        <LabelList dataKey="value" position="top" offset={15} fill="#F7ADC4" fontSize="14pt" fontWeight={400} />
                       </Area>
                     </AreaChart>
                   </ResponsiveContainer>
@@ -216,82 +185,53 @@ export default function StatsPage() {
             </div>
 
             <div className={styles.bottomRightSection}>
-              {/* СЛОЖНОСТЬ КОНТЕНТА */}
               <div className={`${styles.statCard} ${styles.areaComplexity}`}>
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle}>Количество контента</h3>
                   <BarChart3 size={32} color="#449627" />
                 </div>
                 <div className={styles.chartWrapper}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={data.complexity} 
-                      layout="vertical" 
-                      margin={{ left: 10, right: 60, top: 10, bottom: 10 }}
-                    >
-                      <XAxis type="number" hide />
-                      <YAxis 
-                        dataKey="name" 
-                        type="category" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{fill: '#fff', fontSize: '14pt'}} 
-                        width={120} 
-                      />
-                      <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(255,255,255,0.03)'}} />
-                      <Bar 
-                        dataKey="value" 
-                        name="Постов"
-                        barSize={22} 
-                        radius={[0, 10, 10, 0]}
-                      >
-                        <LabelList 
-                          dataKey="value" 
-                          position="right" 
-                          fill="#fff" 
-                          fontSize="14pt" 
-                          fontWeight={400} 
-                          offset={10} 
-                        />
-                        {data.complexity.map((entry: any, index: number) => (
-                          <Cell 
-                            key={`cell-bar-${index}`} 
-                            fill={THEME_COLORS[index % THEME_COLORS.length].fill} 
-                            stroke={THEME_COLORS[index % THEME_COLORS.length].stroke}
-                            strokeWidth={2}
-                          />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {isComplexityEmpty ? (
+                    <div className={styles.noDataOverlay}>Нет данных</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={data.complexity} layout="vertical" margin={{ left: 10, right: 60, top: 10, bottom: 10 }}>
+                        <XAxis type="number" hide />
+                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#fff', fontSize: '14pt'}} width={120} />
+                        <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                        <Bar dataKey="value" name="Постов" barSize={22} radius={[0, 10, 10, 0]}>
+                          <LabelList dataKey="value" position="right" fill="#fff" fontSize="14pt" fontWeight={400} offset={10} />
+                          {data.complexity.map((entry: any, index: number) => (
+                            <Cell key={`cell-bar-${index}`} fill={THEME_COLORS[index % THEME_COLORS.length].fill} stroke={THEME_COLORS[index % THEME_COLORS.length].stroke} strokeWidth={2} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
 
-              {/* ТОП ПРОЕКТОВ */}
               <div className={`${styles.statCard} ${styles.areaEmpty}`}>
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle}>Топ проектов</h3>
                   <Briefcase size={32} color="#F7ADC4" />
                 </div>
                 <div className={styles.projectGrid}>
-                  {data.tags.map((tag: any) => (
-                    <div key={tag.name} className={styles.projectCard}>
-                      <div className={styles.projectHeader}>
-                        <span className={styles.projectName}>{tag.name}</span>
-                        <span className={styles.projectCount}>{tag.count}</span>
+                  {isProjectsEmpty ? (
+                    <div className={styles.noDataOverlayFull}>Нет активных проектов</div>
+                  ) : (
+                    data.tags.map((tag: any) => (
+                      <div key={tag.name} className={styles.projectCard}>
+                        <div className={styles.projectHeader}>
+                          <span className={styles.projectName}>{tag.name}</span>
+                          <span className={styles.projectCount}>{tag.count}</span>
+                        </div>
+                        <div className={styles.projectBarTrack}>
+                          <div className={styles.projectBarFill} style={{ width: `${(tag.count / maxProjectCount) * 100}%`, backgroundColor: tag.color, border: `1px solid ${tag.color.replace('40', 'ff')}` }} />
+                        </div>
                       </div>
-                      <div className={styles.projectBarTrack}>
-                        <div 
-                          className={styles.projectBarFill} 
-                          style={{ 
-                            width: `${(tag.count / maxProjectCount) * 100}%`, 
-                            backgroundColor: tag.color,
-                            border: `1px solid ${tag.color.replace('40', 'ff')}` 
-                          }} 
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>

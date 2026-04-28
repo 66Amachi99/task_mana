@@ -10,18 +10,22 @@
     left: 0;
     overflow: hidden;
     color: #fff;
-    font-size: 14pt; /* Установка базового размера для всего текста */
+    font-size: 14pt;
 }
 
-.page :global(.recharts-wrapper) {
+/* Убираем рамку выделения */
+.page :global(.recharts-wrapper) *,
+.page :global(.recharts-surface),
+.page :global(.recharts-sector),
+.page :global(.recharts-rectangle) {
     outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
 }
 
 .container {
     height: 100%;
     width: 100%;
-    padding: 1.5rem;
-    padding-bottom: 5rem;
+    padding: 1.5rem 1.5rem 6rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -96,7 +100,7 @@
 
 .cardTitle {
     margin: 0;
-    font-size: 18pt; /* Заголовки в карточках */
+    font-size: 18pt;
     opacity: 0.8;
 }
 
@@ -105,13 +109,30 @@
     width: 100%;
     min-height: 150px;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.areaPie { height: 45%; }
-.areaTeam { flex: 1; }
-.areaFriction { flex: 1; }
-.areaComplexity { flex: 1; }
-.areaEmpty { flex: 1; }
+.areaPie {
+    height: 45%;
+}
+
+.areaTeam {
+    flex: 1;
+}
+
+.areaFriction {
+    flex: 1;
+}
+
+.areaComplexity {
+    flex: 1;
+}
+
+.areaEmpty {
+    flex: 1;
+}
 
 /* ТАБЛИЦА */
 .tableWrapper {
@@ -120,6 +141,7 @@
     scrollbar-width: none;
     background: rgba(255, 255, 255, 0.02);
     border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .table {
@@ -130,21 +152,17 @@
 .table th {
     text-align: left;
     padding: 12px;
-    font-size: 12pt; /* Заголовки чуть меньше основного для баланса */
+    font-size: 12pt;
     color: rgba(255, 255, 255, 0.5);
-    background: rgba(30, 30, 30, 0.8);
+    background: rgba(30, 30, 30);
     position: sticky;
     top: 0;
 }
 
 .table td {
     padding: 12px;
-    font-size: 14pt; /* Текст в таблице */
+    font-size: 14pt;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.userNameInTable {
-    font-weight: 600;
 }
 
 /* ПУЛЬС */
@@ -158,22 +176,20 @@
     background: rgba(255, 255, 255, 0.06);
     padding: 1rem;
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    overflow: hidden;
 }
 
 .pulseCardLeft {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-width: 0;
 }
 
 .pulseLabel {
-    font-size: 14pt; /* Текст в пульсе */
+    font-size: 14pt;
     font-weight: 700;
     text-transform: uppercase;
     opacity: 0.7;
@@ -181,12 +197,68 @@
 }
 
 .pulseValue {
-    font-size: 20pt; /* Значения чуть крупнее для акцента */
+    font-size: 20pt;
     font-weight: 800;
     margin-left: 5px;
 }
 
-/* TOOLTIP */
+/* ЗАГЛУШКИ "НЕТ ДАННЫХ" */
+.noDataOverlay {
+    font-size: 14pt;
+    opacity: 0.3;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.noDataOverlayFull {
+    grid-column: 1 / span 2;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14pt;
+    opacity: 0.3;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* ПРОЕКТЫ */
+.projectGrid {
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+}
+
+.projectCard {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.projectName {
+    font-weight: 600;
+    font-size: 14pt;
+}
+
+.projectCount {
+    font-size: 14pt;
+    opacity: 0.7;
+}
+
+.projectBarTrack {
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.projectBarFill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+/* ОСТАЛЬНОЕ */
 .customTooltip {
     background: rgba(15, 15, 15, 0.95);
     padding: 12px;
@@ -209,14 +281,9 @@
 
 .tooltipValue {
     font-weight: 800;
-    font-size: 14pt; /* Текст в тултипе */
-}
-
-.tooltipMetricName {
     font-size: 14pt;
 }
 
-/* ФИЛЬТРЫ */
 .filterGroup {
     display: flex;
     background: rgba(255, 255, 255, 0.05);
@@ -231,52 +298,12 @@
     padding: 6px 16px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14pt; /* Кнопки фильтров */
+    font-size: 14pt;
 }
 
 .filterButtonActive {
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
-}
-
-/* ПРОЕКТЫ */
-.projectGrid {
-    flex: 1;
-    overflow-y: auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.2rem;
-}
-
-.projectCard {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.projectHeader {
-    display: flex;
-    justify-content: space-between;
-}
-
-.projectName { 
-    font-weight: 600; 
-    font-size: 14pt; /* Названия проектов */
-}
-
-.projectCount {
-    font-size: 14pt; /* Цифры проектов */
-}
-
-.projectBarTrack {
-    height: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-
-.projectBarFill {
-    height: 100%;
-    border-radius: 4px;
 }
 
 .loading {
@@ -296,4 +323,8 @@
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
