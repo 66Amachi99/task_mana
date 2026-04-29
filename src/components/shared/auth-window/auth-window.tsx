@@ -21,6 +21,8 @@ export const AuthWindow = ({ onClose, onSuccess }: AuthWindowProps) => {
 
   const queryClient = useQueryClient();
   const overlayPointerDownRef = useRef(false);
+  const loginInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const handleClose = useCallback(() => {
     if (isClosing) return;
@@ -55,8 +57,22 @@ export const AuthWindow = ({ onClose, onSuccess }: AuthWindowProps) => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleLoginKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
+      passwordInputRef.current?.focus();
+    }
+  };
+
+  const handlePasswordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && e.target === e.currentTarget) {
       handleSubmit();
     }
   };
@@ -98,21 +114,25 @@ export const AuthWindow = ({ onClose, onSuccess }: AuthWindowProps) => {
         <div className={styles.form}>
           <div className={styles.field}>
             <input
+              ref={loginInputRef}
               type="text"
               value={login}
               onChange={(e) => setLogin(e.target.value)}
               className={styles.input}
               placeholder="Логин"
+              onKeyDown={handleLoginKeyDown}
             />
           </div>
 
           <div className={styles.passwordField}>
             <input
+              ref={passwordInputRef}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={styles.input}
               placeholder="Пароль"
+              onKeyDown={handlePasswordKeyDown}
             />
           </div>
 

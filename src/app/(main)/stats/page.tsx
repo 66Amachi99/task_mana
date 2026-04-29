@@ -42,12 +42,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function StatsPage() {
-  const [period, setPeriod] = useState<'week' | 'month' | 'all'>('week');
+  const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['global-stats', period],
-    queryFn: () => fetch(`/api/stats?period=${period}`).then(res => res.json()),
-    refetchInterval: 60000
+    queryFn: async () => {
+      const res = await fetch(`/api/stats?period=${period}`);
+      if (!res.ok) {
+        // Если сервер вернул 500 или 401, выкидываем ошибку, чтобы React Query её поймал
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+    refetchInterval: 60000,
+    retry: 1 // Попробовать переповторить запрос 1 раз при ошибке
   });
 
   const sortedTeam = useMemo(() => {
@@ -82,7 +90,21 @@ export default function StatsPage() {
     return data.platforms;
   }, [data?.platforms, isPlatformEmpty]);
 
-  if (isLoading || !data) return <Loading text='Загрузка...'/>;
+  // Обработка загрузки
+  if (isLoading) return <Loading text='Загрузка статистики...'/>;
+
+  // Обработка ошибки сервера (если data.pulse не пришел)
+  if (isError || !data || !data.pulse) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <div className={styles.noDataOverlayFull}>
+            Ошибка загрузки данных. Пожалуйста, проверьте подключение или права доступа.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -90,9 +112,9 @@ export default function StatsPage() {
         <header className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Статистика</h1>
           <div className={styles.filterGroup}>
-            {(['week', 'month', 'all'] as const).map((p) => (
+            {(['week', 'month', 'year'] as const).map((p) => (
               <button key={p} className={`${styles.filterButton} ${period === p ? styles.filterButtonActive : ''}`} onClick={() => setPeriod(p)}>
-                {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Все время'}
+                {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Год'}
               </button>
             ))}
           </div>
@@ -152,10 +174,11 @@ export default function StatsPage() {
           <div className={styles.rightContent}>
             <div className={styles.topRightSection}>
               <div className={styles.pulseGrid}>
-                <PulseCard icon={Layers} label="Посты" value={data.pulse.activePosts} color="#48C884" />
-                <PulseCard icon={CheckSquare} label="Задачи" value={data.pulse.activeTasks} color="#41A5F3" />
-                <PulseCard icon={MessageSquare} label="Правки" value={data.pulse.totalComments} color="#AB48BF" />
-                <PulseCard icon={AlertTriangle} label="Дедлайны" value={data.pulse.overduePosts} color="#FE4D3D" />
+                {/* Используем опциональную цепочку ?. для безопасности */}
+                <PulseCard icon={Layers} label="Посты" value={data.pulse?.activePosts || 0} color="#48C884" />
+                <PulseCard icon={CheckSquare} label="Задачи" value={data.pulse?.activeTasks || 0} color="#41A5F3" />
+                <PulseCard icon={MessageSquare} label="Правки" value={data.pulse?.totalComments || 0} color="#AB48BF" />
+                <PulseCard icon={AlertTriangle} label="Дедлайны" value={data.pulse?.overduePosts || 0} color="#FE4D3D" />
               </div>
 
               <div className={`${styles.statCard} ${styles.areaFriction}`}>
@@ -165,7 +188,7 @@ export default function StatsPage() {
                 </div>
                 <div className={styles.chartWrapper}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data.friction} margin={{ top: 30, right: 20, left: -20, bottom: 0 }}>
+                    <AreaChart data={data.friction || []} margin={{ top: 30, right: 20, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorFriction" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#AB48BF" stopOpacity={0.4}/>
@@ -196,7 +219,7 @@ export default function StatsPage() {
                     <div className={styles.noDataOverlay}>Нет данных</div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data.complexity} layout="vertical" margin={{ left: 20, right: 60, top: 10, bottom: 10 }}>
+                      <BarChart data={data.complexity || []} layout="vertical" margin={{ left: 20, right: 60, top: 10, bottom: 10 }}>
                         <XAxis type="number" hide />
                         <YAxis dataKey="name" type="category" interval={0} axisLine={false} tickLine={false} tick={{fill: '#fff', fontSize: '14pt'}} width={120} />
                         <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />

@@ -336,7 +336,7 @@ export const PostDetailsLeftPanel = ({
           {canUnapprove && !isEditing && (
             <ActionButton
               onClick={onUnapprove}
-              variant="gray"
+              variant="base"
               disabled={isActionLoading}
             >
               Снять согласование
@@ -361,7 +361,7 @@ export const PostDetailsLeftPanel = ({
         {canEditPost && !isEditing && (
           <ActionButton
             onClick={onEditStart}
-            variant="gray"
+            variant="base"
             icon={Edit2}
           >
             Изменить
