@@ -1,18 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
-import type { Task, TasksResponse } from '@/types';
+import type { Task } from '@/types';
 
 const API_URL = '/api/tasks';
 
-export const useTasks = (page = 1, limit = 100, filter?: string) => {
-  const params = new URLSearchParams();
-  params.append('page', page.toString());
-  params.append('limit', limit.toString());
-  if (filter) params.append('filter', filter);
-
+// Добавили параметры фильтрации дат и сортировки
+export const useTasks = (
+  page = 1, 
+  limit = 100, 
+  filter?: string,
+  options: { startDate?: string; endDate?: string; sort?: 'asc' | 'desc' } = {}
+) => {
   return useQuery({
-    queryKey: ['tasks', { page, limit, filter }],
+    queryKey: ['tasks', { page, limit, filter, ...options }],
     queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      if (filter) params.append('filter', filter);
+      
+      // Добавляем новые параметры в URL
+      if (options.startDate) params.append('startDate', options.startDate);
+      if (options.endDate) params.append('endDate', options.endDate);
+      if (options.sort) params.append('sort', options.sort);
+
       const res = await fetch(`${API_URL}?${params.toString()}`);
       if (!res.ok) throw new Error('Ошибка загрузки задач');
       const data = await res.json();

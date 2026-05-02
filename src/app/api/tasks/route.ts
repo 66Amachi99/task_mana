@@ -25,6 +25,12 @@ export async function GET(request: NextRequest) {
     const taskId = searchParams.get('id');
     const filter = searchParams.get('filter');
 
+    // --- НОВЫЕ ПАРАМЕТРЫ ---
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const sort = searchParams.get('sort') || 'asc';
+    // -----------------------
+
     if (taskId) {
       const task = await prisma.task.findUnique({
         where: { task_id: Number(taskId) },
@@ -95,6 +101,14 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    // --- НОВЫЙ БЛОК ФИЛЬТРАЦИИ ПО ДАТАМ ---
+    if (startDate || endDate) {
+      where.end_time = {};
+      if (startDate) where.end_time.gte = new Date(startDate);
+      if (endDate) where.end_time.lte = new Date(endDate);
+    }
+    // ------------------------------------
+
     const totalTasks = await prisma.task.count({ where });
     const totalPages = Math.ceil(totalTasks / limit);
 
@@ -117,9 +131,11 @@ export async function GET(request: NextRequest) {
           }
         }
       },
+      // --- ИЗМЕНЕННАЯ СОРТИРОВКА ---
       orderBy: {
-        created_at: 'desc'
+        end_time: sort as 'asc' | 'desc'
       },
+      // ----------------------------
       skip,
       take: limit
     });

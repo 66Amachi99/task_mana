@@ -9,6 +9,12 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
     const postId = searchParams.get('id');
 
+    // --- НОВЫЕ ПАРАМЕТРЫ ---
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const sort = searchParams.get('sort') || 'asc'; 
+    // -----------------------
+
     if (postId) {
       const post = await prisma.post.findUnique({
         where: { post_id: Number(postId) },
@@ -61,10 +67,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ posts: [transformedPost] }, { status: 200 });
     }
 
-    const totalPosts = await prisma.post.count();
+    // --- ИЗМЕНЕННЫЙ БЛОК WHERE ---
+    const where: any = {};
+    if (startDate || endDate) {
+      where.post_deadline = {};
+      if (startDate) where.post_deadline.gte = new Date(startDate);
+      if (endDate) where.post_deadline.lte = new Date(endDate);
+    }
+    // ----------------------------
+
+    const totalPosts = await prisma.post.count({ where }); // Добавил where в подсчет
     const totalPages = Math.ceil(totalPosts / limit);
 
     const posts = await prisma.post.findMany({
+      where, // Применяем фильтр
       include: {
         user: {
           select: {
@@ -95,9 +111,11 @@ export async function GET(request: NextRequest) {
           },
         },
       },
+      // --- ИЗМЕНЕННАЯ СОРТИРОВКА ---
       orderBy: {
-        post_date: 'desc',
+        post_deadline: sort as 'asc' | 'desc',
       },
+      // ----------------------------
       skip: skip,
       take: limit,
     });

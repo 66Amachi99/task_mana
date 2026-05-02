@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react'; // Убрал useState, добавил в пропсы ниже
 import {
   format,
   startOfMonth,
@@ -21,6 +21,10 @@ import styles from './Calendar.module.css';
 import { FileText, Circle } from 'lucide-react';
 
 interface CalendarProps {
+  // --- НОВЫЕ ПРОПСЫ ---
+  currentMonth: Date;
+  onMonthChange: (date: Date) => void;
+  // --------------------
   itemsByDate: Map<string, CalendarItem[]>;
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
@@ -64,6 +68,8 @@ const getDayStats = (items: CalendarItem[]): DayStats => {
 };
 
 export const Calendar: React.FC<CalendarProps> = ({
+  currentMonth, // из пропсов
+  onMonthChange, // из пропсов
   itemsByDate,
   selectedDate,
   onDateSelect,
@@ -78,7 +84,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   posts,
   tasks,
 }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  // УДАЛИЛИ: const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -96,8 +102,8 @@ export const Calendar: React.FC<CalendarProps> = ({
     end: lastDisplayDate,
   });
 
-  const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-  const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+  const handlePrevMonth = () => onMonthChange(subMonths(currentMonth, 1));
+  const handleNextMonth = () => onMonthChange(addMonths(currentMonth, 1));
 
   const prevMonth = subMonths(currentMonth, 1);
   const nextMonth = addMonths(currentMonth, 1);

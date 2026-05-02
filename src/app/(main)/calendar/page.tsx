@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Calendar } from '@/components/calendar/calendar';
 import { PostDetailsWindow } from '@/components/shared/post-details-window/post-details-window';
 import { TaskDetailsWindow } from '@/components/shared/task-details-window/task-details-window';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { useUser } from '@/hooks/use-roles';
 import type { CalendarPost, CalendarTask, CalendarItem } from '@/types';
 import { X } from 'lucide-react';
@@ -47,6 +47,7 @@ const getCardBackground = (item: CalendarItem): string => {
 };
 
 export default function CalendarPage() {
+  const [currentMonth, setCurrentMonth] = useState(new Date()); // Теперь управляется тут
   const [selectedItem, setSelectedItem] = useState<{ post?: CalendarPost; task?: CalendarTask } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -61,8 +62,19 @@ export default function CalendarPage() {
   const { filterPostByRole } = useUser();
   const { selectedDate, setSelectedDate, openPostModal, openTaskModal } = useHeader();
 
-  const { data: postsData, isLoading: postsLoading } = usePosts(1, 100);
-  const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 100);
+  // --- ЛОГИКА ЗАГРУЗКИ ПО ДИАПАЗОНУ ТЕКУЩЕЙ СЕТКИ ---
+  const fetchRange = useMemo(() => {
+    const start = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
+    const end = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
+    return {
+      startDate: start.toISOString(),
+      endDate: end.toISOString()
+    };
+  }, [currentMonth]);
+
+  // Теперь передаем fetchRange в хуки. Лимит 200 - за глаза на 1 месяц.
+  const { data: postsData, isLoading: postsLoading } = usePosts(1, 200, fetchRange);
+  const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 200, undefined, fetchRange);
 
   const posts = useMemo(() => {
     return (postsData?.posts || []).map((p) => ({
@@ -115,7 +127,7 @@ export default function CalendarPage() {
     const date = selectedDate || new Date();
     const dateStr = format(date, 'yyyy-MM-dd');
     const postsForDay = posts.filter(p => format(p.post_deadline, 'yyyy-MM-dd') === dateStr);
-    const tasksForDay = tasks.filter(t => format(t.end_time, 'yyyy-MM-dd') === dateStr);
+    const tasksForDay = tasks.filter(t => format(new Date(t.end_time), 'yyyy-MM-dd') === dateStr);
     return [
       ...postsForDay.map(p => ({ ...p, type: 'post' as const })),
       ...tasksForDay.map(t => ({ ...t, type: 'task' as const }))
@@ -308,7 +320,7 @@ export default function CalendarPage() {
     );
   };
 
-  if (loading) {
+  if (loading && posts.length === 0) {
     return <Loading text="Загрузка..." />;
   }
 
@@ -320,6 +332,8 @@ export default function CalendarPage() {
             }`}>
             <div className={styles.calendarContainer}>
               <Calendar
+                currentMonth={currentMonth}
+                onMonthChange={setCurrentMonth}
                 itemsByDate={calendarItemsByDate}
                 selectedDate={selectedDate || new Date()}
                 onDateSelect={handleDateSelect}
@@ -343,12 +357,10 @@ export default function CalendarPage() {
                 onRoleFilterChange={setCalendarRoleFilter}
                 postsCount={posts.filter(p => {
                   const date = new Date(p.post_deadline);
-                  const currentMonth = new Date();
                   return date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
                 }).length}
                 tasksCount={tasks.filter(t => {
                   const date = new Date(t.end_time);
-                  const currentMonth = new Date();
                   return date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
                 }).length}
                 showCounts={true}

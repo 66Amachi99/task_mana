@@ -1,14 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGalleryStore } from '@/store/useGalleryStore';
-import type { Post, PostWithRelations, PostsResponse, Comment } from '@/types';
+import type { Post, PostsResponse } from '@/types';
 
 const API_URL = '/api/posts';
 
-export const usePosts = (page = 1, limit = 100) => {
+// Добавили параметры фильтрации дат и сортировки
+export const usePosts = (
+  page = 1, 
+  limit = 100, 
+  options: { startDate?: string; endDate?: string; sort?: 'asc' | 'desc' } = {}
+) => {
   return useQuery({
-    queryKey: ['posts', { page, limit }],
+    // queryKey теперь включает даты, чтобы кэшировать разные месяцы отдельно
+    queryKey: ['posts', { page, limit, ...options }],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}?page=${page}&limit=${limit}`);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+
+      if (options.startDate) params.append('startDate', options.startDate);
+      if (options.endDate) params.append('endDate', options.endDate);
+      if (options.sort) params.append('sort', options.sort);
+
+      const res = await fetch(`${API_URL}?${params.toString()}`);
       if (!res.ok) throw new Error('Ошибка загрузки постов');
       const data = await res.json();
       return {
@@ -37,7 +52,6 @@ export const usePost = (id: number | null) => {
 
 export const useCreatePost = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (newPost: any) => {
       const res = await fetch('/api/posts/create', {
@@ -45,12 +59,10 @@ export const useCreatePost = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newPost),
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка создания поста');
       }
-
       return res.json();
     },
     onSuccess: () => {
@@ -61,7 +73,6 @@ export const useCreatePost = () => {
 
 export const useUpdatePost = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ postId, data }: { postId: number; data: any }) => {
       const res = await fetch('/api/posts/update', {
@@ -69,12 +80,10 @@ export const useUpdatePost = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId, data }),
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка обновления поста');
       }
-
       return res.json();
     },
     onSuccess: (_, variables) => {
@@ -86,7 +95,6 @@ export const useUpdatePost = () => {
 
 export const useSilentUpdatePost = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ postId, data }: { postId: number; data: any }) => {
       const res = await fetch('/api/posts/update', {
@@ -94,12 +102,10 @@ export const useSilentUpdatePost = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId, data }),
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка обновления поста');
       }
-
       return res.json();
     },
     onSuccess: () => {
@@ -110,7 +116,6 @@ export const useSilentUpdatePost = () => {
 
 export const usePatchPost = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       postId,
@@ -128,12 +133,10 @@ export const usePatchPost = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId, action, social, link }),
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка обновления статуса');
       }
-
       return res.json();
     },
     onSuccess: (_, variables) => {
@@ -145,18 +148,15 @@ export const usePatchPost = () => {
 
 export const useDeletePost = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (postId: number) => {
       const res = await fetch(`/api/posts/delete?id=${postId}`, {
         method: 'DELETE',
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка удаления поста');
       }
-
       return res.json();
     },
     onSuccess: () => {
@@ -168,7 +168,6 @@ export const useDeletePost = () => {
 
 export const useAddComment = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       postId,
@@ -184,12 +183,10 @@ export const useAddComment = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId, taskTypeId, text }),
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка добавления комментария');
       }
-
       return res.json();
     },
     onSuccess: (_, variables) => {
@@ -201,7 +198,6 @@ export const useAddComment = () => {
 
 export const useUpdateCommentStatus = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ commentId, status }: { commentId: number; status: string }) => {
       const res = await fetch('/api/posts/comments', {
@@ -209,12 +205,10 @@ export const useUpdateCommentStatus = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ commentId, status }),
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка обновления статуса комментария');
       }
-
       return res.json();
     },
     onSuccess: (data) => {
@@ -229,18 +223,15 @@ export const useUpdateCommentStatus = () => {
 
 export const useDeleteComment = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (commentId: number) => {
       const res = await fetch(`/api/posts/comments?id=${commentId}`, {
         method: 'DELETE',
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Ошибка удаления комментария');
       }
-
       return res.json();
     },
     onSuccess: () => {

@@ -7,7 +7,7 @@ import { SearchInput } from '@/components/ui/search-input/search-input';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
 import type { CalendarTask, CalendarPost } from '@/types';
-import { format } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useUser } from '@/hooks/use-roles';
 import { RoleDropdown } from '@/components/shared/role-dropdown/role-dropdown';
@@ -15,7 +15,6 @@ import { Loading } from '@/components/ui/loading/loading';
 import styles from './DashboardPage.module.css';
 
 type ContentItem = CalendarPost | CalendarTask;
-
 const ITEMS_PER_BATCH = 10;
 
 export default function HomePage() {
@@ -26,203 +25,103 @@ export default function HomePage() {
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_BATCH);
+  const [displayLimit, setDisplayLimit] = useState(ITEMS_PER_BATCH);
+  const [serverLimit, setServerLimit] = useState(100);
+  
   const loaderRef = useRef<HTMLDivElement>(null);
-
   const { filterPostByRole } = useUser();
 
-  const { data: postsData, isLoading: postsLoading } = usePosts(1, 100);
-  const { data: tasksData, isLoading: tasksLoading } = useTasks(1, 100);
+  const fetchOptions = useMemo(() => {
+    const now = new Date();
+    const monday = startOfWeek(now, { weekStartsOn: 1 }).toISOString();
+    return showOverdueOnly ? { endDate: monday, sort: 'desc' as const } : { startDate: monday, sort: 'asc' as const };
+  }, [showOverdueOnly]);
+
+  const { data: postsData, isFetching: postsFetching } = usePosts(1, serverLimit, fetchOptions);
+  const { data: tasksData, isFetching: tasksFetching } = useTasks(1, serverLimit, undefined, fetchOptions);
+
+  // --- ХИТРАЯ ЛОГИКА СОХРАНЕНИЯ ДАННЫХ (Чтобы не прыгал скролл) ---
+  const [storedPosts, setStoredPosts] = useState<any[]>([]);
+  const [storedTasks, setStoredTasks] = useState<any[]>([]);
 
   useEffect(() => {
-    setDisplayedCount(ITEMS_PER_BATCH);
-  }, [showPosts, showTasks, showIncompleteOnly, showOverdueOnly, roleFilter, searchQuery]);
-
-  const allPosts = useMemo(() => {
-    return (postsData?.posts || []).map((post) => ({
-      ...post,
-      post_date: post.post_date ? new Date(post.post_date) : null,
-      post_deadline: new Date(post.post_deadline),
-      type: 'post' as const,
-    }));
+    if (postsData?.posts) setStoredPosts(postsData.posts);
   }, [postsData]);
 
-  const allTasks = useMemo(() => {
-    return (tasksData?.tasks || []).map((task) => ({
-      ...task,
-      type: 'task' as const,
-    }));
+  useEffect(() => {
+    if (tasksData?.tasks) setStoredTasks(tasksData.tasks);
   }, [tasksData]);
+  // -------------------------------------------------------------
 
-  const loading = postsLoading || tasksLoading;
+  useEffect(() => {
+    setDisplayLimit(ITEMS_PER_BATCH);
+  }, [showPosts, showTasks, showIncompleteOnly, showOverdueOnly, roleFilter, searchQuery]);
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  };
-
-  const handlePostsClick = () => {
-    if (showPosts) {
-      if (showTasks) {
-        setShowPosts(false);
-      } else {
-        setShowPosts(false);
-        setShowTasks(true);
-      }
-    } else {
-      setShowPosts(true);
-    }
-    scrollToTop();
-  };
-
-  const handleTasksClick = () => {
-    if (showTasks) {
-      if (showPosts) {
-        setShowTasks(false);
-      } else {
-        setShowTasks(false);
-        setShowPosts(true);
-      }
-    } else {
-      setShowTasks(true);
-    }
-    scrollToTop();
-  };
-
-  const handleIncompleteClick = () => {
-    setShowIncompleteOnly((prev) => !prev);
-    scrollToTop();
-  };
-
-  const handleOverdueClick = () => {
-    setShowOverdueOnly((prev) => !prev);
-    scrollToTop();
-  };
-
-  const isPostCompleted = (status: string) => ['Завершен', 'Завершено'].includes(status);
-  const isTaskCompleted = (status: string) => ['Выполнена', 'Выполнено'].includes(status);
-
-  const itemDate = (item: ContentItem) => {
-    return item.type === 'post' ? item.post_deadline : new Date(item.end_time);
+  const getItemDate = (item: ContentItem): Date => {
+    if (item.type === 'post') return new Date(item.post_deadline);
+    return new Date(item.end_time);
   };
 
   const allFilteredItems = useMemo(() => {
-    let items: ContentItem[] = [];
-
-    if (showPosts) items.push(...allPosts);
-    if (showTasks) items.push(...allTasks);
-
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const posts = showPosts ? storedPosts.map(p => ({ ...p, type: 'post' as const })) : [];
+    const tasks = showTasks ? storedTasks.map(t => ({ ...t, type: 'task' as const })) : [];
+    let items = [...posts, ...tasks] as ContentItem[];
 
     if (showIncompleteOnly) {
-      items = items.filter((item) => {
-        if (item.type === 'post') return !isPostCompleted(item.post_status);
-        return !isTaskCompleted(item.task_status);
-      });
+      items = items.filter(i => i.type === 'post' 
+        ? !['Завершен', 'Завершено'].includes(i.post_status)
+        : !['Выполнена', 'Выполнено'].includes(i.task_status));
     }
-
-    if (showOverdueOnly) {
-      items = items.filter((item) => {
-        if (item.type === 'post') {
-          return item.post_deadline < todayStart;
-        }
-        return new Date(item.end_time) < todayStart;
-      });
-    } else {
-      items = items.filter((item) => {
-        const date = itemDate(item);
-        return date >= todayStart;
-      });
-    }
-
     if (roleFilter) {
-      items = items.filter((item) => {
-        if (item.type === 'post') return filterPostByRole(item, roleFilter);
-        return true;
-      });
+      items = items.filter(i => i.type === 'post' ? filterPostByRole(i, roleFilter) : true);
     }
-
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      items = items.filter((item) => {
-        if (item.type === 'post') {
-          return item.post_title.toLowerCase().includes(query);
-        }
-        return item.title.toLowerCase().includes(query);
-      });
+      const q = searchQuery.toLowerCase().trim();
+      items = items.filter(i => (i.type === 'post' ? i.post_title : i.title).toLowerCase().includes(q));
     }
 
     items.sort((a, b) => {
-      const dateA = itemDate(a).getTime();
-      const dateB = itemDate(b).getTime();
-      return showOverdueOnly ? dateB - dateA : dateA - dateB;
+      const tA = getItemDate(a).getTime();
+      const tB = getItemDate(b).getTime();
+      return showOverdueOnly ? tB - tA : tA - tB;
     });
-
     return items;
-  }, [
-    allPosts,
-    allTasks,
-    showPosts,
-    showTasks,
-    showIncompleteOnly,
-    showOverdueOnly,
-    roleFilter,
-    searchQuery,
-    filterPostByRole,
-  ]);
-
-  const visibleItems = useMemo(() => {
-    return allFilteredItems.slice(0, displayedCount);
-  }, [allFilteredItems, displayedCount]);
+  }, [storedPosts, storedTasks, showPosts, showTasks, showIncompleteOnly, showOverdueOnly, roleFilter, searchQuery, filterPostByRole]);
 
   const visibleGroups = useMemo(() => {
+    const slice = allFilteredItems.slice(0, displayLimit);
     const groupsMap = new Map<string, { dateKey: string; displayDate: string; items: ContentItem[] }>();
-
-    for (const item of visibleItems) {
-      const date = itemDate(item);
-      const dateKey = format(date, 'yyyy-MM-dd');
-      const displayDate = format(date, 'dd MMMM', { locale: ru });
-
-      if (!groupsMap.has(dateKey)) {
-        groupsMap.set(dateKey, { dateKey, displayDate, items: [] });
+    slice.forEach(item => {
+      const d = getItemDate(item);
+      const key = format(d, 'yyyy-MM-dd');
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, { dateKey: key, displayDate: format(d, 'dd MMMM', { locale: ru }), items: [] });
       }
-
-      groupsMap.get(dateKey)!.items.push(item);
-    }
-
-    const groups = Array.from(groupsMap.values());
-    return groups.sort((a, b) => {
-      return showOverdueOnly ? b.dateKey.localeCompare(a.dateKey) : a.dateKey.localeCompare(b.dateKey);
+      groupsMap.get(key)!.items.push(item);
     });
-  }, [visibleItems, showOverdueOnly]);
+    return Array.from(groupsMap.values());
+  }, [allFilteredItems, displayLimit]);
 
-  const hasMore = displayedCount < allFilteredItems.length;
+  const hasMoreLocal = displayLimit < allFilteredItems.length;
+  // Используем данные из последнего успешного ответа сервера для проверки
+  const hasMoreServer = (postsData?.totalPosts || 0) + (tasksData?.totalTasks || 0) > allFilteredItems.length;
 
   useEffect(() => {
-    if (!loaderRef.current || !hasMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setDisplayedCount((prev) => prev + ITEMS_PER_BATCH);
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        if (hasMoreLocal) {
+          setDisplayLimit(prev => prev + ITEMS_PER_BATCH);
+        } else if (hasMoreServer && !postsFetching && !tasksFetching) {
+          setServerLimit(prev => prev + 100);
         }
-      },
-      { threshold: 1.0 }
-    );
-
-    observer.observe(loaderRef.current);
+      }
+    }, { threshold: 0.1 });
+    if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
-  }, [hasMore]);
+  }, [hasMoreLocal, hasMoreServer, postsFetching, tasksFetching]);
 
-  const handleRoleSelect = (role: string | null) => {
-    setRoleFilter(role);
-    scrollToTop();
-  };
-
-  if (loading && allPosts.length === 0 && allTasks.length === 0) {
+  // Показываем лоадер только когда на странице СОВСЕМ пусто
+  if (allFilteredItems.length === 0 && (postsFetching || tasksFetching)) {
     return <Loading text="Загрузка..." />;
   }
 
@@ -230,73 +129,39 @@ export default function HomePage() {
     <div className={styles.page}>
       <div className={styles.filterWrapper}>
         <div className={styles.filterGroup}>
-          <button
-            onClick={handlePostsClick}
-            className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : ''}`}
-          >
-            Посты
-          </button>
-
-          <button
-            onClick={handleTasksClick}
-            className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : ''}`}
-          >
-            Задачи
-          </button>
-
-          <button
-            onClick={handleIncompleteClick}
-            className={`${styles.filterButton} ${
-              showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive
-            }`}
-          >
-            Не готовые
-          </button>
-
-          <button
-            onClick={handleOverdueClick}
-            className={`${styles.filterButton} ${
-              showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive
-            }`}
-          >
-            Просроченные
-          </button>
-
-          <RoleDropdown roleFilter={roleFilter} onRoleSelect={handleRoleSelect} />
+          <button onClick={() => setShowPosts(!showPosts)} className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : ''}`}>Посты</button>
+          <button onClick={() => setShowTasks(!showTasks)} className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : ''}`}>Задачи</button>
+          <button onClick={() => setShowIncompleteOnly(!showIncompleteOnly)} className={`${styles.filterButton} ${showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive}`}>Не готовые</button>
+          <button onClick={() => setShowOverdueOnly(!showOverdueOnly)} className={`${styles.filterButton} ${showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive}`}>Прошедшие</button>
+          <RoleDropdown roleFilter={roleFilter} onRoleSelect={setRoleFilter} />
         </div>
-
-        <SearchInput 
-          value={searchQuery} 
-          onChange={setSearchQuery} 
-          placeholder="Поиск по названию..." 
-          className={styles.mainSearch}
-        />
+        <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Поиск..." className={styles.mainSearch} />
       </div>
 
       <div className={styles.container}>
         <div className={styles.list}>
-          {visibleGroups.map((group) => (
+          {visibleGroups.map(group => (
             <div key={group.dateKey} className={styles.dayGroup}>
               <div className={styles.dayHeader}>{group.displayDate}</div>
-              {group.items.map((item) => {
-                if (item.type === 'post') {
-                  return <PostCard key={`post-${item.post_id}`} post={item} />;
-                }
-                return <TaskCard key={`task-${item.task_id}`} task={item} />;
-              })}
+              {group.items.map(item => (
+                item.type === 'post' 
+                  ? <PostCard key={`post-${item.post_id}`} post={item} /> 
+                  : <TaskCard key={`task-${item.task_id}`} task={item} />
+              ))}
             </div>
           ))}
 
-          {visibleGroups.length === 0 && !loading && (
-            <div className={styles.emptyMessage}>
-              <p>
-                {!showPosts && !showTasks && 'Выберите хотя бы один тип элементов'}
-                {(showPosts || showTasks) && 'Нет элементов для отображения'}
-              </p>
-            </div>
+          {/* Невидимый триггер - не удаляется и не прыгает */}
+          <div ref={loaderRef} style={{ height: '10px' }} />
+
+          {/* Индикатор загрузки только в самом низу */}
+          {(postsFetching || tasksFetching) && (
+             <div style={{ textAlign: 'center', padding: '10px' }}>Обновление данных...</div>
           )}
 
-          {hasMore && <div ref={loaderRef} className={styles.loader}>Загрузка...</div>}
+          {visibleGroups.length === 0 && !postsFetching && !tasksFetching && (
+            <div className={styles.emptyMessage}>Ничего не найдено</div>
+          )}
         </div>
       </div>
     </div>
