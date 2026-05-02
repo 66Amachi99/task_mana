@@ -22,9 +22,10 @@ interface AssigneeSelectorProps {
   users: User[];
   onChange: (users: User[]) => void;
   disabled?: boolean;
+  canRemoveUser?: (user: User) => boolean;
 }
 
-export const AssigneeSelector = ({ selectedUsers, users, onChange, disabled = false }: AssigneeSelectorProps) => {
+export const AssigneeSelector = ({ selectedUsers, users, onChange, disabled = false, canRemoveUser }: AssigneeSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const ref = useOutsideClick(() => setIsOpen(false));
@@ -52,7 +53,7 @@ export const AssigneeSelector = ({ selectedUsers, users, onChange, disabled = fa
             <button
               type="button"
               onClick={() => handleRemove(user.user_id)}
-              disabled={disabled}
+              disabled={disabled || (canRemoveUser && !canRemoveUser(user))}
               className={styles.chipRemove}
             >
               <X className="w-3 h-3" />

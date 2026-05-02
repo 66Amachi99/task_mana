@@ -30,7 +30,7 @@ export const TASK_CONFIG = [
   {
     id: 4,
     name: 'photogallery',
-    label: 'Фотогалерея',
+    label: 'Галерея',
     needsKey: 'post_needs_photogallery',
     linkKey: 'post_done_link_photogallery',
     role: 'photographer',

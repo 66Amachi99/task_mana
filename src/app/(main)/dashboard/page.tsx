@@ -16,6 +16,7 @@ import styles from './DashboardPage.module.css';
 
 type ContentItem = CalendarPost | CalendarTask;
 const ITEMS_PER_BATCH = 10;
+const INITIAL_SERVER_LIMIT = 100;
 
 export default function HomePage() {
   const [showPosts, setShowPosts] = useState(true);
@@ -26,12 +27,15 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [displayLimit, setDisplayLimit] = useState(ITEMS_PER_BATCH);
-  const [serverLimit, setServerLimit] = useState(100);
-  
+  const [serverLimit, setServerLimit] = useState(INITIAL_SERVER_LIMIT);
+
+  // Флаг, указывающий, что первые данные от сервера получены
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
   const loaderRef = useRef<HTMLDivElement>(null);
   const { filterPostByRole } = useUser();
 
-  // 1. ЛОГИКА ДАТ: СТРОГО ОТ СЕГОДНЯ
+  // ЛОГИКА ДАТ: СТРОГО ОТ СЕГОДНЯ
   const fetchOptions = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -50,6 +54,13 @@ export default function HomePage() {
   const [storedPosts, setStoredPosts] = useState<any[]>([]);
   const [storedTasks, setStoredTasks] = useState<any[]>([]);
 
+  // Помечаем, что первичная загрузка завершена, когда оба хука вернули данные
+  useEffect(() => {
+    if (postsData !== undefined && tasksData !== undefined) {
+      setInitialLoadDone(true);
+    }
+  }, [postsData, tasksData]);
+
   useEffect(() => {
     if (postsData?.posts) setStoredPosts(postsData.posts);
   }, [postsData]);
@@ -58,6 +69,7 @@ export default function HomePage() {
     if (tasksData?.tasks) setStoredTasks(tasksData.tasks);
   }, [tasksData]);
 
+  // Сброс отображаемого лимита при изменении фильтров
   useEffect(() => {
     setDisplayLimit(ITEMS_PER_BATCH);
   }, [showPosts, showTasks, showIncompleteOnly, showOverdueOnly, roleFilter, searchQuery]);
@@ -72,7 +84,6 @@ export default function HomePage() {
     const tasks = showTasks ? storedTasks.map(t => ({ ...t, type: 'task' as const })) : [];
     let items = [...posts, ...tasks] as ContentItem[];
 
-    // Дополнительный клиентский фильтр даты (чтобы точно убрать старое)
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -83,16 +94,20 @@ export default function HomePage() {
     }
 
     if (showIncompleteOnly) {
-      items = items.filter(i => i.type === 'post' 
-        ? !['Завершен', 'Завершено'].includes(i.post_status)
-        : !['Выполнена', 'Выполнено'].includes(i.task_status));
+      items = items.filter(i =>
+        i.type === 'post'
+          ? !['Завершен', 'Завершено'].includes(i.post_status)
+          : !['Выполнена', 'Выполнено'].includes(i.task_status)
+      );
     }
     if (roleFilter) {
-      items = items.filter(i => i.type === 'post' ? filterPostByRole(i, roleFilter) : true);
+      items = items.filter(i => (i.type === 'post' ? filterPostByRole(i, roleFilter) : true));
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase().trim();
-      items = items.filter(i => (i.type === 'post' ? i.post_title : i.title).toLowerCase().includes(q));
+      items = items.filter(i =>
+        (i.type === 'post' ? i.post_title : i.title).toLowerCase().includes(q)
+      );
     }
 
     items.sort((a, b) => {
@@ -118,24 +133,31 @@ export default function HomePage() {
   }, [allFilteredItems, displayLimit]);
 
   const hasMoreLocal = displayLimit < allFilteredItems.length;
-  const hasMoreServer = (postsData?.totalPosts || 0) + (tasksData?.totalTasks || 0) > allFilteredItems.length;
+
+  // Исправлено: сравниваем с реально загруженными элементами, а не с отфильтрованными
+  const totalPosts = postsData?.totalPosts ?? 0;
+  const totalTasks = tasksData?.totalTasks ?? 0;
+  const hasMoreServer = totalPosts > storedPosts.length || totalTasks > storedTasks.length;
 
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        if (hasMoreLocal) {
-          setDisplayLimit(prev => prev + 10);
-        } else if (hasMoreServer && !postsFetching && !tasksFetching) {
-          setServerLimit(prev => prev + 100);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          if (hasMoreLocal) {
+            setDisplayLimit(prev => prev + 10);
+          } else if (hasMoreServer && !postsFetching && !tasksFetching && allFilteredItems.length > 0) {
+            // Подгружаем с сервера, только если есть что отображать и ещё остались данные
+            setServerLimit(prev => prev + 100);
+          }
         }
-      }
-    }, { threshold: 0.1 });
+      },
+      { threshold: 0.1 }
+    );
     if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
-  }, [hasMoreLocal, hasMoreServer, postsFetching, tasksFetching]);
+  }, [hasMoreLocal, hasMoreServer, postsFetching, tasksFetching, allFilteredItems.length]);
 
-  // Загрузка только на абсолютно пустой экран
-  if (allFilteredItems.length === 0 && (postsFetching || tasksFetching)) {
+  if (!initialLoadDone) {
     return <Loading text="Загрузка..." />;
   }
 
@@ -143,13 +165,38 @@ export default function HomePage() {
     <div className={styles.page}>
       <div className={styles.filterWrapper}>
         <div className={styles.filterGroup}>
-          <button onClick={() => setShowPosts(!showPosts)} className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : ''}`}>Посты</button>
-          <button onClick={() => setShowTasks(!showTasks)} className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : ''}`}>Задачи</button>
-          <button onClick={() => setShowIncompleteOnly(!showIncompleteOnly)} className={`${styles.filterButton} ${showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive}`}>Не готовые</button>
-          <button onClick={() => setShowOverdueOnly(!showOverdueOnly)} className={`${styles.filterButton} ${showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive}`}>Просроченные</button>
+          <button
+            onClick={() => setShowPosts(!showPosts)}
+            className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : ''}`}
+          >
+            Посты
+          </button>
+          <button
+            onClick={() => setShowTasks(!showTasks)}
+            className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : ''}`}
+          >
+            Задачи
+          </button>
+          <button
+            onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
+            className={`${styles.filterButton} ${showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive}`}
+          >
+            Не готовые
+          </button>
+          <button
+            onClick={() => setShowOverdueOnly(!showOverdueOnly)}
+            className={`${styles.filterButton} ${showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive}`}
+          >
+            Просроченные
+          </button>
           <RoleDropdown roleFilter={roleFilter} onRoleSelect={setRoleFilter} />
         </div>
-        <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Поиск..." className={styles.mainSearch} />
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Поиск..."
+          className={styles.mainSearch}
+        />
       </div>
 
       <div className={styles.container}>
@@ -157,18 +204,22 @@ export default function HomePage() {
           {visibleGroups.map(group => (
             <div key={group.dateKey} className={styles.dayGroup}>
               <div className={styles.dayHeader}>{group.displayDate}</div>
-              {group.items.map(item => (
-                item.type === 'post' 
-                  ? <PostCard key={`post-${item.post_id}`} post={item} /> 
-                  : <TaskCard key={`task-${item.task_id}`} task={item} />
-              ))}
+              {group.items.map(item =>
+                item.type === 'post' ? (
+                  <PostCard key={`post-${item.post_id}`} post={item} />
+                ) : (
+                  <TaskCard key={`task-${item.task_id}`} task={item} />
+                )
+              )}
             </div>
           ))}
 
           <div ref={loaderRef} style={{ height: '20px' }} />
 
           {(postsFetching || tasksFetching) && (
-             <div style={{ textAlign: 'center', padding: '10px', color: '#888' }}>Обновление...</div>
+            <div style={{ textAlign: 'center', padding: '10px', color: '#888' }}>
+              Обновление...
+            </div>
           )}
 
           {visibleGroups.length === 0 && !postsFetching && !tasksFetching && (

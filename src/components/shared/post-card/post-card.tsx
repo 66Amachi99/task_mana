@@ -16,7 +16,7 @@ const TASK_DEFINITIONS = [
   { field: 'post_needs_mini_video_smm', linkField: 'post_done_link_mini_video_smm', name: 'Мини-видео', role: 'smm' },
   { field: 'post_needs_video', linkField: 'post_done_link_video', name: 'Видео', role: 'photographer' },
   { field: 'post_needs_text', linkField: 'post_done_link_text', name: 'Текст', role: 'text' },
-  { field: 'post_needs_photogallery', linkField: 'post_done_link_photogallery', name: 'Фотогалерея', role: 'photographer' },
+  { field: 'post_needs_photogallery', linkField: 'post_done_link_photogallery', name: 'Галерея', role: 'photographer' },
   { field: 'post_needs_cover_photo', linkField: 'post_done_link_cover_photo', name: 'Обложка', role: 'designer' },
   { field: 'post_needs_photo_cards', linkField: 'post_done_link_photo_cards', name: 'Фотокарточки', role: 'designer' },
   { field: 'post_needs_mini_gallery', linkField: 'post_done_link_mini_gallery', name: 'Мини-фотогалерея', role: 'smm' },

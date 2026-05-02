@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
 
   if (
     !token && 
-    (pathname.startsWith('/dashboard') || pathname.startsWith('/calendar') || pathname.startsWith('/admin'))
+    (pathname.startsWith('/dashboard') || pathname.startsWith('/calendar') || pathname.startsWith('/admin') || pathname.startsWith('/stats'))
   ) {
     return NextResponse.redirect(new URL('/', req.url));
   }
@@ -32,5 +32,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/calendar/:path*', '/admin/:path*'],
+  matcher: ['/', '/dashboard/:path*', '/stats/:path*', '/calendar/:path*', '/admin/:path*'],
 };

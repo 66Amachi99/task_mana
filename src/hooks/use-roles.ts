@@ -76,8 +76,6 @@ export function useUser() {
     setLoading(false);
   }, [session, status]);
 
-  // Derive loading state based on whether we have user data
-  // This ensures buttons don't flicker during navigation
   const isLoading = loading && !user;
 
   const isDesigner = useMemo(() => user?.designer_role === true, [user?.designer_role]);
@@ -108,7 +106,7 @@ export function useUser() {
     if (!user) return false;
     if (isAdmin || isSmm) return true;
     const isCreator = task.created_by_id === user.id;
-    const isAssignee = task.assignees && task.assignees.some((a: any) => a.user_id === user.id);
+    const isAssignee = task.assignees?.some((a: any) => a.user_id === user.id);
     return isCreator || isAssignee;
   }, [user, isAdmin, isSmm]);
 

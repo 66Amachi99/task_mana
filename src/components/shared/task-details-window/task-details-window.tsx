@@ -105,7 +105,7 @@ const CustomSelect = ({ value, options, onChange, disabled }: {
 };
 
 export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => {
-  const { user } = useUser();
+  const { user, isAdmin, isSmm } = useUser();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState({ data: true, action: false });
@@ -509,6 +509,7 @@ export const TaskDetailsWindow = ({ onClose, task }: TaskDetailsWindowProps) => 
                   users={users}
                   onChange={assignees => handleChange('assignees', assignees)}
                   disabled={isLoading.action || isLoading.data}
+                  canRemoveUser={isAdmin || isSmm ? undefined : (u) => u.user_id !== user?.id}
                 />
               ) : formData.assignees.length > 0 ? (
                 <div className={styles.assigneesList}>
