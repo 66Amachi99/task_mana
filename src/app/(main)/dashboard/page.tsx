@@ -7,7 +7,7 @@ import { SearchInput } from '@/components/ui/search-input/search-input';
 import { usePosts } from '@/hooks/usePosts';
 import { useTasks } from '@/hooks/useTasks';
 import type { CalendarTask, CalendarPost } from '@/types';
-import { format, startOfWeek } from 'date-fns';
+import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useUser } from '@/hooks/use-roles';
 import { RoleDropdown } from '@/components/shared/role-dropdown/role-dropdown';
@@ -31,16 +31,22 @@ export default function HomePage() {
   const loaderRef = useRef<HTMLDivElement>(null);
   const { filterPostByRole } = useUser();
 
+  // 1. ЛОГИКА ДАТ: СТРОГО ОТ СЕГОДНЯ
   const fetchOptions = useMemo(() => {
-    const now = new Date();
-    const monday = startOfWeek(now, { weekStartsOn: 1 }).toISOString();
-    return showOverdueOnly ? { endDate: monday, sort: 'desc' as const } : { startDate: monday, sort: 'asc' as const };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString();
+
+    if (showOverdueOnly) {
+      return { endDate: todayISO, sort: 'desc' as const };
+    }
+    return { startDate: todayISO, sort: 'asc' as const };
   }, [showOverdueOnly]);
 
   const { data: postsData, isFetching: postsFetching } = usePosts(1, serverLimit, fetchOptions);
   const { data: tasksData, isFetching: tasksFetching } = useTasks(1, serverLimit, undefined, fetchOptions);
 
-  // --- ХИТРАЯ ЛОГИКА СОХРАНЕНИЯ ДАННЫХ (Чтобы не прыгал скролл) ---
+  // Сохраняем данные, чтобы список не обнулялся при подгрузке и не кидало наверх
   const [storedPosts, setStoredPosts] = useState<any[]>([]);
   const [storedTasks, setStoredTasks] = useState<any[]>([]);
 
@@ -51,7 +57,6 @@ export default function HomePage() {
   useEffect(() => {
     if (tasksData?.tasks) setStoredTasks(tasksData.tasks);
   }, [tasksData]);
-  // -------------------------------------------------------------
 
   useEffect(() => {
     setDisplayLimit(ITEMS_PER_BATCH);
@@ -66,6 +71,16 @@ export default function HomePage() {
     const posts = showPosts ? storedPosts.map(p => ({ ...p, type: 'post' as const })) : [];
     const tasks = showTasks ? storedTasks.map(t => ({ ...t, type: 'task' as const })) : [];
     let items = [...posts, ...tasks] as ContentItem[];
+
+    // Дополнительный клиентский фильтр даты (чтобы точно убрать старое)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    if (showOverdueOnly) {
+      items = items.filter(i => getItemDate(i) < todayStart);
+    } else {
+      items = items.filter(i => getItemDate(i) >= todayStart);
+    }
 
     if (showIncompleteOnly) {
       items = items.filter(i => i.type === 'post' 
@@ -103,14 +118,13 @@ export default function HomePage() {
   }, [allFilteredItems, displayLimit]);
 
   const hasMoreLocal = displayLimit < allFilteredItems.length;
-  // Используем данные из последнего успешного ответа сервера для проверки
   const hasMoreServer = (postsData?.totalPosts || 0) + (tasksData?.totalTasks || 0) > allFilteredItems.length;
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
         if (hasMoreLocal) {
-          setDisplayLimit(prev => prev + ITEMS_PER_BATCH);
+          setDisplayLimit(prev => prev + 10);
         } else if (hasMoreServer && !postsFetching && !tasksFetching) {
           setServerLimit(prev => prev + 100);
         }
@@ -120,7 +134,7 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, [hasMoreLocal, hasMoreServer, postsFetching, tasksFetching]);
 
-  // Показываем лоадер только когда на странице СОВСЕМ пусто
+  // Загрузка только на абсолютно пустой экран
   if (allFilteredItems.length === 0 && (postsFetching || tasksFetching)) {
     return <Loading text="Загрузка..." />;
   }
@@ -132,7 +146,7 @@ export default function HomePage() {
           <button onClick={() => setShowPosts(!showPosts)} className={`${styles.filterButton} ${showPosts ? styles.filterButtonActive : ''}`}>Посты</button>
           <button onClick={() => setShowTasks(!showTasks)} className={`${styles.filterButton} ${showTasks ? styles.filterButtonActive : ''}`}>Задачи</button>
           <button onClick={() => setShowIncompleteOnly(!showIncompleteOnly)} className={`${styles.filterButton} ${showIncompleteOnly ? styles.filterButtonActive : styles.filterButtonInactive}`}>Не готовые</button>
-          <button onClick={() => setShowOverdueOnly(!showOverdueOnly)} className={`${styles.filterButton} ${showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive}`}>Прошедшие</button>
+          <button onClick={() => setShowOverdueOnly(!showOverdueOnly)} className={`${styles.filterButton} ${showOverdueOnly ? styles.filterButtonActive : styles.filterButtonInactive}`}>Просроченные</button>
           <RoleDropdown roleFilter={roleFilter} onRoleSelect={setRoleFilter} />
         </div>
         <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Поиск..." className={styles.mainSearch} />
@@ -151,12 +165,10 @@ export default function HomePage() {
             </div>
           ))}
 
-          {/* Невидимый триггер - не удаляется и не прыгает */}
-          <div ref={loaderRef} style={{ height: '10px' }} />
+          <div ref={loaderRef} style={{ height: '20px' }} />
 
-          {/* Индикатор загрузки только в самом низу */}
           {(postsFetching || tasksFetching) && (
-             <div style={{ textAlign: 'center', padding: '10px' }}>Обновление данных...</div>
+             <div style={{ textAlign: 'center', padding: '10px', color: '#888' }}>Обновление...</div>
           )}
 
           {visibleGroups.length === 0 && !postsFetching && !tasksFetching && (
