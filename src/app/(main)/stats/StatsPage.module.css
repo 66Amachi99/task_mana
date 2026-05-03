@@ -225,10 +225,11 @@
 /* ПРОЕКТЫ */
 .projectGrid {
     flex: 1;
+    max-height: 200px;
     overflow-y: auto;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.2rem;
+    gap: 1rem;
 }
 
 .projectHeader {

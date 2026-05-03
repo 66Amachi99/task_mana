@@ -57,9 +57,12 @@ export async function GET(request: NextRequest) {
     // 2. Параллельные запросы к БД
     const [
       activePosts,
+      completedPosts,
       activeTasks,
+      completedTasks,
       overduePosts,
       totalComments,
+      confirmedComments,
       complexityData,
       published,
       teamRaw,
@@ -67,7 +70,9 @@ export async function GET(request: NextRequest) {
       tagsRaw
     ] = await Promise.all([
       prisma.post.count({ where: postFilter }),
+      prisma.post.count({ where: { ...postFilter, post_status: 'Завершен' } }),
       prisma.task.count({ where: taskFilter }),
+      prisma.task.count({ where: { ...taskFilter, task_status: 'Выполнена' } }),
       // Просроченные — только те, что "В работе" и дедлайн уже прошел
       prisma.post.count({ 
         where: { 
@@ -78,11 +83,16 @@ export async function GET(request: NextRequest) {
       prisma.comment.count({ 
         where: { created_at: { gte: startDate, lte: now } } 
       }),
+      prisma.comment.count({ 
+        where: { created_at: { gte: startDate, lte: now }, status: 'confirmed' } 
+      }),
       prisma.post.findMany({
         where: postFilter,
         select: { 
           post_needs_video: true, post_needs_mini_video_smm: true, post_needs_cover_photo: true,
-          post_needs_photo_cards: true, post_needs_photogallery: true, post_needs_mini_gallery: true 
+          post_needs_photo_cards: true, post_needs_photogallery: true, post_needs_mini_gallery: true,
+          post_done_link_video: true, post_done_link_mini_video_smm: true, post_done_link_cover_photo: true,
+          post_done_link_photo_cards: true, post_done_link_photogallery: true, post_done_link_mini_gallery: true
         }
       }),
       prisma.post.aggregate({
@@ -136,14 +146,14 @@ export async function GET(request: NextRequest) {
 
     // 4. Ответ
     return NextResponse.json({
-      pulse: { activePosts, activeTasks, overduePosts, totalComments },
+      pulse: { activePosts, completedPosts, activeTasks, completedTasks, overduePosts, totalComments, confirmedComments },
       complexity: [
-        { name: 'Видео', value: complexityData.filter(p => p.post_needs_video).length },
-        { name: 'SMM Видео', value: complexityData.filter(p => p.post_needs_mini_video_smm).length },
-        { name: 'Обложки', value: complexityData.filter(p => p.post_needs_cover_photo).length },
-        { name: 'Карточки', value: complexityData.filter(p => p.post_needs_photo_cards).length },
-        { name: 'Галереи', value: complexityData.filter(p => p.post_needs_photogallery).length },
-        { name: 'Мини-галереи', value: complexityData.filter(p => p.post_needs_mini_gallery).length },
+        { name: 'Видео',        value: complexityData.filter(p => p.post_needs_video).length,              completed: complexityData.filter(p => p.post_needs_video && p.post_done_link_video).length },
+        { name: 'SMM Видео',    value: complexityData.filter(p => p.post_needs_mini_video_smm).length,     completed: complexityData.filter(p => p.post_needs_mini_video_smm && p.post_done_link_mini_video_smm).length },
+        { name: 'Обложки',      value: complexityData.filter(p => p.post_needs_cover_photo).length,        completed: complexityData.filter(p => p.post_needs_cover_photo && p.post_done_link_cover_photo).length },
+        { name: 'Карточки',     value: complexityData.filter(p => p.post_needs_photo_cards).length,        completed: complexityData.filter(p => p.post_needs_photo_cards && p.post_done_link_photo_cards).length },
+        { name: 'Галереи',      value: complexityData.filter(p => p.post_needs_photogallery).length,       completed: complexityData.filter(p => p.post_needs_photogallery && p.post_done_link_photogallery).length },
+        { name: 'Мини-галереи', value: complexityData.filter(p => p.post_needs_mini_gallery).length,       completed: complexityData.filter(p => p.post_needs_mini_gallery && p.post_done_link_mini_gallery).length },
       ],
       platforms: [
         { name: 'Telegram', value: published._count.telegram_published || 0 },

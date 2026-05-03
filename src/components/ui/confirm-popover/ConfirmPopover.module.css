@@ -2,7 +2,7 @@
     position: absolute;
     bottom: calc(100% + 10px);
     right: 0;
-    background-color: #585858e8;
+    background-color: #1A1A1A;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     padding: 8px 12px;
@@ -63,7 +63,7 @@
     right: 15px;
     width: 10px;
     height: 10px;
-    background-color: #585858e8;
+    background-color: #1A1A1A;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     transform: rotate(45deg);

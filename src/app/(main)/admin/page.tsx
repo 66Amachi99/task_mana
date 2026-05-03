@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { useAdminUsers } from '@/hooks/use-admin-users';
+import { useAdminFilter } from '@/hooks/use-admin-filter'; // Импортируем хук
 import { SearchInput } from '@/components/ui/search-input/search-input';
 import { ActionButton } from '@/components/ui/action-button/action-button';
 import { Plus } from 'lucide-react';
@@ -18,15 +19,10 @@ export default function AdminPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [targetUser, setTargetUser] = useState<any>(null);
-
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredUsers = useMemo(() => {
-    if (!users || !Array.isArray(users)) return [];
-    return users.filter((u: any) =>
-      u.user_login?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [users, searchQuery]);
+  // ПРИМЕНЯЕМ ХУК ФИЛЬТРАЦИИ
+  const filteredUsers = useAdminFilter(users, searchQuery);
 
   if (userLoading || isLoading) return null;
   if (!isAdmin) return <div style={{ color: '#fff', padding: '100px', textAlign: 'center' }}>Нет доступа</div>;
@@ -67,47 +63,22 @@ export default function AdminPage() {
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Пользователи</h1>
-
           <div className={styles.headerActions}>
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Поиск по логину..."
+              showHistory={false} // ОТКЛЮЧАЕМ ИСТОРИЮ
             />
-
-            <ActionButton 
-              variant="base" 
-              icon={Plus}
-              className={styles.btnPrimary} 
-              onClick={handleCreateClick}
-            >
+            <ActionButton variant="base" icon={Plus} className={styles.btnPrimary} onClick={handleCreateClick}>
               Добавить
             </ActionButton>
           </div>
         </div>
-
-        <UserTable
-          users={filteredUsers}
-          onEdit={handleEdit}
-          onDelete={handleDeleteClick}
-        />
+        <UserTable users={filteredUsers} onEdit={handleEdit} onDelete={handleDeleteClick} />
       </div>
-
-      {modalOpen && (
-        <UserForm
-          user={targetUser}
-          onClose={() => setModalOpen(false)}
-          onSave={handleSave}
-        />
-      )}
-
-      {deleteModalOpen && targetUser && (
-        <DeleteModal
-          user={targetUser}
-          onClose={() => setDeleteModalOpen(false)}
-          onConfirm={confirmDelete}
-        />
-      )}
+      {modalOpen && <UserForm user={targetUser} onClose={() => setModalOpen(false)} onSave={handleSave} />}
+      {deleteModalOpen && targetUser && <DeleteModal user={targetUser} onClose={() => setDeleteModalOpen(false)} onConfirm={confirmDelete} />}
     </div>
   );
 }

@@ -175,10 +175,10 @@ export default function StatsPage() {
             <div className={styles.topRightSection}>
               <div className={styles.pulseGrid}>
                 {/* Используем опциональную цепочку ?. для безопасности */}
-                <PulseCard icon={Layers} label="Посты" value={data.pulse?.activePosts || 0} color="#48C884" />
-                <PulseCard icon={CheckSquare} label="Задачи" value={data.pulse?.activeTasks || 0} color="#41A5F3" />
-                <PulseCard icon={MessageSquare} label="Правки" value={data.pulse?.totalComments || 0} color="#AB48BF" />
-                <PulseCard icon={AlertTriangle} label="Дедлайны" value={data.pulse?.overduePosts || 0} color="#FE4D3D" />
+                <PulseCard icon={Layers} label="Посты" value={data.pulse?.activePosts || 0} completed={data.pulse?.completedPosts || 0} color="#48C884" />
+                <PulseCard icon={CheckSquare} label="Задачи" value={data.pulse?.activeTasks || 0} completed={data.pulse?.completedTasks || 0} color="#41A5F3" />
+                <PulseCard icon={MessageSquare} label="Правки" value={data.pulse?.totalComments || 0} completed={data.pulse?.confirmedComments || 0} color="#AB48BF" />
+                <PulseCard icon={AlertTriangle} label="Просрочено" value={data.pulse?.overduePosts || 0} color="#FE4D3D" />
               </div>
 
               <div className={`${styles.statCard} ${styles.areaFriction}`}>
@@ -219,15 +219,36 @@ export default function StatsPage() {
                     <div className={styles.noDataOverlay}>Нет данных</div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data.complexity || []} layout="vertical" margin={{ left: 20, right: 60, top: 10, bottom: 10 }}>
+                      <BarChart data={data.complexity || []} layout="vertical" margin={{ left: 20, right: 80, top: 10, bottom: 10 }}>
                         <XAxis type="number" hide />
                         <YAxis dataKey="name" type="category" interval={0} axisLine={false} tickLine={false} tick={{fill: '#fff', fontSize: '14pt'}} width={120} />
                         <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
-                        <Bar dataKey="value" name="Постов" radius={[0, 10, 10, 0]}>
-                          <LabelList dataKey="value" position="right" fill="#fff" fontSize="14pt" fontWeight={400} offset={10} />
-                          {data.complexity.map((entry: any, index: number) => (
-                            <Cell key={`cell-bar-${index}`} fill={THEME_COLORS[index % THEME_COLORS.length].fill} stroke={THEME_COLORS[index % THEME_COLORS.length].stroke} strokeWidth={2} />
-                          ))}
+                        <Bar dataKey="value" name="Всего" radius={[0, 10, 10, 0]}
+                          shape={(props: any) => {
+                            const { x, y, width, height, index } = props;
+                            const item = (data.complexity || [])[index];
+                            const colors = THEME_COLORS[index % THEME_COLORS.length];
+                            const completedWidth = item?.value > 0 ? (item.completed / item.value) * width : 0;
+                            return (
+                              <g>
+                                <rect x={x} y={y} width={width} height={height} rx={10} ry={10} fill={colors.fill} stroke={colors.stroke} strokeWidth={2} />
+                                {completedWidth > 0 && (
+                                  <rect x={x} y={y} width={completedWidth} height={height} rx={10} ry={10} fill={colors.stroke} stroke="none" />
+                                )}
+                              </g>
+                            );
+                          }}
+                        >
+                          <LabelList dataKey="value" position="right" offset={10} content={(props: any) => {
+                            const { x, y, width, height, value, index } = props;
+                            const item = (data.complexity || [])[index];
+                            return (
+                              <text x={x + width + 14} y={y + height / 2} dominantBaseline="middle" fontSize="14pt" fontWeight={400}>
+                                <tspan fill={THEME_COLORS[index % THEME_COLORS.length].stroke}>{item?.completed ?? 0}</tspan>
+                                <tspan fill="rgba(255,255,255,0.3)"> / {value}</tspan>
+                              </text>
+                            );
+                          }} />
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
@@ -266,14 +287,21 @@ export default function StatsPage() {
   );
 }
 
-function PulseCard({ icon: Icon, label, value, color }: any) {
+function PulseCard({ icon: Icon, label, value, completed, color }: any) {
   return (
     <div className={styles.pulseCardMini} style={{ borderLeft: `3px solid ${color}` }}>
       <div className={styles.pulseCardLeft}>
         <Icon size={26} color={color} strokeWidth={2.5} />
         <div className={styles.pulseLabel}>{label}</div>
       </div>
-      <div className={styles.pulseValue} style={{color: color}}>{value}</div>
+      <div className={styles.pulseValue} style={{ color: color }}>
+        {completed !== undefined ? (
+          <span>
+            <span style={{ color: color }}>{completed}</span>
+            <span style={{ color: color }}> / {value}</span>
+          </span>
+        ) : value}
+      </div>
     </div>
   );
 }

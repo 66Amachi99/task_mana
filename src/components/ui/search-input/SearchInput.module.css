@@ -4,6 +4,14 @@
   align-items: center;
   width: 100%;
   max-width: 300px;
+  z-index: 100;
+}
+
+.inputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
 .searchIcon {
@@ -31,10 +39,71 @@
 }
 
 .searchInput:focus {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .searchInput::placeholder {
-  color: #ffffff80;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ВЫПАДАЮЩИЙ СПИСОК */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  padding: 5px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+/* Подсветка активного элемента (и через мышь, и через клавиатуру) */
+.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.itemIcon {
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+  transition: color 0.1s;
+}
+
+.active .itemIcon {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.itemText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdownItem strong {
+  color: #fff;
+  font-weight: 500;
 }
