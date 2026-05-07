@@ -240,15 +240,26 @@ export const Calendar: React.FC<CalendarProps> = ({
               <div className={`${styles.itemsContainer} ${styles.scrollable}`}>
                 {filteredItems.map((item, idx) => {
                   const isPost = item.type === 'post';
-                  const bgColor =
-                    item.tags && item.tags.length > 0 ? item.tags[0].color : undefined;
+
+                  const isCompleted = isPost
+                    ? (item as CalendarPost).post_status === 'Завершен'
+                    : (item as CalendarTask).task_status === 'Выполнена';
+
                   const postIcon = isPost ? getFirstTaskIcon(item as CalendarPost) : null;
+
+                  const defaultBgColor = item.tags && item.tags.length > 0
+                    ? item.tags[0].color
+                    : 'rgba(128, 128, 128, 0.15)';
+
+                  const itemStyle = isCompleted
+                    ? { background: 'linear-gradient(90deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 255, 0, 0.15) 100%)' }
+                    : { backgroundColor: defaultBgColor };
 
                   return (
                     <div
                       key={`${item.type}-${isPost ? item.post_id : item.task_id}-${idx}`}
-                      className={styles.item}
-                      style={{ backgroundColor: bgColor }}
+                      className={`${styles.item} ${isCompleted ? styles.itemCompleted : ''}`}
+                      style={itemStyle}
                       title={isPost ? item.post_title : item.title}
                       onClick={(e) => {
                         e.stopPropagation();

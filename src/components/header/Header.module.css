@@ -1,10 +1,27 @@
+/* Глобальные переменные хэдера */
 .header {
+  /* Тёмная тема (по умолчанию) */
+  --header-bg-start: rgba(255, 255, 255, 0.05);
+  --header-bg-end: rgba(255, 255, 255, 0.1);
+  --header-border: rgba(255, 255, 255, 0.1);
+  --header-text: rgba(255, 255, 255, 0.5); /* Полупрозрачный белый */
+  --header-icon-filter: none; /* Оставляем белые иконки как есть */
+
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 40;
   pointer-events: none;
+}
+
+/* Светлая тема */
+:global([data-theme="light"]) .header {
+  --header-bg-start: rgba(0, 0, 0, 0.05);
+  --header-bg-end: rgba(0, 0, 0, 0.1);
+  --header-border: rgba(0, 0, 0, 0.15);
+  --header-text: rgba(0, 0, 0, 0.7); /* Тёмно-серый текст */
+  --header-icon-filter: invert(0.8); /* Инвертируем белые SVG-картинки в тёмные */
 }
 
 .container {
@@ -16,13 +33,15 @@
 
 .userSection {
   justify-self: start;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  background: linear-gradient(90deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
   border-radius: 9999px;
   height: 60px;
   display: flex;
   align-items: center;
-  color: #ffffff80;
+  color: var(--header-text);
   pointer-events: auto;
+  border: 1px solid var(--header-border);
+  transition: all 0.3s ease;
 }
 
 .userButton {
@@ -33,9 +52,11 @@
   padding-right: 1.5rem;
   height: 100%;
   border-radius: 9999px;
-  transition: background-color 0.2s;
   backdrop-filter: blur(15px);
   cursor: pointer;
+  background: transparent;
+  border: none;
+  color: inherit;
 }
 
 .userIcon {
@@ -55,7 +76,7 @@
 }
 
 .navBlock {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  background: linear-gradient(90deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
   padding-left: 0.5rem;
   padding-right: 0.5rem;
   border-radius: 9999px;
@@ -63,8 +84,9 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  border: 1px solid #ffffff10;
+  border: 1px solid var(--header-border);
   backdrop-filter: blur(15px);
+  transition: all 0.3s ease;
 }
 
 .navLink {
@@ -82,15 +104,25 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  background: transparent;
+  border: none;
 }
 
 .navButton:hover {
   transform: translateY(-2px);
 }
 
-.navIcon {
+/* Инвертируем белые img иконки в светлой теме */
+.navIcon, .adminIcon, .addIcon {
   width: 2rem;
   height: 2rem;
+  filter: var(--header-icon-filter); 
+  transition: filter 0.3s ease;
+}
+
+.adminIcon {
+  width: 26px;
+  height: 26px;
 }
 
 .addButtons {
@@ -104,52 +136,47 @@
   backdrop-filter: blur(15px);
   width: 60px;
   height: 60px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  background: linear-gradient(90deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
   border-radius: 9999px;
-  border: 1px solid #ffffff10;
+  border: 1px solid var(--header-border);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.addIcon {
+.addIconSvg {
   width: 2rem;
   height: 2rem;
-  color: #ffffff;
+  color: var(--header-text);
   transition: transform 0.2s;
 }
 
-.addIcon:hover {
+.addButton:hover, .adminButton:hover, .themeButton:hover {
   transform: translateY(-2px);
 }
 
-/* Секция админа справа */
-.adminSection {
+/* Секция админа и темы справа */
+.rightControls {
   justify-self: end;
   pointer-events: auto;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
-.adminButton {
+.adminButton, .themeButton {
   backdrop-filter: blur(15px);
   width: 60px;
   height: 60px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+  background: linear-gradient(90deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
   border-radius: 9999px;
-  border: 1px solid #ffffff10;
+  border: 1px solid var(--header-border);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-}
-
-
-.adminIcon {
-  width: 26px;
-  height: 26px;
-  transition: transform 0.2s;
-}
-
-.adminIcon:hover {
-  transform: translateY(-2px);
+  color: var(--header-text);
+  transition: all 0.3s ease;
 }

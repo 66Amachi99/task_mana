@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/hooks/use-roles';
@@ -8,7 +8,7 @@ import { AuthWindow } from '@/components/shared/auth-window/auth-window';
 import { LogoutWindow } from '@/components/shared/logout-window/logout-window';
 import { PostAddWindow } from '@/components/shared/post-add-window/post-add-window';
 import { TaskAddWindow } from '@/components/shared/task-add-window/task-add-window';
-import { User } from 'lucide-react';
+import { User, Sun, Moon } from 'lucide-react';
 import styles from './Header.module.css';
 import { useHeader } from '@/contexts/HeaderContext';
 
@@ -19,6 +19,23 @@ export const Header: React.FC = () => {
 
   const [showAuthWindow, setShowAuthWindow] = useState(false);
   const [showLogoutWindow, setShowLogoutWindow] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  // Загрузка и установка глобальной темы
+  useEffect(() => {
+    const savedTheme = (localStorage.getItem('app-theme') as 'dark' | 'light') || 'dark';
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('app-theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    // Отправляем кастомное событие, чтобы JS-графики (Recharts) тоже обновились
+    window.dispatchEvent(new Event('theme-change')); 
+  };
 
   const handleAuthClick = () => {
     if (user) {
@@ -31,6 +48,7 @@ export const Header: React.FC = () => {
   const icons = {
     post: '/icons/post_window_icon_no_clicked.svg',
     calendar: '/icons/calendar_window_icon_no_clicked.svg',
+    timeline: '/icons/timeline.svg',
     stats: '/icons/stats.svg'
   };
 
@@ -66,6 +84,11 @@ export const Header: React.FC = () => {
                   <img src={icons.calendar} alt="Календарь" className={styles.navIcon} />
                 </button>
               </Link>
+              <Link href="/timeline" className={styles.navLink}>
+                <button className={styles.navButton} style={getNavStyle('/timeline')} title="Таймлайн">
+                  <img src={icons.timeline} alt="Таймлайн" className={styles.navIcon} />
+                </button>
+              </Link>
               <Link href="/stats" className={styles.navLink}>
                 <button className={styles.navButton} style={getNavStyle('/stats')} title="Статистика">
                   <img src={icons.stats} alt="Статистика" className={styles.navIcon} />
@@ -90,7 +113,7 @@ export const Header: React.FC = () => {
                   className={styles.addButton}
                   title="Добавить задачу"
                 >
-                  <svg className={styles.addIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={styles.addIconSvg} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </button>
@@ -98,7 +121,11 @@ export const Header: React.FC = () => {
             </div>
           </div>
 
-          <div className={styles.adminSection}>
+          <div className={styles.rightControls}>
+            {/* <button onClick={toggleTheme} className={styles.themeButton} title="Переключить тему">
+              {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+            </button> */}
+
             {isAdmin && (
               <Link href="/admin">
                 <button className={styles.adminButton} title="Админ панель">
@@ -110,18 +137,10 @@ export const Header: React.FC = () => {
         </div>
       </header>
 
-      {showAuthWindow && (
-        <AuthWindow onClose={() => setShowAuthWindow(false)} />
-      )}
-      {showLogoutWindow && (
-        <LogoutWindow onClose={() => setShowLogoutWindow(false)} />
-      )}
-      {isPostModalOpen && (
-        <PostAddWindow onClose={closePostModal} initialDate={postModalDate} />
-      )}
-      {isTaskModalOpen && (
-        <TaskAddWindow onClose={closeTaskModal} initialDate={taskModalDate} />
-      )}
+      {showAuthWindow && <AuthWindow onClose={() => setShowAuthWindow(false)} />}
+      {showLogoutWindow && <LogoutWindow onClose={() => setShowLogoutWindow(false)} />}
+      {isPostModalOpen && <PostAddWindow onClose={closePostModal} initialDate={postModalDate} />}
+      {isTaskModalOpen && <TaskAddWindow onClose={closeTaskModal} initialDate={taskModalDate} />}
     </>
   );
 };

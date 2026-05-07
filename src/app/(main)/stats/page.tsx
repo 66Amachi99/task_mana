@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, 
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList
 } from 'recharts';
-import { Layers, CheckSquare, MessageSquare, AlertTriangle, Users, BarChart3, TrendingUp, Briefcase } from 'lucide-react';
+import { Layers, CheckSquare, MessageSquare, AlertTriangle, Users, BarChart3, TrendingUp, Briefcase, Sun, Moon } from 'lucide-react';
 import { Loading } from '@/components/ui/loading/loading';
 import styles from './StatsPage.module.css';
 
@@ -43,19 +43,32 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function StatsPage() {
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    // Функция проверки текущей темы
+    const checkTheme = () => {
+      const current = document.documentElement.getAttribute('data-theme') as 'dark' | 'light';
+      if (current) setTheme(current);
+    };
+
+    // Проверяем при монтировании
+    checkTheme();
+
+    // Слушаем событие изменения из Хэдера
+    window.addEventListener('theme-change', checkTheme);
+    return () => window.removeEventListener('theme-change', checkTheme);
+  }, []);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['global-stats', period],
     queryFn: async () => {
       const res = await fetch(`/api/stats?period=${period}`);
-      if (!res.ok) {
-        // Если сервер вернул 500 или 401, выкидываем ошибку, чтобы React Query её поймал
-        throw new Error('Network response was not ok');
-      }
+      if (!res.ok) throw new Error('Network response was not ok');
       return res.json();
     },
     refetchInterval: 60000,
-    retry: 1 // Попробовать переповторить запрос 1 раз при ошибке
+    retry: 1
   });
 
   const sortedTeam = useMemo(() => {
@@ -70,7 +83,6 @@ export default function StatsPage() {
     return Math.max(...data.tags.map((t: any) => t.count));
   }, [data?.tags]);
 
-  // ПРОВЕРКИ НА ПУСТОТУ
   const isPlatformEmpty = useMemo(() => {
     if (!data?.platforms || !Array.isArray(data.platforms)) return true;
     return data.platforms.every((p: any) => p.value === 0);
@@ -90,16 +102,18 @@ export default function StatsPage() {
     return data.platforms;
   }, [data?.platforms, isPlatformEmpty]);
 
-  // Обработка загрузки
-  if (isLoading) return <Loading text='Загрузка статистики...'/>;
+  // Цвета для Recharts, которые нужно передавать через JS пропсы
+  const chartTextColor = theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)';
+  const chartGridColor = theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
-  // Обработка ошибки сервера (если data.pulse не пришел)
+  if (isLoading) return <Loading text='Загрузка статистики...' />;
+
   if (isError || !data || !data.pulse) {
     return (
-      <div className={styles.page}>
+      <div className={styles.page} data-theme={theme}>
         <div className={styles.container}>
           <div className={styles.noDataOverlayFull}>
-            Ошибка загрузки данных. Пожалуйста, проверьте подключение или права доступа.
+            Ошибка загрузки данных. Пожалуйста, проверьте подключение.
           </div>
         </div>
       </div>
@@ -107,16 +121,21 @@ export default function StatsPage() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-theme={theme}>
+      {/* Оверлей для сглаживания фона под текст */}
+      <div className={styles.bgOverlay} />
+
       <div className={styles.container}>
         <header className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Статистика</h1>
-          <div className={styles.filterGroup}>
-            {(['week', 'month', 'year'] as const).map((p) => (
-              <button key={p} className={`${styles.filterButton} ${period === p ? styles.filterButtonActive : ''}`} onClick={() => setPeriod(p)}>
-                {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Год'}
-              </button>
-            ))}
+          <div className={styles.headerControls}>
+            <div className={styles.filterGroup}>
+              {(['week', 'month', 'year'] as const).map((p) => (
+                <button key={p} className={`${styles.filterButton} ${period === p ? styles.filterButtonActive : ''}`} onClick={() => setPeriod(p)}>
+                  {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Год'}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
@@ -132,7 +151,7 @@ export default function StatsPage() {
                   <PieChart>
                     <Pie data={platformData} innerRadius="60%" outerRadius="90%" paddingAngle={5} dataKey="value" nameKey="name" isAnimationActive={true} stroke="none">
                       {isPlatformEmpty ? (
-                        <Cell fill="rgba(255,255,255,0.05)" />
+                        <Cell fill={chartGridColor} />
                       ) : (
                         platformData.map((entry: any, index: number) => (
                           <Cell key={`cell-pie-${index}`} fill={THEME_COLORS[index % THEME_COLORS.length].fill} stroke={THEME_COLORS[index % THEME_COLORS.length].stroke} strokeWidth={2} />
@@ -140,7 +159,7 @@ export default function StatsPage() {
                       )}
                     </Pie>
                     {!isPlatformEmpty && <Tooltip content={<CustomTooltip />} cursor={false} />}
-                    <Legend verticalAlign="bottom" height={36} formatter={(value) => <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14pt' }}>{value}</span>} />
+                    <Legend verticalAlign="bottom" height={36} formatter={(value) => <span style={{ color: chartTextColor, fontSize: '14pt' }}>{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -174,7 +193,6 @@ export default function StatsPage() {
           <div className={styles.rightContent}>
             <div className={styles.topRightSection}>
               <div className={styles.pulseGrid}>
-                {/* Используем опциональную цепочку ?. для безопасности */}
                 <PulseCard icon={Layers} label="Посты" value={data.pulse?.activePosts || 0} completed={data.pulse?.completedPosts || 0} color="#48C884" />
                 <PulseCard icon={CheckSquare} label="Задачи" value={data.pulse?.activeTasks || 0} completed={data.pulse?.completedTasks || 0} color="#41A5F3" />
                 <PulseCard icon={MessageSquare} label="Правки" value={data.pulse?.totalComments || 0} completed={data.pulse?.confirmedComments || 0} color="#AB48BF" />
@@ -191,13 +209,13 @@ export default function StatsPage() {
                     <AreaChart data={data.friction || []} margin={{ top: 30, right: 20, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorFriction" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#AB48BF" stopOpacity={0.4}/>
-                          <stop offset="95%" stopColor="#AB48BF" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#AB48BF" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#AB48BF" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="name" padding={{ left: 10, right: 0 }} tickMargin={10} axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.3)', fontSize: '14pt'}} />
-                      <YAxis axisLine={false} allowDecimals={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.5)', fontSize: '14pt'}} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
+                      <XAxis dataKey="name" padding={{ left: 10, right: 0 }} tickMargin={10} axisLine={false} tickLine={false} tick={{ fill: chartTextColor, fontSize: '14pt' }} />
+                      <YAxis axisLine={false} allowDecimals={false} tickLine={false} tick={{ fill: chartTextColor, fontSize: '14pt' }} />
                       <Tooltip content={<CustomTooltip />} />
                       <Area type="monotone" dataKey="value" name="Правки" stroke="#AB48BF" strokeWidth={3} fillOpacity={1} fill="url(#colorFriction)">
                         <LabelList dataKey="value" position="top" offset={15} fill="#F7ADC4" fontSize="14pt" fontWeight={400} />
@@ -221,8 +239,8 @@ export default function StatsPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={data.complexity || []} layout="vertical" margin={{ left: 20, right: 80, top: 10, bottom: 10 }}>
                         <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" interval={0} axisLine={false} tickLine={false} tick={{fill: '#fff', fontSize: '14pt'}} width={120} />
-                        <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                        <YAxis dataKey="name" type="category" interval={0} axisLine={false} tickLine={false} tick={{ fill: theme === 'dark' ? '#fff' : '#000', fontSize: '14pt' }} width={120} />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
                         <Bar dataKey="value" name="Всего" radius={[0, 10, 10, 0]}
                           shape={(props: any) => {
                             const { x, y, width, height, index } = props;
@@ -245,7 +263,7 @@ export default function StatsPage() {
                             return (
                               <text x={x + width + 14} y={y + height / 2} dominantBaseline="middle" fontSize="14pt" fontWeight={400}>
                                 <tspan fill={THEME_COLORS[index % THEME_COLORS.length].stroke}>{item?.completed ?? 0}</tspan>
-                                <tspan fill="rgba(255,255,255,0.3)"> / {value}</tspan>
+                                <tspan fill={chartTextColor}> / {value}</tspan>
                               </text>
                             );
                           }} />

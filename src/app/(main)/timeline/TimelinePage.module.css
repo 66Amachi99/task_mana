@@ -1,0 +1,491 @@
+/* --- ПЕРЕМЕННЫЕ ТЕМ (CSS Variables) --- */
+.page {
+    /* Темная тема (по умолчанию) */
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    
+    --bg-overlay: none;
+    --surface-bg: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.10) 100%);
+    --surface-border: #ffffff10;;
+    
+    --grid-line: rgba(255, 255, 255, 0.04);
+    --bg-weekend: rgba(255, 255, 255, 0.015);
+    --bg-today: rgba(59, 130, 246, 0.08);
+    
+    --control-bg: rgba(255, 255, 255, 0.04);
+    --control-hover: rgba(255, 255, 255, 0.08);
+    
+    --color-post: #10b981;
+    --color-post-bg: rgba(16, 185, 129, 0.15);
+    --color-post-border: rgba(16, 185, 129, 0.3);
+    
+    --color-task: #3b82f6;
+    --color-task-bg: rgba(59, 130, 246, 0.15);
+    --color-task-border: rgba(59, 130, 246, 0.3);
+}
+
+.page[data-theme="light"] {
+    /* Светлая тема */
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+    
+    --bg-overlay: rgba(249, 250, 251, 0.95);
+    --surface-bg: #ffffff;
+    --surface-border: rgba(0, 0, 0, 0.08);
+    
+    --grid-line: rgba(0, 0, 0, 0.06);
+    --bg-weekend: rgba(0, 0, 0, 0.02);
+    --bg-today: rgba(59, 130, 246, 0.06);
+    
+    --control-bg: rgba(0, 0, 0, 0.04);
+    --control-hover: rgba(0, 0, 0, 0.08);
+    
+    --color-post: #059669;
+    --color-post-bg: rgba(5, 150, 105, 0.12);
+    --color-post-border: rgba(5, 150, 105, 0.3);
+    
+    --color-task: #2563eb;
+    --color-task-bg: rgba(37, 99, 235, 0.12);
+    --color-task-border: rgba(37, 99, 235, 0.3);
+}
+
+/* --- БАЗОВЫЕ СТИЛИ --- */
+.page {
+    height: 100vh;
+    width: 100vw;
+    background-image: url('/images/background.webp');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.bgOverlay {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(20px);
+    z-index: 0;
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 2rem;
+    padding-top: 2rem;
+    padding-bottom: 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-sizing: border-box;
+}
+
+/* --- ШАПКА И КОНТРОЛЛЫ --- */
+.pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+.headerTitles {
+    display: flex;
+    flex-direction: column;
+}
+
+.pageTitle {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+}
+
+.pageSubtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.headerControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.zoomControl {
+    display: flex;
+    align-items: center;
+    background: var(--surface-bg);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 2px;
+    height: 37px;
+}
+
+.zoomBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.zoomBtn:hover:not(:disabled) {
+    background: var(--control-hover);
+    color: var(--text-primary);
+}
+
+.zoomBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.zoomLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    width: 44px;
+    text-align: center;
+    user-select: none;
+}
+
+.btnToday {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-bg);
+    border: 1px solid var(--surface-border);
+    color: var(--text-primary);
+    padding: 8px 10px;
+    border-radius: 10px;
+    height: 37px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.btnToday:hover {
+    border-color: var(--text-muted);
+}
+
+.filterGroup {
+    display: flex;
+    background: var(--control-bg);
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid var(--surface-border);
+    height: 37px;
+}
+
+.filterBtn {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+}
+
+.filterBtn.active {
+    background: var(--surface-bg);
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* --- ЗОНА СКРОЛЛА И ХОЛСТ ТАЙМЛАЙНА --- */
+.mainContent {
+    flex: 1;
+    min-height: 0;
+    background: var(--surface-bg);
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Настройки для Drag-to-Scroll */
+.scrollViewport {
+    flex: 1;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface-border) transparent;
+    cursor: grab; /* Курсор-ладонь по умолчанию */
+    user-select: none; /* Запрет на выделение текста при свайпе */
+}
+
+/* Когда пользователь зажал мышь */
+.isDragging {
+    cursor: grabbing !important;
+}
+
+/* Запрещаем pointer-events только на некликабельных слоях во время drag */
+.isDragging .gridBackgrounds,
+.isDragging .gridLines,
+.isDragging .gridHeader,
+.isDragging .sectionLabel {
+    pointer-events: none !important;
+}
+
+.scrollViewport::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.scrollViewport::-webkit-scrollbar-thumb {
+    background: var(--surface-border);
+    border-radius: 5px;
+    border: 2px solid var(--surface-bg);
+}
+
+.canvas {
+    position: relative;
+    min-height: 100%;
+}
+
+/* --- СЛОИ СЕТКИ (Grid Layers) --- */
+.gridBackgrounds, 
+.gridLines, 
+.gridHeader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+.gridBackgrounds {
+    bottom: 0;
+    z-index: 0;
+}
+
+.gridLines {
+    bottom: 0;
+    z-index: 1;
+}
+
+.gridHeader {
+    height: 44px;
+    z-index: 30;
+    background: var(--surface-bg);
+    border-bottom: 1px solid var(--surface-border);
+    position: sticky;
+    top: 0;
+    backdrop-filter: blur(8px);
+    pointer-events: auto;
+}
+
+.colBg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.bgWeekend {
+    background: var(--bg-weekend);
+}
+
+.bgToday {
+    background: var(--bg-today);
+}
+
+.gridLine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--grid-line);
+}
+
+.headerCell {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--grid-line);
+    box-sizing: border-box;
+}
+
+.headWeekend {
+    background: var(--bg-weekend);
+}
+
+.headToday {
+    background: var(--bg-today);
+    color: var(--color-task);
+    border-bottom: 2px solid var(--color-task);
+}
+
+.dayNum {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.dayName {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+/* --- КОНТЕНТ (Секции и Карточки) --- */
+.canvasContent {
+    position: relative;
+    z-index: 10;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.section {
+    position: relative;
+    width: 100%;
+}
+
+.sectionLabel {
+    position: sticky;
+    left: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: var(--surface-bg);
+    padding: 6px 12px 6px 6px;
+    border-radius: 20px;
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 20;
+    margin-bottom: 12px;
+    width: fit-content;
+}
+
+.icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.iconPost { background: var(--color-post); }
+.iconTask { background: var(--color-task); }
+
+/* --- КАРТОЧКА --- */
+.card {
+    position: absolute;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.card:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 15;
+}
+
+.cardAccent {
+    width: 3px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.cardText {
+    flex: 1;
+    min-width: 0;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cardPost {
+    background: var(--color-post-bg);
+    border: 1px solid var(--color-post-border);
+    color: var(--text-primary);
+}
+
+.cardPost .cardAccent {
+    background: var(--color-post);
+}
+
+.cardTask {
+    background: var(--color-task-bg);
+    border: 1px solid var(--color-task-border);
+    color: var(--text-primary);
+}
+
+.cardTask .cardAccent {
+    background: var(--color-task);
+}
+
+/* --- ПУСТОЕ СОСТОЯНИЕ --- */
+.noData {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+/* --- АДАПТИВНОСТЬ --- */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .pageHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .headerControls {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    
+    .pageTitle {
+        font-size: 24px;
+    }
+}

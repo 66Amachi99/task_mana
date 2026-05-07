@@ -44,7 +44,7 @@ export function PostCard({ post }: PostCardProps) {
   const bgGradient = isCompleted
     ? 'linear-gradient(90deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 255, 0, 0.15) 100%)'
     : firstTag
-    ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`
+    ? `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 40%) 0%, rgba(72, 200, 132, 0) 100%)`
     : undefined;
 
   const handleTzLinkClick = (url: string | null | undefined, e: React.MouseEvent) => {
@@ -169,11 +169,11 @@ export function PostCard({ post }: PostCardProps) {
         <div className={styles.dateColumn}>
           <div className={styles.dateRow}>
             <Calendar className={styles.dateIcon} />
-            <span>Создан: {post.post_date ? new Date(post.post_date).toLocaleDateString('ru-RU') : 'Не указана'}</span>
+            <span>Дедлайн: {post.post_deadline ? new Date(post.post_deadline).toLocaleDateString('ru-RU') : 'Не указан'}</span>
           </div>
           <div className={styles.dateRow}>
             <Calendar className={styles.dateIcon} />
-            <span>Дедлайн: {post.post_deadline ? new Date(post.post_deadline).toLocaleDateString('ru-RU') : 'Не указан'}</span>
+            <span>Создан: {post.post_date ? new Date(post.post_date).toLocaleDateString('ru-RU') : 'Не указана'}</span>
           </div>
         </div>
       </div>

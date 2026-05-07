@@ -40,7 +40,7 @@ const getCardBackground = (item: CalendarItem): string => {
   const firstTag = item.tags && item.tags.length > 0 ? item.tags[0] : null;
 
   if (!firstTag) {
-    return 'none';
+    return 'linear-gradient(180deg, rgba(128, 128, 128, 0.2) 0%, rgba(128, 128, 128, 0.1) 100%)';
   }
 
   return `radial-gradient(100% 100% at 50% 0%, color-mix(in srgb, ${firstTag.color}, transparent 70%) 0%, rgba(72, 200, 132, 0) 100%)`;

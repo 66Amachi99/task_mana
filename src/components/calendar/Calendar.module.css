@@ -298,3 +298,15 @@
 .nextGroupButton:hover .nextMonthName {
   opacity: 0.7;
 }
+
+.itemCompleted {
+  color: #ffffff80;
+}
+
+.itemCompleted .itemIcon {
+  color: #4596279b; 
+}
+
+.itemCompleted img.itemIcon {
+  filter: brightness(0) saturate(100%) invert(46%) sepia(61%) saturate(543%) hue-rotate(63deg) brightness(92%) contrast(87%);
+}
