@@ -2,7 +2,11 @@
 @import "tw-animate-css";
 @tailwind utilities;
 
-/* Подключение локальных шрифтов RFDewi */
+html {
+  scrollbar-gutter: stable; 
+}
+
+/* Подключение локальных шрифтов RFDewisdffsdsdf */
 @font-face {
   font-family: 'RFDewi';
   src: url('/fonts/RFDewi-Regular.woff2') format('woff2');

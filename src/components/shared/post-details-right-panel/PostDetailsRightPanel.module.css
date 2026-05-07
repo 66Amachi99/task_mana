@@ -23,6 +23,11 @@
   color: #ffffff;
 }
 
+.taskCardDisabled {
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
 .taskRow {
   display: flex;
   justify-content: space-between;

@@ -180,17 +180,6 @@ const CommentItem = ({
     }
   };
 
-  // const handleDeleteClick = async () => {
-  //   setIsDeleting(true);
-  //   try {
-  //     await onDelete(comment.id);
-  //   } catch (error) {
-  //     console.error('Ошибка при удалении:', error);
-  //   } finally {
-  //     setIsDeleting(false);
-  //   }
-  // };
-
   return (
     <div className={getStatusClass(comment.status)}>
       <div className={styles.commentContent}>
@@ -262,6 +251,7 @@ export const PostDetailsRightPanel = ({
   isEditing,
   isActionLoading
 }: PostDetailsRightPanelProps) => {
+  // Достаем user из хука, чтобы проверять его роль и ID
   const { user, canAddComment, canDeleteComment } = useUser();
   const [addingCommentFor, setAddingCommentFor] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -289,11 +279,21 @@ export const PostDetailsRightPanel = ({
     }
   };
 
+  // Сортировка: задачи, которые пользователь может редактировать, переносятся наверх
+  const sortedTasks = [...tasks].sort((a, b) => {
+    const canEditA = canEditPostTask(a.role);
+    const canEditB = canEditPostTask(b.role);
+
+    if (canEditA && !canEditB) return -1;
+    if (!canEditA && canEditB) return 1;
+    return 0; // Сохраняем порядок, если права одинаковые
+  });
+
   return (
     <div className={styles.panel}>
       <div className={styles.taskList}>
-        {tasks.length > 0 ? (
-          tasks.map(task => {
+        {sortedTasks.length > 0 ? (
+          sortedTasks.map(task => {
             const originalLink = (post[task.linkKey] as string) || '';
             const hasLink = originalLink.trim() !== '';
             const userCanEdit = canEditPostTask(task.role);
@@ -312,7 +312,10 @@ export const PostDetailsRightPanel = ({
             })();
 
             return (
-              <div key={task.id} className={styles.taskCard}>
+              <div
+                key={task.id}
+                className={`${styles.taskCard} ${!userCanEdit ? styles.taskCardDisabled : ''}`}
+              >
                 {supportsFiles ? (
                   <Gallery
                     folderPath={folderPath}
@@ -437,16 +440,26 @@ export const PostDetailsRightPanel = ({
 
                 {task.comments.length > 0 && (
                   <div className={styles.commentsSection}>
-                    {task.comments.map(comment => (
-                      <CommentItem
-                        key={comment.id}
-                        comment={comment}
-                        onStatusChange={onCommentStatusChange}
-                        onDelete={onDeleteComment}
-                        canDelete={!isEditing && canDeleteComment(comment)}
-                        canChangeCommentStatus={!isEditing && userCanChangeCommentStatus}
-                      />
-                    ))}
+                    {task.comments.map(comment => {
+                      const isAdmin = Boolean(user?.admin_role);
+                      const isAuthor =
+                        user?.id === Number((comment as any).created_by_id) ||
+                        user?.id === Number((comment as any).user_id) ||
+                        user?.id === Number((comment as any).author_id);
+
+                      const canDeleteSpecificComment = isAdmin || isAuthor;
+
+                      return (
+                        <CommentItem
+                          key={comment.id}
+                          comment={comment}
+                          onStatusChange={onCommentStatusChange}
+                          onDelete={onDeleteComment}
+                          canDelete={!isEditing && canDeleteSpecificComment}
+                          canChangeCommentStatus={!isEditing && userCanChangeCommentStatus}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </div>

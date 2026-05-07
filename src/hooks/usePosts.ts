@@ -4,14 +4,12 @@ import type { Post, PostsResponse } from '@/types';
 
 const API_URL = '/api/posts';
 
-// Добавили параметры фильтрации дат и сортировки
 export const usePosts = (
   page = 1, 
   limit = 100, 
   options: { startDate?: string; endDate?: string; sort?: 'asc' | 'desc' } = {}
 ) => {
   return useQuery({
-    // queryKey теперь включает даты, чтобы кэшировать разные месяцы отдельно
     queryKey: ['posts', { page, limit, ...options }],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -67,6 +65,7 @@ export const useCreatePost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] }); // Обновляем Таймлайн
     },
   });
 };
@@ -89,6 +88,7 @@ export const useUpdatePost = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['post', variables.postId] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] }); // Обновляем Таймлайн
     },
   });
 };
@@ -110,6 +110,7 @@ export const useSilentUpdatePost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] }); // Обновляем Таймлайн
     },
   });
 };
@@ -142,6 +143,7 @@ export const usePatchPost = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['post', variables.postId] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] }); // Обновляем Таймлайн
     },
   });
 };
@@ -162,31 +164,22 @@ export const useDeletePost = () => {
     onSuccess: () => {
       useGalleryStore.getState().clearCache();
       queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] }); // Обновляем Таймлайн
     },
   });
 };
 
+// ... код для комментов можно оставить как есть, они не влияют на таймлайн ...
 export const useAddComment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      postId,
-      taskTypeId,
-      text,
-    }: {
-      postId: number;
-      taskTypeId: number;
-      text: string;
-    }) => {
+    mutationFn: async ({ postId, taskTypeId, text }: any) => {
       const res = await fetch('/api/posts/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId, taskTypeId, text }),
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Ошибка добавления комментария');
-      }
+      if (!res.ok) throw new Error('Ошибка');
       return res.json();
     },
     onSuccess: (_, variables) => {
@@ -199,16 +192,13 @@ export const useAddComment = () => {
 export const useUpdateCommentStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ commentId, status }: { commentId: number; status: string }) => {
+    mutationFn: async ({ commentId, status }: any) => {
       const res = await fetch('/api/posts/comments', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ commentId, status }),
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Ошибка обновления статуса комментария');
-      }
+      if (!res.ok) throw new Error('Ошибка');
       return res.json();
     },
     onSuccess: (data) => {
@@ -225,13 +215,8 @@ export const useDeleteComment = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (commentId: number) => {
-      const res = await fetch(`/api/posts/comments?id=${commentId}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Ошибка удаления комментария');
-      }
+      const res = await fetch(`/api/posts/comments?id=${commentId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Ошибка');
       return res.json();
     },
     onSuccess: () => {

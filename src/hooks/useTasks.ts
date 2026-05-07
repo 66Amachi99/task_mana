@@ -3,7 +3,6 @@ import type { Task } from '@/types';
 
 const API_URL = '/api/tasks';
 
-// Добавили параметры фильтрации дат и сортировки
 export const useTasks = (
   page = 1, 
   limit = 100, 
@@ -18,7 +17,6 @@ export const useTasks = (
       params.append('limit', limit.toString());
       if (filter) params.append('filter', filter);
       
-      // Добавляем новые параметры в URL
       if (options.startDate) params.append('startDate', options.startDate);
       if (options.endDate) params.append('endDate', options.endDate);
       if (options.sort) params.append('sort', options.sort);
@@ -67,6 +65,7 @@ export const useCreateTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] }); // Обновляем Таймлайн
     },
   });
 };
@@ -89,6 +88,7 @@ export const useUpdateTask = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['task', variables.taskId] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] }); // Обновляем Таймлайн
     },
   });
 };
@@ -111,6 +111,7 @@ export const usePatchTask = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['task', variables.taskId] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] }); // Обновляем Таймлайн
     },
   });
 };
@@ -130,6 +131,7 @@ export const useDeleteTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] }); // Обновляем Таймлайн
     },
   });
 };

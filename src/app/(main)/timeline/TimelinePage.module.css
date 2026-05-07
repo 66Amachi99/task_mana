@@ -78,9 +78,9 @@
     position: relative;
     z-index: 1;
     height: 100%;
-    max-width: 1800px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1.5rem;
     padding-top: 2rem;
     padding-bottom: 6rem;
     display: flex;
@@ -415,7 +415,7 @@
 }
 
 .card:hover {
-    transform: translateY(-2px) scale(1.01);
+    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     z-index: 15;
 }
