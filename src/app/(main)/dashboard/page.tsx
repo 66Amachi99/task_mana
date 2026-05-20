@@ -92,7 +92,7 @@ export default function HomePage() {
         if (hasMoreLocal) setDisplayLimit(p => p + 10);
         else if (hasMoreServer && !postsFetching && !tasksFetching && filteredCount > 0) setServerLimit(p => p + 100);
       }
-    }, { threshold: 0.1 });
+    }, { threshold: 0.01, rootMargin: '300px' });
     if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
   }, [hasMoreLocal, hasMoreServer, postsFetching, tasksFetching, filteredCount]);

@@ -14,7 +14,7 @@ export async function proxy(req: NextRequest) {
 
   if (
     !token && 
-    (pathname.startsWith('/dashboard') || pathname.startsWith('/calendar') || pathname.startsWith('/admin') || pathname.startsWith('/stats'))
+    (pathname.startsWith('/dashboard') || pathname.startsWith('/calendar') || pathname.startsWith('/admin') || pathname.startsWith('/stats') || pathname.startsWith('/timeline'))
   ) {
     return NextResponse.redirect(new URL('/', req.url));
   }
@@ -32,5 +32,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/stats/:path*', '/calendar/:path*', '/admin/:path*'],
+  matcher: ['/', '/dashboard/:path*', '/stats/:path*', '/calendar/:path*', '/admin/:path*', '/timeline/:path*'],
 };

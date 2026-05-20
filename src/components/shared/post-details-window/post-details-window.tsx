@@ -335,8 +335,8 @@ export const PostDetailsWindow = ({ onClose, postId }: PostDetailsWindowProps) =
 
     try {
       const baseFolder = buildFolderPath(
-        editedTitle || post.post_title,
-        editedDeadline || post.post_deadline,
+        post.post_title,
+        post.post_deadline,
         post.post_id,
       );
 
