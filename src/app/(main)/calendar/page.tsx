@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Calendar } from '@/components/calendar/calendar';
 import { PostDetailsWindow } from '@/components/shared/post-details-window/post-details-window';
 import { TaskDetailsWindow } from '@/components/shared/task-details-window/task-details-window';
@@ -61,6 +61,7 @@ export default function CalendarPage() {
 
   const { filterPostByRole } = useUser();
   const { selectedDate, setSelectedDate, openPostModal, openTaskModal } = useHeader();
+  const sidebarRef = useRef<HTMLElement>(null);
 
   // --- ЛОГИКА ЗАГРУЗКИ ПО ДИАПАЗОНУ ТЕКУЩЕЙ СЕТКИ ---
   const fetchRange = useMemo(() => {
@@ -170,6 +171,12 @@ export default function CalendarPage() {
     setSelectedDate(date);
     setIsSidebarOpen(true);
     setShowIncompleteOnly(false);
+    // На мобиле скроллим к сайдбару
+    if (window.innerWidth <= 1024) {
+      setTimeout(() => {
+        sidebarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
   };
 
   const handleOpenPostModal = () => {
@@ -368,7 +375,7 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          <aside className={`${styles.sidebar} ${isSidebarOpen ? styles.sidebarOpen : styles.sidebarClosed
+          <aside ref={sidebarRef} className={`${styles.sidebar} ${isSidebarOpen ? styles.sidebarOpen : styles.sidebarClosed
             }`}>
             <div className={styles.sidebarContent}>
               <div className={styles.sidebarHeader}>

@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
     } else {
       const months = eachMonthOfInterval({ start: startDate, end: now });
       frictionData = months.map(m => ({
-        name: format(m, 'MMM', { locale: ru }),
+        name: format(m, 'LLL', { locale: ru }),
         value: commentsRaw.filter(c => c.created_at.getMonth() === m.getMonth()).length
       }));
     }

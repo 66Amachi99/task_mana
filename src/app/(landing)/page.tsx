@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Users, Calendar, MessageSquare, ShieldCheck, Zap, Layers,
+  Users, Calendar, MessageSquare, ShieldCheck, Zap,
   Github, Twitter, Mail,
-  Eye
+  Eye, Menu, X
 } from "lucide-react";
 import Image from "next/image";
 import styles from "./LandingPage.module.css";
@@ -87,10 +87,13 @@ const itemVariants = {
 export default function LandingPage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ src: string, alt: string } | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleAuthSuccess = () => {
     window.location.href = "/dashboard";
   };
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <div className={styles.mainWrapper}>
@@ -105,8 +108,24 @@ export default function LandingPage() {
           <a href="#features" className={styles.navLink}>Сводка</a>
           <a href="#footer" className={styles.navLink}>FAQ</a>
         </nav>
-        <button onClick={() => setIsAuthOpen(true)} className={styles.btnSecondary}>Войти</button>
+        <button onClick={() => setIsAuthOpen(true)} className={`${styles.btnSecondary} ${styles.desktopAuthBtn}`}>Войти</button>
+        <button
+          className={styles.menuToggle}
+          onClick={() => setIsMobileMenuOpen(prev => !prev)}
+          aria-label="Открыть меню"
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </header>
+
+      {/* Мобильное меню */}
+      <nav className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.open : ""}`}>
+        <a href="#functions" className={styles.mobileNavLink} onClick={closeMobileMenu}>Функции</a>
+        <a href="#workflow" className={styles.mobileNavLink} onClick={closeMobileMenu}>Процесс</a>
+        <a href="#features" className={styles.mobileNavLink} onClick={closeMobileMenu}>Сводка</a>
+        <a href="#footer" className={styles.mobileNavLink} onClick={closeMobileMenu}>FAQ</a>
+        <a className={styles.mobileNavLink} onClick={() => { closeMobileMenu(); setIsAuthOpen(true); }} style={{ cursor: "pointer" }}>Войти</a>
+      </nav>
 
       {/* Hero секция */}
       <motion.section

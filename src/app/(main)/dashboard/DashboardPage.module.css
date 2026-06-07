@@ -12,6 +12,8 @@
   margin-left: auto;
   margin-right: auto;
   padding-bottom: 4rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 @media (min-width: 640px) {
@@ -96,7 +98,7 @@
   top: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Чтобы поиск улетел вправо */
+  justify-content: space-between;
   gap: 16px;
   color: #ffffff;
   z-index: 10;
@@ -144,4 +146,40 @@
 
 .mainSearch {
   max-width: 250px;
+}
+
+@media (max-width: 768px) {
+  .filterWrapper {
+    padding: 10px 16px;
+    gap: 10px;
+    min-height: unset;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filterGroup {
+    gap: 6px;
+  }
+
+  .filterButton {
+    font-size: 14px;
+    padding: 6px 10px;
+    height: 30px;
+  }
+
+  .mainSearch {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .filterWrapper {
+    padding: 10px 12px;
+  }
+
+  .filterButton {
+    font-size: 13px;
+    padding: 5px 8px;
+  }
 }

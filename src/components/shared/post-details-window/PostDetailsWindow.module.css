@@ -146,3 +146,85 @@
     width: 50%; /* lg:w-3/5 */
   }
 }
+
+@media (max-width: 1024px) {
+  .content {
+    gap: 20px;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .container {
+    max-height: 92dvh;
+    max-width: 100%;
+    border-radius: 1.25rem 1.25rem 0 0;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+  }
+
+  .header {
+    /* position: absolute; */
+    top: 0;
+    z-index: 10;
+    padding: 0.75rem 1rem 0;
+  }
+
+  .leftPanel {
+    width: 100%;
+    overflow-y: visible;
+    padding: 0.75rem 1rem;
+  }
+
+  .rightPanel {
+    width: 100%;
+    overflow-y: visible;
+    padding: 0.75rem 1rem 2.5rem;
+  }
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+  .overlay {
+    /* align-items: flex-end; */
+    padding: 0;
+  }
+
+  .container {
+    max-height: 92dvh;
+    max-width: 100%;
+    border-radius: 1.25rem 1.25rem 0 0;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+  }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 0.75rem 1rem 0;
+    backdrop-filter: blur(12px);
+  }
+
+  .content {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .leftPanel {
+    width: 100%;
+    overflow-y: visible;
+    padding: 0.75rem 1rem;
+  }
+
+  .rightPanel {
+    width: 100%;
+    overflow-y: visible;
+    padding: 0.75rem 1rem 2.5rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+}

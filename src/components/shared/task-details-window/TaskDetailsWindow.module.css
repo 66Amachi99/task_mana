@@ -20,7 +20,6 @@
   width: 100%;
   max-width: 64rem;
   max-height: 90vh;
-  display: flex;
   overflow-y: auto;
 }
 
@@ -118,21 +117,10 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.statusBadgeYellow {
-  color: #c07116;
-}
-
-.statusBadgeBlue {
-  color: #617acc;
-}
-
-.statusBadgeGreen {
-  color: #3dac67;
-}
-
-.statusBadgeGray {
-  color: #9b9ea1;
-}
+.statusBadgeYellow { color: #c07116; }
+.statusBadgeBlue { color: #617acc; }
+.statusBadgeGreen { color: #3dac67; }
+.statusBadgeGray { color: #9b9ea1; }
 
 .priorityBadge {
   display: flex;
@@ -145,21 +133,10 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.priorityLow {
-  color: #7793f0;
-}
-
-.priorityMedium {
-  color: #d69851;
-}
-
-.priorityHigh {
-  color: #af5252;
-}
-
-.priorityDefault {
-  color: #969696;
-}
+.priorityLow { color: #7793f0; }
+.priorityMedium { color: #d69851; }
+.priorityHigh { color: #af5252; }
+.priorityDefault { color: #969696; }
 
 .customSelect {
   position: relative;
@@ -254,9 +231,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.descriptionBox {
-  /* min-height: 44px; */
-}
+.descriptionBox {}
 
 .descriptionPreview {
   overflow: visible;
@@ -408,8 +383,7 @@
   color: #ffffff;
 }
 
-.resultSection {
-}
+.resultSection {}
 
 .resultTextarea {
   composes: descriptionTextarea;
@@ -509,14 +483,45 @@
   font-style: italic;
 }
 
-@keyframes overlayFadeIn {
-  from {
-    opacity: 0;
+/* Мобильная адаптация */
+@media (max-width: 640px) {
+  .modalOverlay {
+    padding: 0;
   }
 
-  to {
-    opacity: 1;
+  .modalContainer {
+    max-height: 92dvh;
+    max-width: 100%;
+    border-radius: 1.25rem 1.25rem 0 0;
   }
+
+  .form {
+    width: 100%;
+    min-height: unset;
+    padding: 1.25rem 1rem 2.5rem;
+  }
+
+  .headerTitle {
+    font-size: 1.4rem;
+  }
+
+  .datesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .customSelectButton {
+    min-width: unset;
+    flex: 1;
+  }
+
+  .statusPriority {
+    flex-wrap: wrap;
+  }
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes modalSlideIn {
@@ -524,7 +529,6 @@
     transform: scale(0.95) translateY(10px);
     opacity: 0;
   }
-
   to {
     transform: scale(1) translateY(0);
     opacity: 1;
@@ -536,7 +540,6 @@
     transform: scale(1) translateY(0);
     opacity: 1;
   }
-
   to {
     transform: scale(0.95) translateY(10px);
     opacity: 0;

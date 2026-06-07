@@ -205,6 +205,37 @@ export default function TimelinePage() {
   const postsSectionHeight = postsWithLanes.length > 0 ? (Math.max(...postsWithLanes.map(p => p.lane), 0) + 1) * LANE_HEIGHT + 16 : 0;
   const tasksSectionHeight = tasksWithLanes.length > 0 ? (Math.max(...tasksWithLanes.map(t => t.lane), 0) + 1) * LANE_HEIGHT + 16 : 0;
 
+  // Группировка дней по месяцам для строки заголовка
+  const monthGroups = useMemo(() => {
+    const groups: { label: string; left: number; width: number }[] = [];
+    let currentMonth = -1;
+    let groupStart = 0;
+
+    daysArray.forEach((day, idx) => {
+      const month = day.getMonth();
+      if (month !== currentMonth) {
+        if (currentMonth !== -1) {
+          groups.push({
+            label: format(daysArray[groupStart], 'LLLL yyyy', { locale: ru }),
+            left: groupStart * DAY_WIDTH,
+            width: (idx - groupStart) * DAY_WIDTH,
+          });
+        }
+        currentMonth = month;
+        groupStart = idx;
+      }
+    });
+    // последняя группа
+    if (daysArray.length > 0) {
+      groups.push({
+        label: format(daysArray[groupStart], 'LLLL yyyy', { locale: ru }),
+        left: groupStart * DAY_WIDTH,
+        width: (daysArray.length - groupStart) * DAY_WIDTH,
+      });
+    }
+    return groups;
+  }, [daysArray, DAY_WIDTH]);
+
   // Позиционирование на текущую дату "Сегодня"
   const scrollToToday = () => {
     if (!viewportRef.current) return;
@@ -361,6 +392,17 @@ export default function TimelinePage() {
                 </div>
 
                 <div className={styles.gridHeader}>
+                  <div className={styles.monthRow}>
+                    {monthGroups.map((group, idx) => (
+                      <div
+                        key={idx}
+                        className={styles.monthCell}
+                        style={{ left: `${group.left}px`, width: `${group.width}px` }}
+                      >
+                        {group.label}
+                      </div>
+                    ))}
+                  </div>
                   {daysArray.map((day, idx) => {
                     const isWknd = day.getDay() === 0 || day.getDay() === 6;
                     const isTdy = isToday(day);
@@ -387,7 +429,7 @@ export default function TimelinePage() {
                       {postsWithLanes.map(post => (
                         <div 
                           key={post.post_id} 
-                          className={`${styles.card} ${styles.cardPost}`} 
+                          className={`${styles.card} ${styles.cardPost} ${post.post_status === 'Завершен' ? styles.cardCompleted : ''}`} 
                           style={{ ...post.style, height: `${CARD_HEIGHT}px` }} 
                           title={`${post.post_title}\nДедлайн: ${format(new Date(post.post_deadline), 'dd.MM.yyyy')}\nАвтор: ${post.user?.user_login || 'Нет автора'}`}
                           onClick={(e) => handleCardClick(e, () => setSelectedPostId(post.post_id))}                        >
@@ -407,7 +449,7 @@ export default function TimelinePage() {
                       {tasksWithLanes.map(task => (
                         <div 
                           key={task.task_id} 
-                          className={`${styles.card} ${styles.cardTask}`} 
+                          className={`${styles.card} ${styles.cardTask} ${task.task_status === 'Выполнена' ? styles.cardCompleted : ''}`} 
                           style={{ ...task.style, height: `${CARD_HEIGHT}px` }} 
                           title={`${task.title}\nДедлайн: ${format(new Date(task.end_time), 'dd.MM.yyyy')}\nИсполнители: ${task.assignees.map(a=>a.user.user_login).join(', ')}`}
                           onClick={(e) => handleCardClick(e, () => setSelectedTask({

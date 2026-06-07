@@ -121,6 +121,13 @@ html {
   background: var(--glass-hover);
 }
 
+/* Кнопка "Войти" скрывается на мобиле — она переехала в мобильное меню */
+@media (max-width: 768px) {
+  .desktopAuthBtn {
+    display: none;
+  }
+}
+
 /* Секция Hero */
 .heroSection {
   max-width: 1200px;
@@ -208,9 +215,71 @@ html {
 .bentoTitle { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; pointer-events: none; }
 .bentoText { color: var(--text-dimmed); font-size: 0.95rem; line-height: 1.5; pointer-events: none; }
 
-/* Адаптивность */
+/* Мобильное меню */
+.menuToggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-main);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.mobileMenu {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  background: rgba(5, 5, 5, 0.65);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-border);
+  position: fixed;
+  top: 57px;
+  left: 0;
+  right: 0;
+  z-index: 8;
+}
+
+.mobileMenu.open {
+  display: flex;
+}
+
+.mobileNavLink {
+  color: var(--text-dimmed);
+  text-decoration: none;
+  font-size: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--glass-border);
+  transition: color 0.2s, background 0.2s;
+}
+
+.mobileNavLink:last-child {
+  border-bottom: none;
+}
+
+.mobileNavLink:hover {
+  color: var(--text-main);
+  background: var(--glass-hover);
+}
+
+/* Адаптивность bento */
 @media (max-width: 900px) {
-  .bentoGrid { grid-template-columns: 1fr; grid-auto-rows: auto; }
+  .bentoGrid {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: auto;
+    margin: 4rem auto;
+  }
+  .large { grid-column: span 2; }
+  .tall { grid-row: span 1; }
+  .bentoItem { min-height: 200px; }
+}
+
+@media (max-width: 600px) {
+  .bentoGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 1rem;
+    margin: 3rem auto;
+  }
   .large { grid-column: span 1; }
 }
 
@@ -293,10 +362,27 @@ html {
     flex-direction: column;
     gap: 2rem;
     text-align: center;
+    padding-top: 3rem;
   }
-  
+
   .featureTitle {
     font-size: 2rem;
+  }
+
+  .featureDescription {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .featureBlock, .featureBlock:nth-child(even) {
+    gap: 1.5rem;
+    padding-top: 2rem;
+  }
+
+  .featureTitle {
+    font-size: 1.6rem;
+    letter-spacing: -0.5px;
   }
 }
 
@@ -393,13 +479,60 @@ html {
   }
 }
 
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem 1.25rem;
+  }
+
+  .navLinks {
+    display: none;
+  }
+
+  .menuToggle {
+    display: block;
+  }
+
+  .heroSection {
+    padding: 5rem 1.25rem 3rem;
+  }
+
+  .title {
+    font-size: clamp(2rem, 10vw, 3rem);
+    letter-spacing: -1px;
+  }
+
+  .description {
+    font-size: 1rem;
+  }
+
+  .badge {
+    font-size: 0.78rem;
+  }
+
+  .btnSecondary,
+  .btnPrimary {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .footer {
+    margin-top: 4rem;
+    padding: 3rem 1.25rem 2rem;
+  }
+}
+
 @media (max-width: 600px) {
   .footerContainer {
     grid-template-columns: 1fr;
+    gap: 2rem;
   }
   .footerBottom {
     flex-direction: column;
     gap: 1.5rem;
     text-align: center;
+  }
+
+  .heroSection {
+    padding: 4rem 1rem 2rem;
   }
 }

@@ -62,7 +62,7 @@
 .closeButton {
   color: #ffffff60;
   border-radius: 9999px;
-  transition: color 0.2s, background-color 0.2s, transform 0.3s ease; 
+  transition: color 0.2s, background-color 0.2s, transform 0.3s ease;
   background: none;
   border: none;
   cursor: pointer;
@@ -104,9 +104,8 @@
   transition: border-color 0.2s, box-shadow 0.2s;
   color: #ffffff;
   height: 2.75rem;
-
-  background: rgba(255, 255, 255, 0.02); 
-  border: 1px solid rgba(255, 255, 255, 0.1); 
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .textarea {
@@ -191,8 +190,8 @@
 .checkbox {
   width: 1.25rem;
   height: 1.25rem;
-  background: rgba(255, 255, 255, 0.02); 
-  border: 1px solid rgba(255, 255, 255, 0.1); 
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.5rem;
   cursor: pointer;
   appearance: none;
@@ -263,19 +262,48 @@
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.20) 100%);
 }
 
-.fieldGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+/* Мобильная адаптация */
+@media (max-width: 640px) {
+  .modalOverlay {
+    padding: 0;
+  }
+
+  .modalContainer {
+    max-height: 92dvh;
+    max-width: 100%;
+    border-radius: 1.25rem 1.25rem 0 0;
+  }
+
+  .modalForm {
+    width: 100%;
+    min-height: unset;
+    padding: 1.25rem 1rem 2.5rem;
+    gap: 14px;
+  }
+
+  .priorityContainer {
+    flex-wrap: wrap;
+  }
+
+  .priorityButton {
+    flex: 1 1 40%;
+    height: 36px;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .button {
+    flex: 1;
+    width: auto;
+    height: 36px;
+  }
 }
 
 @keyframes overlayFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes modalSlideIn {

@@ -310,3 +310,102 @@
 .itemCompleted img.itemIcon {
   filter: brightness(0) saturate(100%) invert(46%) sepia(61%) saturate(543%) hue-rotate(63deg) brightness(92%) contrast(87%);
 }
+
+/* Мобильная адаптация */
+@media (max-width: 640px) {
+  .calendar {
+    padding: 0.5rem;
+  }
+
+  .header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: unset;
+    margin-bottom: 0.5rem;
+  }
+
+  .prevGroupButton,
+  .nextGroupButton {
+    order: 1;
+  }
+
+  .filterGroup {
+    order: 0;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .monthTitle {
+    font-size: 1.5rem;
+  }
+
+  .filterButtons {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .filterButton {
+    font-size: 13px;
+    padding: 0.15rem 0.6rem;
+  }
+
+  .prevMonthName,
+  .nextMonthName {
+    display: none;
+  }
+
+  .navButtonSymbol {
+    height: 28px;
+    font-size: 1.5rem;
+  }
+
+  .weekDays {
+    font-size: 12px;
+    gap: 0.15rem;
+  }
+
+  .dayGrid {
+    gap: 0.15rem;
+  }
+
+  .dayCell {
+    min-height: 60px;
+    border-radius: 10px;
+  }
+
+  .emptyCell {
+    border-radius: 10px;
+  }
+
+  .dayNumber {
+    font-size: 12px;
+  }
+
+  .dayWeekday {
+    font-size: 11px;
+  }
+
+  .dayStats {
+    font-size: 11px;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+
+  .dayHeader {
+    padding-inline: 4px;
+    padding-top: 4px;
+    margin-bottom: 0.1rem;
+  }
+
+  .item {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.25rem;
+  }
+
+  .itemsContainer {
+    margin: 2px;
+    margin-bottom: 4px;
+  }
+}

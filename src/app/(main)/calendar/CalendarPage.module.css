@@ -394,3 +394,112 @@
   height: 16px;
   opacity: 0.7;
 }
+
+/* Мобильная адаптация */
+@media (max-width: 1024px) {
+  /* Страница становится скроллируемой */
+  .page {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .main {
+    overflow: visible;
+    flex-direction: column;
+  }
+
+  .contentWrapper {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+    position: static;
+  }
+
+  /* Календарь занимает фиксированную высоту экрана */
+  .calendarWrapper,
+  .calendarWrapperFull,
+  .calendarWrapperWithSidebar {
+    width: 100% !important;
+    height: 100svh;
+    flex-shrink: 0;
+  }
+
+  .calendarContainer {
+    padding-bottom: 0rem;
+  }
+
+  /* Сайдбар — обычный блок под календарём */
+  .sidebar {
+    position: static !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    overflow: visible;
+    display: none;
+  }
+
+  .sidebarOpen {
+    display: flex;
+  }
+
+  .sidebarClosed {
+    display: none;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .sidebarContent {
+    padding: 0.75rem 1rem 5rem;
+    height: auto;
+    overflow: visible;
+  }
+
+  .itemsList {
+    overflow-y: visible;
+    height: auto;
+  }
+
+  .dateTitle {
+    font-size: 1.5rem;
+  }
+
+  .weekdayTitle {
+    font-size: 1.5rem;
+  }
+
+  .statsWrapper {
+    padding-top: 1rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .filterButton {
+    font-size: 14px;
+    padding: 0.35rem 0.75rem;
+    height: 32px;
+    min-width: fit-content;
+  }
+
+  .closeIcon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .sidebarCard {
+    padding: 0.75rem;
+  }
+
+  .sidebarCardTitle {
+    font-size: 0.9rem;
+  }
+
+  /* Прячем FilterBar под календарём на мобиле — он перекрывает сайдбар */
+  .calendarFilterBar {
+    display: none;
+  }
+}

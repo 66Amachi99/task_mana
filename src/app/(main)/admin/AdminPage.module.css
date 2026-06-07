@@ -27,6 +27,7 @@
   font-weight: 700;
   color: #fff;
   padding-bottom: 8px;
+  margin: 0;
 }
 
 .headerActions {
@@ -35,17 +36,26 @@
   gap: 12px;
 }
 
-.btn {
+/* Обертка для инпута, чтобы контролировать ширину */
+.searchContainer {
+  width: 260px;
+}
+
+.searchContainer > div {
+  width: 100%;
+}
+
+.btnPrimary {
+  height: 32px !important;
+  background: linear-gradient(90deg, rgba(74, 101, 234, 0.25) 0%, rgba(74, 101, 234, 0.4) 100%) !important;
+  border-color: rgba(74, 101, 234, 0.4) !important;
+  color: #c0ccfa !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 32px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.12) 100%);
-  color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -53,59 +63,53 @@
   white-space: nowrap;
 }
 
-.btn:hover {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.2) 100%);
-  color: #fff;
-}
-
-.btnPrimary {
-  height: 32px !important; /* Кнопка Добавить 32px */
-  background: linear-gradient(90deg, rgba(74, 101, 234, 0.25) 0%, rgba(74, 101, 234, 0.4) 100%) !important;
-  border-color: rgba(74, 101, 234, 0.4) !important;
-  color: #c0ccfa !important;
-}
-
 .btnPrimary:hover {
   background: linear-gradient(90deg, rgba(74, 101, 234, 0.35) 0%, rgba(74, 101, 234, 0.55) 100%) !important;
 }
 
-.icon {
-  width: 16px;
-  height: 16px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* --- АДАПТИВНОСТЬ --- */
+
+/* Планшеты (до 768px) */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .searchContainer {
+    flex: 1; /* Поиск растягивается на все доступное место */
+    width: auto;
+  }
 }
 
-.searchWrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 260px;
-}
+/* Мобильные телефоны (до 480px) */
+@media (max-width: 480px) {
+  .pageTitle {
+    font-size: 26px; /* Уменьшаем заголовок */
+  }
 
-.searchIcon {
-  position: absolute;
-  left: 14px;
-  width: 18px;
-  height: 18px;
-  color: rgba(255, 255, 255, 0.5);
-  pointer-events: none;
-  z-index: 10;
-}
+  .headerActions {
+    flex-direction: column; /* Кнопки друг под другом */
+    align-items: stretch;
+    gap: 12px;
+  }
 
-.searchInput {
-  width: 100%;
-  height: 32px;
-  padding: 0 14px 0 40px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.2s;
-  backdrop-filter: blur(10px);
+  .searchContainer {
+    width: 100%;
+  }
+
+  .btnPrimary {
+    width: 100%; /* Кнопка добавления во всю ширину */
+  }
 }

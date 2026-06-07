@@ -332,3 +332,150 @@
     justify-content: center;
     background: var(--bg-overlay);
 }
+
+/* --- АДАПТИВНОСТЬ (Tablet & Mobile) --- */
+
+/* Планшеты и небольшие экраны (до 1024px) */
+@media (max-width: 1446px) {
+    /* Глобальное уменьшение шрифтов */
+    .page { font-size: 11pt; }
+    .pageTitle { font-size: 28px; }
+    .cardTitle { font-size: 14pt; }
+    
+    .container {
+        padding: 1.5rem;
+        height: 100vh;
+        overflow-y: auto;
+        scrollbar-width: none;
+    }
+    .container::-webkit-scrollbar { display: none; }
+
+    /* Растворяем обертки, чтобы управлять карточками напрямую */
+    .mainLayout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        height: auto;
+        min-height: auto;
+        overflow: visible;
+        padding-bottom: 3rem;
+    }
+
+    .leftColumn, 
+    .rightContent, 
+    .topRightSection, 
+    .bottomRightSection {
+        display: contents;
+    }
+
+    /* ЖЕСТКО ЗАДАЕМ ПОРЯДОК БЛОКОВ (Игнорируя HTML) */
+    
+    /* 1. Пульс сверху на всю ширину */
+    .pulseGrid {
+        order: 1;
+        grid-column: 1 / -1; 
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+
+    /* 2. Охват площадок слева, Индекс правок справа */
+    .areaPie { 
+        order: 2; 
+        grid-column: 1 / 2; 
+        min-height: 340px; 
+    }
+    .areaFriction { 
+        order: 3; 
+        grid-column: 2 / 3; 
+        min-height: 340px; 
+    }
+
+    /* 3. Количество контента слева, Проекты справа */
+    .areaComplexity { 
+        order: 4; 
+        grid-column: 1 / 2; 
+        min-height: 340px; 
+    }
+    .areaEmpty { 
+        order: 5; 
+        grid-column: 2 / 3; 
+        min-height: 340px; 
+    }
+
+    /* 4. Таблица команды в самом низу на всю ширину */
+    .areaTeam { 
+        order: 6; 
+        grid-column: 1 / -1; 
+        min-height: 350px; 
+    }
+
+    /* Корректировка внутренних элементов */
+    .table th, .table td { padding: 10px; font-size: 11pt; }
+    .pulseLabel { font-size: 12pt; }
+    .pulseValue { font-size: 16pt; }
+    .pulseCardMini { padding: 12px; }
+    .page :global(.recharts-text) { font-size: 11pt !important; }
+}
+
+/* Мобильные устройства (до 768px) */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem 1rem 5rem 1rem;
+    }
+
+    .pageHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        gap: 1rem;
+    }
+
+    .headerControls, .filterGroup {
+        width: 100%;
+    }
+
+    .filterButton {
+        flex: 1;
+        text-align: center;
+        padding: 8px 0;
+        font-size: 11pt;
+    }
+
+    /* Переводим Grid в одну колонку (порядок order сохранится из 1024px) */
+    .mainLayout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .areaPie, .areaFriction, .areaComplexity, .areaEmpty, .areaTeam {
+        grid-column: 1 / -1;
+        min-height: 320px;
+    }
+
+    /* Пульс разбиваем на 2 колонки (2х2) */
+    .pulseGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .pulseCardMini {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .projectGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Компактные смартфоны (до 480px) */
+@media (max-width: 480px) {
+    .pageTitle { font-size: 26px; }
+    .pulseLabel { font-size: 11pt; }
+    .pulseValue { font-size: 14pt; }
+    .pulseGrid { grid-template-columns: 1fr; }
+    .areaPie, .areaFriction, .areaComplexity { min-height: 280px; }
+    .page :global(.recharts-text) { font-size: 9pt !important; }
+}

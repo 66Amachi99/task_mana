@@ -349,3 +349,41 @@
     opacity: 0;
   }
 }
+
+/* Мобильная адаптация */
+@media (max-width: 640px) {
+  .overlay {
+    padding: 0;
+  }
+
+  .container {
+    max-height: 92dvh;
+    max-width: 100%;
+    border-radius: 1.25rem 1.25rem 0 0;
+  }
+
+  .form {
+    width: 100%;
+    min-height: unset;
+    padding: 1.25rem 1rem 2.5rem;
+    gap: 14px;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .button {
+    flex: 1;
+    height: 36px;
+  }
+
+  .taskButtonsContainer {
+    gap: 0.4rem;
+  }
+
+  .taskButton {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+}

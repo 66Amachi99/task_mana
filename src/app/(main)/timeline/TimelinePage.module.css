@@ -287,7 +287,7 @@
 }
 
 .gridHeader {
-    height: 44px;
+    height: 60px;
     z-index: 30;
     background: var(--surface-bg);
     border-bottom: 1px solid var(--surface-border);
@@ -295,6 +295,47 @@
     top: 0;
     backdrop-filter: blur(8px);
     pointer-events: auto;
+}
+
+/* Строка месяцев */
+.monthRow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 24px;
+    border-bottom: 1px solid var(--surface-border);
+    pointer-events: none;
+}
+
+.monthCell {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    border-right: 1px solid var(--surface-border);
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.headerCell {
+    position: absolute;
+    top: 28px;
+    height: calc(100% - 28px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--grid-line);
+    box-sizing: border-box;
 }
 
 .colBg {
@@ -317,22 +358,6 @@
     bottom: 0;
     width: 1px;
     background: var(--grid-line);
-}
-
-.headerCell {
-    position: absolute;
-    top: 0;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-right: 1px solid var(--grid-line);
-    box-sizing: border-box;
-}
-
-.headWeekend {
-    background: var(--bg-weekend);
 }
 
 .headToday {
@@ -457,6 +482,21 @@
     background: var(--color-task);
 }
 
+/* --- ЗАВЕРШЁННЫЕ КАРТОЧКИ --- */
+.cardCompleted {
+    opacity: 0.45;
+    filter: saturate(0.4);
+}
+
+.cardCompleted .cardAccent {
+    background: #6b7280;
+}
+
+.cardCompleted .cardText::after {
+    content: ' ✓';
+    opacity: 0.7;
+}
+
 /* --- ПУСТОЕ СОСТОЯНИЕ --- */
 .noData {
     display: flex;
@@ -471,21 +511,64 @@
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
+        padding-bottom: 5rem;
     }
     
     .pageHeader {
         flex-direction: column;
         align-items: flex-start;
-        gap: 1rem;
+        gap: 0.75rem;
     }
     
     .headerControls {
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-start;
         flex-wrap: wrap;
+        gap: 8px;
     }
     
     .pageTitle {
-        font-size: 24px;
+        font-size: 22px;
+    }
+
+    .btnToday {
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+
+    .zoomLabel {
+        width: 36px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0.75rem;
+        padding-bottom: 5rem;
+    }
+
+    .pageTitle {
+        font-size: 18px;
+    }
+
+    .headerControls {
+        gap: 6px;
+    }
+
+    .zoomControl,
+    .btnToday,
+    .filterGroup {
+        height: 32px;
+    }
+
+    .filterBtn {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+
+    .zoomBtn {
+        width: 24px;
+        height: 24px;
     }
 }

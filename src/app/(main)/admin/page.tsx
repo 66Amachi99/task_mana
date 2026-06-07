@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useUser } from '@/hooks/use-roles';
 import { useAdminUsers } from '@/hooks/use-admin-users';
-import { useAdminFilter } from '@/hooks/use-admin-filter'; // Импортируем хук
+import { useAdminFilter } from '@/hooks/use-admin-filter';
 import { SearchInput } from '@/components/ui/search-input/search-input';
 import { ActionButton } from '@/components/ui/action-button/action-button';
 import { Plus } from 'lucide-react';
@@ -64,12 +64,14 @@ export default function AdminPage() {
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Пользователи</h1>
           <div className={styles.headerActions}>
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Поиск по логину..."
-              showHistory={false} // ОТКЛЮЧАЕМ ИСТОРИЮ
-            />
+            <div className={styles.searchContainer}>
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Поиск по логину..."
+                showHistory={false}
+              />
+            </div>
             <ActionButton variant="base" icon={Plus} className={styles.btnPrimary} onClick={handleCreateClick}>
               Добавить
             </ActionButton>
